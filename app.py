@@ -121,6 +121,97 @@ LANG_FILTER = {
     "Armenian": "armenian",
 }
 
+# Longest-token-first Latin → script. Enough to make Erin / Sophia / Naples count.
+LATIN_TO_SCRIPT = {
+    "Russian": {
+        "shch": "щ", "yo": "ё", "zh": "ж", "kh": "х", "ts": "ц", "ch": "ч",
+        "sh": "ш", "yu": "ю", "ya": "я", "ye": "е",
+        "a": "а", "b": "б", "c": "к", "d": "д", "e": "е", "f": "ф", "g": "г",
+        "h": "х", "i": "и", "j": "й", "k": "к", "l": "л", "m": "м", "n": "н",
+        "o": "о", "p": "п", "q": "к", "r": "р", "s": "с", "t": "т", "u": "у",
+        "v": "в", "w": "в", "x": "кс", "y": "ы", "z": "з",
+    },
+    "Ukrainian": {
+        "shch": "щ", "zh": "ж", "kh": "х", "ts": "ц", "ch": "ч", "sh": "ш",
+        "yu": "ю", "ya": "я", "ye": "є", "yi": "ї",
+        "a": "а", "b": "б", "c": "к", "d": "д", "e": "е", "f": "ф", "g": "г",
+        "h": "г", "i": "і", "j": "й", "k": "к", "l": "л", "m": "м", "n": "н",
+        "o": "о", "p": "п", "q": "к", "r": "р", "s": "с", "t": "т", "u": "у",
+        "v": "в", "w": "в", "x": "кс", "y": "и", "z": "з",
+    },
+    "Greek": {
+        "th": "θ", "ph": "φ", "ch": "χ", "ps": "ψ", "kh": "χ",
+        "a": "α", "b": "β", "c": "κ", "d": "δ", "e": "ε", "f": "φ", "g": "γ",
+        "h": "η", "i": "ι", "j": "ι", "k": "κ", "l": "λ", "m": "μ", "n": "ν",
+        "o": "ο", "p": "π", "q": "κ", "r": "ρ", "s": "σ", "t": "τ", "u": "υ",
+        "v": "β", "w": "ω", "x": "ξ", "y": "υ", "z": "ζ",
+    },
+    "Coptic": {
+        "th": "ⲑ", "ph": "ⲫ", "ch": "ⲭ", "ps": "ⲯ", "sh": "ϣ",
+        "a": "ⲁ", "b": "ⲃ", "c": "ⲕ", "d": "ⲇ", "e": "ⲉ", "f": "ϥ", "g": "ⲅ",
+        "h": "ϩ", "i": "ⲓ", "j": "ϫ", "k": "ⲕ", "l": "ⲗ", "m": "ⲙ", "n": "ⲛ",
+        "o": "ⲟ", "p": "ⲡ", "q": "ⲕ", "r": "ⲣ", "s": "ⲥ", "t": "ⲧ", "u": "ⲩ",
+        "v": "ⲃ", "w": "ⲱ", "x": "ⲝ", "y": "ⲓ", "z": "ⲍ",
+    },
+    "Hebrew": {
+        "sh": "ש", "ch": "ח", "ts": "צ", "th": "ת", "kh": "כ",
+        "a": "א", "b": "ב", "c": "כ", "d": "ד", "e": "א", "f": "פ", "g": "ג",
+        "h": "ה", "i": "י", "j": "י", "k": "כ", "l": "ל", "m": "מ", "n": "נ",
+        "o": "ו", "p": "פ", "q": "ק", "r": "ר", "s": "ס", "t": "ט", "u": "ו",
+        "v": "ו", "w": "ו", "x": "קס", "y": "י", "z": "ז",
+    },
+    "Aramaic (Square)": {
+        "sh": "ש", "ch": "ח", "ts": "צ", "th": "ת", "kh": "כ",
+        "a": "א", "b": "ב", "c": "כ", "d": "ד", "e": "א", "f": "פ", "g": "ג",
+        "h": "ה", "i": "י", "j": "י", "k": "כ", "l": "ל", "m": "מ", "n": "נ",
+        "o": "ו", "p": "פ", "q": "ק", "r": "ר", "s": "ס", "t": "ט", "u": "ו",
+        "v": "ו", "w": "ו", "x": "קס", "y": "י", "z": "ז",
+    },
+    "Aramaic (Syriac)": {
+        "sh": "ܫ", "ch": "ܚ", "ts": "ܨ", "th": "ܬ",
+        "a": "ܐ", "b": "ܒ", "c": "ܟ", "d": "ܕ", "e": "ܐ", "f": "ܦ", "g": "ܓ",
+        "h": "ܗ", "i": "ܝ", "j": "ܝ", "k": "ܟ", "l": "ܠ", "m": "ܡ", "n": "ܢ",
+        "o": "ܘ", "p": "ܦ", "q": "ܩ", "r": "ܪ", "s": "ܣ", "t": "ܛ", "u": "ܘ",
+        "v": "ܘ", "w": "ܘ", "x": "ܣ", "y": "ܝ", "z": "ܙ",
+    },
+    "Arabic": {
+        "sh": "ش", "kh": "خ", "th": "ث", "dh": "ذ", "gh": "غ",
+        "a": "ا", "b": "ب", "c": "ك", "d": "د", "e": "ا", "f": "ف", "g": "ج",
+        "h": "ه", "i": "ي", "j": "ج", "k": "ك", "l": "ل", "m": "م", "n": "ن",
+        "o": "و", "p": "ب", "q": "ق", "r": "ر", "s": "س", "t": "ت", "u": "و",
+        "v": "و", "w": "و", "x": "كس", "y": "ي", "z": "ز",
+    },
+    "Sanskrit": {
+        "kh": "ख", "gh": "घ", "ch": "च", "jh": "झ", "th": "थ", "dh": "ध",
+        "ph": "फ", "bh": "भ", "sh": "श", "ss": "ष",
+        "a": "अ", "b": "ब", "c": "क", "d": "द", "e": "ए", "f": "फ", "g": "ग",
+        "h": "ह", "i": "इ", "j": "ज", "k": "क", "l": "ल", "m": "म", "n": "न",
+        "o": "ओ", "p": "प", "q": "क", "r": "र", "s": "स", "t": "त", "u": "उ",
+        "v": "व", "w": "व", "x": "क्ष", "y": "य", "z": "ज",
+    },
+    "Georgian": {
+        "a": "ა", "b": "ბ", "c": "ც", "d": "დ", "e": "ე", "f": "ფ", "g": "გ",
+        "h": "ჰ", "i": "ი", "j": "ჯ", "k": "კ", "l": "ლ", "m": "მ", "n": "ნ",
+        "o": "ო", "p": "პ", "q": "ქ", "r": "რ", "s": "ს", "t": "ტ", "u": "უ",
+        "v": "ვ", "w": "ვ", "x": "ხ", "y": "ი", "z": "ზ",
+    },
+    "Armenian": {
+        "a": "ա", "b": "բ", "c": "ց", "d": "դ", "e": "ե", "f": "ֆ", "g": "գ",
+        "h": "հ", "i": "ի", "j": "ջ", "k": "կ", "l": "լ", "m": "մ", "n": "ն",
+        "o": "ո", "p": "պ", "q": "ք", "r": "ր", "s": "ս", "t": "տ", "u": "ու",
+        "v": "վ", "w": "վ", "x": "խ", "y": "յ", "z": "զ",
+    },
+}
+
+GRIMES = {
+    "Genesis": "1FH-q0I1fJY",
+    "Genesis (audio)": "WizNXQGBMEk",
+    "So Heavy I Fell Through the Earth": "eLo1pQ45XYs",
+    "Oblivion": "kTwA6IQS5Lw",
+    "4ÆM": "lZk7G-pX6s0",
+    "You'll miss me when I'm not around": "grY7et4ZZjU",
+}
+
 
 def seed_sigil(text: str) -> str:
     h = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -343,6 +434,34 @@ def filter_scripts(rows: list[dict], lang: str) -> list[dict]:
     if key is None or key == "latin":
         return [] if key == "latin" else rows
     return [r for r in rows if key in r.get("name", "").lower()]
+
+
+def transliterate(text: str, lang: str) -> str:
+    table = LATIN_TO_SCRIPT.get(lang)
+    if not table:
+        return text
+    keys = sorted(table, key=len, reverse=True)
+    out: list[str] = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if not ch.isascii() or not ch.isalpha():
+            out.append(ch)
+            i += 1
+            continue
+        hit = False
+        for token in keys:
+            chunk = text[i : i + len(token)]
+            if chunk.lower() == token:
+                mapped = table[token]
+                out.append(mapped.upper() if ch.isupper() and len(mapped) == 1 else mapped)
+                i += len(token)
+                hit = True
+                break
+        if not hit:
+            out.append(ch)
+            i += 1
+    return "".join(out)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -652,6 +771,16 @@ with st.sidebar:
         "Language / script",
         list(LANG_FILTER.keys()),
     )
+    st.markdown("##### Grimes — ethereal")
+    track = st.selectbox("Play", ["Off"] + list(GRIMES.keys()))
+    if track != "Off":
+        vid = GRIMES[track]
+        st.markdown(
+            f'<iframe width="100%" height="160" src="https://www.youtube.com/embed/{vid}?rel=0" '
+            f'frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>',
+            unsafe_allow_html=True,
+        )
+        st.caption("Official Grimes / 4AD upload. Use headphones.")
     live = st.toggle("Live lookups (Numbers API + Bible API)", value=True)
     as_of = st.date_input("Personal cycles as of", value=date.today())
     birth_default = st.date_input(
@@ -715,8 +844,18 @@ if geo:
 earth = earth_profile(place_label, lat, lon) if (place_label and lat is not None and lon is not None) else None
 bible_m = BIBLE_RE.search(text)
 bible_ref = f"{bible_m.group('book')} {bible_m.group('ch')}:{bible_m.group('vs')}" if bible_m else None
+script_text = text
+if lang not in ("Auto", "English (Latin)"):
+    script_text = transliterate(text, lang)
 latin = letters_latin(text) if lang in ("Auto", "English (Latin)") else []
-scripts = filter_scripts(script_readings(text), lang)
+native = script_readings(text)
+converted = script_readings(script_text) if script_text != text else []
+scripts = filter_scripts(converted or native, lang)
+if lang == "Auto":
+    scripts = filter_scripts(native, lang)
+if lang not in ("Auto", "English (Latin)") and script_text != text:
+    st.markdown(f"**{lang}:** `{script_text}`")
+    st.caption("Latin letters moved into this script so the cipher can actually count.")
 
 save_l, save_r = st.columns(2)
 with save_l:
@@ -739,6 +878,23 @@ tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look = st.tabs(
 )
 
 with tab_decode:
+    if lang not in ("Auto", "English (Latin)"):
+        st.subheader(f"{lang} decode")
+        if scripts:
+            for r in scripts:
+                info = meaning(r["reduced"])
+                st.write(
+                    f"**{r['name']}** — raw `{r['raw']}` → **{r['reduced']}** · {info['title']}"
+                )
+                st.write(info.get("current", info["light"]))
+                shown = " ".join(f"{ch}={v}" for ch, v in r["pairs"][:48])
+                st.caption(shown)
+                render_depth(r["reduced"], f"dec_lang_{r['name']}")
+        else:
+            st.warning(
+                f"No {lang} letters counted. Type in that script, or keep English letters — "
+                "they get converted automatically (Erin → Эрин / Εριν / ארין)."
+            )
     st.subheader("Letter / name decode (Pythagorean)")
     if latin:
         prof = name_profile(text)
