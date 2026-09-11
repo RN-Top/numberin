@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import re
-from datetime import date, datetime, timezone
+import textwrap
+from datetime import date, datetime, time, timezone
 from urllib.parse import quote
 
 import requests
 import streamlit as st
+from PIL import Image, ImageDraw, ImageFont
 
 from engine import (
     KARMIC,
@@ -77,6 +80,23 @@ BIBLE_RE = re.compile(
 )
 DATE_ISO = re.compile(r"\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b")
 DATE_US = re.compile(r"\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})\b")
+TIME_RE = re.compile(
+    r"\b([01]?\d|2[0-3])[:.;]([0-5]\d)(?:\s*([AaPp]\.?[Mm]\.?))?\b"
+)
+COORD_RE = re.compile(r"(-?\d{1,3}\.\d+)\s*[,/ ]\s*(-?\d{1,3}\.\d+)")
+PLACE_HINT = re.compile(
+    r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*,?\s*(FL|Florida|TX|Texas|CA|NY|OH|GA|NC|SC)\b",
+    re.I,
+)
+KNOWN_COORDS = {
+    "naples fl": (26.1420, -81.7948, "Naples, Florida, US"),
+    "naples florida": (26.1420, -81.7948, "Naples, Florida, US"),
+    "naples": (26.1420, -81.7948, "Naples, Florida, US"),
+    "cape coral": (26.5628, -81.9495, "Cape Coral, Florida, US"),
+    "cape coral fl": (26.5628, -81.9495, "Cape Coral, Florida, US"),
+    "mcallen": (26.2034, -98.2300, "McAllen, Texas, US"),
+    "mcallen tx": (26.2034, -98.2300, "McAllen, Texas, US"),
+}
 MONTHS = {
     m.lower(): i
     for i, m in enumerate(
@@ -143,6 +163,179 @@ def detect_dates(text: str) -> list[date]:
             seen.add(d)
             out.append(d)
     return out
+
+
+def detect_times(text: str) -> list[time]:
+    found: list[time] = []
+    seen = set()
+    for hh, mm, ampm in TIME_RE.findall(text):
+        hour = int(hh)
+        minute = int(mm)
+        if ampm:
+            tag = re.sub(r"[^A-Za-z]", "", ampm).upper()
+            if tag == "PM" and hour < 12:
+                hour += 12
+            if tag == "AM" and hour == 12:
+                hour = 0
+        try:
+            t = time(hour, minute)
+        except ValueError:
+            continue
+        if t not in seen:
+            seen.add(t)
+            found.append(t)
+    return found
+
+
+def detect_coords(text: str) -> tuple[float, float] | None:
+    m = COORD_RE.search(text)
+    if not m:
+        return None
+    lat, lon = float(m.group(1)), float(m.group(2))
+    if abs(lat) <= 90 and abs(lon) <= 180:
+        return lat, lon
+    return None
+
+
+def detect_place(text: str) -> str | None:
+    m = PLACE_HINT.search(text)
+    if m:
+        return f"{m.group(1).strip()} {m.group(2).strip()}"
+    low = text.lower()
+    for key in KNOWN_COORDS:
+        if key in low:
+            return KNOWN_COORDS[key][2]
+    return None
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def geocode_place(place: str) -> dict | None:
+    key = place.strip().lower()
+    if key in KNOWN_COORDS:
+        lat, lon, label = KNOWN_COORDS[key]
+        return {"label": label, "lat": lat, "lon": lon, "source": "known"}
+    # fuzzy known
+    for k, (lat, lon, label) in KNOWN_COORDS.items():
+        if k in key or key in k:
+            return {"label": label, "lat": lat, "lon": lon, "source": "known"}
+    try:
+        r = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": place, "format": "json", "limit": 1},
+            timeout=6,
+            headers={"User-Agent": "NUMBERIN/2.0 (personal numerology lab)"},
+        )
+        if r.ok:
+            data = r.json()
+            if data:
+                hit = data[0]
+                return {
+                    "label": hit.get("display_name", place),
+                    "lat": float(hit["lat"]),
+                    "lon": float(hit["lon"]),
+                    "source": "nominatim",
+                }
+    except Exception:
+        return None
+    return None
+
+
+def earth_profile(place: str, lat: float, lon: float) -> dict:
+    prof = name_profile(place)
+    lat_red, lat_steps = reduce_trace(int(abs(lat) * 10000))
+    lon_red, lon_steps = reduce_trace(int(abs(lon) * 10000))
+    pair_red, pair_steps = reduce_trace(int(abs(lat) * 100 + abs(lon) * 100))
+    return {
+        "place": place,
+        "lat": lat,
+        "lon": lon,
+        "lat_hemi": "N" if lat >= 0 else "S",
+        "lon_hemi": "E" if lon >= 0 else "W",
+        "name": prof,
+        "lat_num": (lat_red, lat_steps),
+        "lon_num": (lon_red, lon_steps),
+        "earth_num": (pair_red, pair_steps),
+    }
+
+
+def name_extras(prof: dict) -> dict:
+    rows = prof["rows"]
+    letters = [r["letter"] for r in rows]
+    values = [r["value"] for r in rows]
+    counts = {n: values.count(n) for n in range(1, 10)}
+    hidden = max(counts, key=counts.get) if values else 0
+    first = rows[0] if rows else None
+    last = rows[-1] if rows else None
+    vowels = [r for r in rows if r["kind"] == "vowel"]
+    cons = [r for r in rows if r["kind"] == "consonant"]
+    tokens: dict[str, list] = {}
+    for r in rows:
+        tokens.setdefault(r["token"], []).append(r)
+    token_sums = {}
+    for tok, rs in tokens.items():
+        raw = sum(x["value"] for x in rs)
+        token_sums[tok] = (raw, *reduce_trace(raw))
+    return {
+        "counts": counts,
+        "hidden": hidden,
+        "corner": first,
+        "cap": last,
+        "first_vowel": vowels[0] if vowels else None,
+        "vowel_n": len(vowels),
+        "cons_n": len(cons),
+        "token_sums": token_sums,
+    }
+
+
+def decode_voice(prof: dict) -> str:
+    d = meaning(prof["destiny"][1])
+    s = meaning(prof["soul"][1])
+    p = meaning(prof["personality"][1])
+    extras = name_extras(prof)
+    bits = [
+        f"The vehicle is {prof['destiny'][1]} — {d['title']}. {d.get('current', d['light'])}",
+        f"Under the tongue: {prof['soul'][1]} — {s['title']}. {s.get('current', s['light'])}",
+        f"What the room meets: {prof['personality'][1]} — {p['title']}. {p.get('current', p['light'])}",
+    ]
+    if extras["corner"]:
+        c = extras["corner"]
+        bits.append(
+            f"Cornerstone {c['letter']}={c['value']} ({meaning(c['value'])['title']}) "
+            f"is how this name walks into a room."
+        )
+    if extras["cap"]:
+        c = extras["cap"]
+        bits.append(
+            f"Capstone {c['letter']}={c['value']} ({meaning(c['value'])['title']}) "
+            f"is how it finishes what it starts."
+        )
+    if extras["hidden"]:
+        h = meaning(extras["hidden"])
+        bits.append(
+            f"Hidden passion {extras['hidden']} — {h['title']} — is the number that repeats. "
+            f"That hunger does not clock out."
+        )
+    if extras["first_vowel"]:
+        v = extras["first_vowel"]
+        bits.append(
+            f"First vowel {v['letter']}={v['value']} is the first private note. "
+            f"{meaning(v['value'])['light']}"
+        )
+    return " ".join(bits)
+
+
+def hour_profile(t: time) -> dict:
+    raw_hour = t.hour or 24
+    red, steps = reduce_trace(raw_hour)
+    minute_red, minute_steps = reduce_trace(t.minute) if t.minute else (0, [0])
+    stamp = raw_hour * 100 + t.minute
+    stamp_red, stamp_steps = reduce_trace(stamp)
+    return {
+        "time": t,
+        "hour": (raw_hour, red, steps),
+        "minute": (t.minute, minute_red, minute_steps),
+        "stamp": (stamp, stamp_red, stamp_steps),
+    }
 
 
 def filter_scripts(rows: list[dict], lang: str) -> list[dict]:
@@ -214,6 +407,229 @@ def render_depth(n: int, key: str) -> None:
                 st.markdown(f"**{label}.** {line}")
 
 
+def _slug(text: str) -> str:
+    first = (text.splitlines() or ["reading"])[0].strip() or "reading"
+    clean = re.sub(r"[^A-Za-z0-9_\-]+", "_", first)[:40].strip("_")
+    return clean or "reading"
+
+
+def build_report(text: str, latin: list, scripts: list, dates: list, digits: str, birth_time: time | None = None, earth: dict | None = None) -> str:
+    lines = [
+        "# NUMBERIN reading",
+        f"Saved {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        "",
+        f"Seal: {seed_sigil(text)}",
+        "",
+        "## Input",
+        text,
+        "",
+    ]
+    if latin:
+        prof = name_profile(text)
+        lines.append("## Name chart")
+        lines.append(decode_voice(prof))
+        lines.append("")
+        extras = name_extras(prof)
+        if extras["corner"]:
+            c = extras["corner"]
+            lines.append(f"- Cornerstone {c['letter']}={c['value']} ({meaning(c['value'])['title']})")
+        if extras["cap"]:
+            c = extras["cap"]
+            lines.append(f"- Capstone {c['letter']}={c['value']} ({meaning(c['value'])['title']})")
+        if extras["hidden"]:
+            lines.append(f"- Hidden passion {extras['hidden']} ({meaning(extras['hidden'])['title']})")
+        lines.append("- Intensity: " + ", ".join(f"{n}×{extras['counts'][n]}" for n in range(1, 10) if extras["counts"][n]))
+        lines.append("")
+        for label, pack in (
+            ("Destiny / Expression", prof["destiny"]),
+            ("Soul Urge", prof["soul"]),
+            ("Personality", prof["personality"]),
+        ):
+            raw, red, steps = pack
+            info = meaning(red)
+            lines.append(f"### {label}: {red} — {info['title']}")
+            lines.append(f"raw {raw} · {' → '.join(map(str, steps))}")
+            for lab, line in depth_lines(red):
+                if line:
+                    lines.append(f"- **{lab}:** {line}")
+            lines.append("")
+    if digits:
+        red, steps = reduce_trace(int(digits[:18]))
+        lines.append("## Digit stream")
+        lines.append(f"`{digits[:18]}` → {red} ({' → '.join(map(str, steps))})")
+        omen = angel_read(digits) or angel_read(digits[:4])
+        if omen:
+            lines.append(omen)
+        lines.append("")
+    if dates:
+        lines.append("## Dates")
+        for d in dates[:8]:
+            lp = life_path(d)
+            info = meaning(lp["life_path"][1])
+            lines.append(f"- {d.isoformat()} · Life Path {lp['life_path'][1]} — {info['title']}")
+            lines.append(f"  {info.get('current', info['light'])}")
+        lines.append("")
+    if birth_time:
+        hp = hour_profile(birth_time)
+        info = meaning(hp["hour"][1])
+        lines.append("## Birth time")
+        lines.append(f"- Clock: {birth_time.strftime('%H:%M')}")
+        lines.append(f"- Natal hour {hp['hour'][1]} — {info['title']}")
+        lines.append(f"  {info.get('current', info['light'])}")
+        if dates:
+            when = datetime.combine(dates[0], birth_time, tzinfo=timezone.utc)
+            m = moon_phase(when)
+            lines.append(f"- Moon at birth (UTC clock): {m['name']} — {m['note']}")
+        lines.append("")
+    if earth:
+        info = meaning(earth["earth_num"][0])
+        lines.append("## Earth / coordinates")
+        lines.append(f"- Place: {earth['place']}")
+        lines.append(
+            f"- Coordinates: {abs(earth['lat']):.4f}°{earth['lat_hemi']}, "
+            f"{abs(earth['lon']):.4f}°{earth['lon_hemi']}"
+        )
+        lines.append(
+            f"- Earth number {earth['earth_num'][0]} — {info['title']}. "
+            f"{info.get('current', info['light'])}"
+        )
+        lines.append(
+            f"- Latitude number {earth['lat_num'][0]} · Longitude number {earth['lon_num'][0]}"
+        )
+        if earth["name"]["destiny"][1]:
+            lines.append(
+                f"- Place name Destiny {earth['name']['destiny'][1]} — "
+                f"{meaning(earth['name']['destiny'][1])['title']}"
+            )
+        lines.append("")
+    if scripts:
+        lines.append("## Scripts")
+        for r in scripts:
+            info = meaning(r["reduced"])
+            lines.append(f"- {r['name']}: raw {r['raw']} → {r['reduced']} — {info['title']}")
+            lines.append(f"  {info.get('current', info['light'])}")
+        lines.append("")
+    lines.append("---")
+    lines.append("Counting is local. The click you feel is the reading.")
+    return "\n".join(lines)
+
+
+def _font(size: int, bold: bool = False):
+    names = (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        if bold
+        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    )
+    for path in names:
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            continue
+    return ImageFont.load_default()
+
+
+def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str, birth_time: time | None = None, earth: dict | None = None) -> bytes:
+    W, H = 1080, 1920
+    img = Image.new("RGB", (W, H), "#050506")
+    draw = ImageDraw.Draw(img)
+    gold = "#f5d76e"
+    cyan = "#00e5ff"
+    cream = "#f3e6c4"
+    mute = "#c9a227"
+
+    title_f = _font(54, True)
+    big_f = _font(42, True)
+    body_f = _font(28)
+    small_f = _font(22)
+
+    y = 70
+    draw.text((W // 2, y), "NUMBERIN", font=title_f, fill=gold, anchor="mt")
+    y += 80
+    draw.text((W // 2, y), seed_sigil(text), font=big_f, fill=cyan, anchor="mt")
+    y += 70
+    draw.line((80, y, W - 80, y), fill=mute, width=1)
+    y += 36
+
+    first = (text.splitlines() or [""])[0][:48]
+    for wrapped in textwrap.wrap(first, 34)[:2]:
+        draw.text((80, y), wrapped, font=big_f, fill=cream)
+        y += 48
+    y += 20
+
+    blocks = []
+    if latin:
+        prof = name_profile(text)
+        for label, pack in (
+            ("DESTINY", prof["destiny"]),
+            ("SOUL URGE", prof["soul"]),
+            ("PERSONALITY", prof["personality"]),
+        ):
+            raw, red, steps = pack
+            info = meaning(red)
+            blocks.append((label, str(red), info["title"], info.get("current", info["light"])))
+    if dates:
+        d = dates[0]
+        lp = life_path(d)
+        info = meaning(lp["life_path"][1])
+        blocks.append(
+            (
+                "LIFE PATH",
+                str(lp["life_path"][1]),
+                info["title"],
+                f"{d.isoformat()} · {info.get('current', info['light'])}",
+            )
+        )
+    if digits:
+        red, _ = reduce_trace(int(digits[:18]))
+        info = meaning(red)
+        blocks.append(("DIGITS", str(red), info["title"], digits[:18]))
+    if birth_time:
+        hp = hour_profile(birth_time)
+        info = meaning(hp["hour"][1])
+        blocks.append(
+            (
+                "NATAL HOUR",
+                str(hp["hour"][1]),
+                info["title"],
+                f"{birth_time.strftime('%H:%M')} · {info.get('current', info['light'])}",
+            )
+        )
+    if earth:
+        info = meaning(earth["earth_num"][0])
+        blocks.append(
+            (
+                earth["place"].upper()[:22],
+                str(earth["earth_num"][0]),
+                info["title"],
+                f"{abs(earth['lat']):.4f}°{earth['lat_hemi']}  {abs(earth['lon']):.4f}°{earth['lon_hemi']}",
+            )
+        )
+    for r in scripts[:3]:
+        info = meaning(r["reduced"])
+        blocks.append((r["name"].upper()[:22], str(r["reduced"]), info["title"], info.get("current", info["light"])))
+
+    for label, num, title, current in blocks[:6]:
+        draw.text((80, y), label, font=small_f, fill=cyan)
+        y += 34
+        draw.text((80, y), num, font=title_f, fill=gold)
+        draw.text((220, y + 14), title, font=body_f, fill=cream)
+        y += 60
+        for wrapped in textwrap.wrap(current, 46)[:3]:
+            draw.text((80, y), wrapped, font=small_f, fill=mute)
+            y += 32
+        y += 28
+        if y > H - 160:
+            break
+
+    draw.line((80, H - 90, W - 80, H - 90), fill=mute, width=1)
+    draw.text((W // 2, H - 50), "the click you feel is the reading", font=small_f, fill=cyan, anchor="mt")
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 moon = moon_phase()
 h1, h2 = st.columns([4, 1])
 with h1:
@@ -244,6 +660,11 @@ with st.sidebar:
         min_value=date(1900, 1, 1),
         max_value=date(2026, 12, 31),
     )
+    know_time = st.toggle("I know the birth time", value=False)
+    birth_time_in = st.time_input("Birth time", value=time(16, 27), disabled=not know_time)
+    place_in = st.text_input("Birth place", value="Naples, FL")
+    lat_in = st.text_input("Latitude", value="26.1420", placeholder="26.1420")
+    lon_in = st.text_input("Longitude", value="-81.7948", placeholder="-81.7948")
     moon_date = st.date_input("Moon for date", value=date.today())
     st.markdown("---")
     st.markdown(
@@ -258,7 +679,7 @@ if moon_date != date.today():
 payload = st.text_area(
     "Drop anything",
     height=110,
-    placeholder="Erin\nNovember 19 1983\nPistis Sophia\nJohn 1:1\nשלום\nΑγάπη\nσοφία\nज्ञान\nСофия\nСофія\nⲥⲟⲫⲓⲁ\n444",
+    placeholder="Erin 11/19/1983 Naples FL 4:27pm\nPistis Sophia\nJohn 1:1\n26.1420, -81.7948",
 )
 
 if not payload.strip():
@@ -270,11 +691,48 @@ st.markdown(f'<div class="seal">{seed_sigil(text)}</div>', unsafe_allow_html=Tru
 st.caption("Seal of this input — same text, same seal.")
 
 dates = detect_dates(text)
+times = detect_times(text)
 digits = extract_digits(text)
+birth_time = birth_time_in if know_time else (times[0] if times else None)
+
+place_guess = detect_place(text) or (place_in.strip() if place_in.strip() else None)
+coords_guess = detect_coords(text)
+lat = lon = None
+place_label = place_guess
+if coords_guess:
+    lat, lon = coords_guess
+else:
+    try:
+        if lat_in.strip() and lon_in.strip():
+            lat, lon = float(lat_in), float(lon_in)
+    except ValueError:
+        lat = lon = None
+geo = geocode_place(place_guess) if place_guess else None
+if geo:
+    place_label = geo["label"]
+    if lat is None or lon is None:
+        lat, lon = geo["lat"], geo["lon"]
+earth = earth_profile(place_label, lat, lon) if (place_label and lat is not None and lon is not None) else None
 bible_m = BIBLE_RE.search(text)
 bible_ref = f"{bible_m.group('book')} {bible_m.group('ch')}:{bible_m.group('vs')}" if bible_m else None
 latin = letters_latin(text) if lang in ("Auto", "English (Latin)") else []
 scripts = filter_scripts(script_readings(text), lang)
+
+save_l, save_r = st.columns(2)
+with save_l:
+    st.download_button(
+        "Save reading as file",
+        data=build_report(text, latin, scripts, dates, digits, birth_time, earth),
+        file_name=f"numberin_{_slug(text)}.md",
+        mime="text/markdown",
+    )
+with save_r:
+    st.download_button(
+        "Save reading as photo",
+        data=build_photo(text, latin, scripts, dates, digits, birth_time, earth),
+        file_name=f"numberin_{_slug(text)}.png",
+        mime="image/png",
+    )
 
 tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look = st.tabs(
     ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups"]
@@ -299,10 +757,67 @@ with tab_decode:
             col.caption(note)
             if raw in KARMIC:
                 col.warning(KARMIC_NOTE[raw])
+            col.caption(info.get("shadow", ""))
+
+        extras = name_extras(prof)
+        st.markdown("##### The current of this name")
+        st.write(decode_voice(prof))
+
+        g1, g2, g3, g4 = st.columns(4)
+        if extras["corner"]:
+            c = extras["corner"]
+            g1.metric("Cornerstone", f"{c['letter']} · {c['value']}")
+            g1.caption(f"{meaning(c['value'])['title']} — how it enters.")
+        if extras["cap"]:
+            c = extras["cap"]
+            g2.metric("Capstone", f"{c['letter']} · {c['value']}")
+            g2.caption(f"{meaning(c['value'])['title']} — how it closes.")
+        if extras["first_vowel"]:
+            v = extras["first_vowel"]
+            g3.metric("First vowel", f"{v['letter']} · {v['value']}")
+            g3.caption("First private note.")
+        if extras["hidden"]:
+            g4.metric("Hidden passion", extras["hidden"])
+            g4.caption(f"{meaning(extras['hidden'])['title']} — the repeat.")
+
+        st.markdown("##### Intensity (how often each number lives in the name)")
+        icols = st.columns(9)
+        for n in range(1, 10):
+            icols[n - 1].metric(str(n), extras["counts"].get(n, 0))
+        missing = [str(n) for n in range(1, 10) if extras["counts"].get(n, 0) == 0]
+        loud = [str(n) for n in range(1, 10) if extras["counts"].get(n, 0) >= 3]
+        if missing:
+            st.caption("Quiet / absent: " + ", ".join(missing) + " — not a hole. A lesson that arrives from outside the name.")
+        if loud:
+            st.caption("Loud: " + ", ".join(loud) + " — this voltage is the habit.")
+
+        if extras["token_sums"]:
+            st.markdown("##### Each word")
+            for tok, (raw, red, steps) in extras["token_sums"].items():
+                info = meaning(red)
+                st.write(
+                    f"**{tok}** — raw `{raw}` → **{red}** {info['title']} "
+                    f"({' → '.join(map(str, steps))})"
+                )
+                st.caption(info.get("current", info["light"]))
+
+        with st.expander("Letter by letter", expanded=False):
+            for r in prof["rows"]:
+                info = meaning(r["value"])
+                kind = "vowel" if r["kind"] == "vowel" else "consonant"
+                st.markdown(
+                    f"**{r['letter']}** = {r['value']} ({kind}, {r['token']}) — "
+                    f"{info['title']}. {info['light']}"
+                )
+
         st.markdown("##### Full current")
         render_depth(prof["destiny"][1], "dec_dest")
         render_depth(prof["soul"][1], "dec_soul")
         render_depth(prof["personality"][1], "dec_pers")
+        if extras["hidden"]:
+            render_depth(extras["hidden"], "dec_hidden")
+        if extras["corner"]:
+            render_depth(extras["corner"]["value"], "dec_corner")
     else:
         st.write("No Latin letters in this specimen. Check **All ciphers** for other scripts.")
 
@@ -321,10 +836,36 @@ with tab_decode:
 
     if dates:
         st.caption("Dates found: " + ", ".join(d.isoformat() for d in dates[:8]))
+    if times:
+        st.caption("Times found: " + ", ".join(t.strftime("%H:%M") for t in times[:8]))
+    if earth:
+        st.markdown("##### Earth")
+        e1, e2, e3 = st.columns(3)
+        e1.metric("Place", earth["place"].split(",")[0])
+        e2.metric("Latitude", f"{abs(earth['lat']):.4f}°{earth['lat_hemi']}")
+        e3.metric("Longitude", f"{abs(earth['lon']):.4f}°{earth['lon_hemi']}")
+        e4, e5, e6 = st.columns(3)
+        e4.metric("Earth number", earth["earth_num"][0])
+        e4.write(meaning(earth["earth_num"][0])["light"])
+        e5.metric("Lat number", earth["lat_num"][0])
+        e6.metric("Lon number", earth["lon_num"][0])
+        eplace = earth["name"]
+        st.caption(
+            f"Place-name Destiny {eplace['destiny'][1]} — {meaning(eplace['destiny'][1])['title']}. "
+            f"{meaning(earth['earth_num'][0]).get('current', meaning(earth['earth_num'][0])['light'])}"
+        )
+        render_depth(earth["earth_num"][0], "dec_earth")
+        render_depth(eplace["destiny"][1], "dec_place")
 
 with tab_chart:
     name_line = st.text_input("Name to chart", value=text.split("\n")[0])
     use_date = st.date_input("Birth date", value=dates[0] if dates else birth_default, key="chart_d")
+    use_time = st.time_input(
+        "Birth time (optional)",
+        value=birth_time or time(12, 0),
+        key="chart_t",
+    )
+    has_time = st.checkbox("Use this birth time", value=bool(birth_time), key="chart_use_t")
     if name_line.strip():
         nm = name_profile(name_line)
         letter_chips(nm["rows"])
@@ -365,6 +906,23 @@ with tab_chart:
     t3.metric("Personal Day", cy["day"][1])
     render_depth(lp["life_path"][1], "ch_lp")
     render_depth(cy["year"][1], "ch_py")
+
+    when_time = use_time if has_time else birth_time
+    if when_time:
+        hp = hour_profile(when_time)
+        st.markdown("##### Natal hour")
+        h1c, h2c, h3c = st.columns(3)
+        h1c.metric("Clock", when_time.strftime("%H:%M"))
+        h2c.metric("Hour number", hp["hour"][1])
+        h2c.write(meaning(hp["hour"][1])["light"])
+        h3c.metric("HHMM stamp", hp["stamp"][1])
+        born_at = datetime.combine(use_date, when_time, tzinfo=timezone.utc)
+        mb = moon_phase(born_at)
+        st.caption(
+            f"Moon at birth (using this clock as UTC): {mb['name']} · "
+            f"{mb['illumination']*100:.0f}% — {mb['note']}"
+        )
+        render_depth(hp["hour"][1], "ch_hour")
 
 with tab_ciphers:
     st.write("Same specimen, many temples. Disagreement is information.")
