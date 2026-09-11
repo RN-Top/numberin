@@ -749,8 +749,33 @@ def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str,
     return buf.getvalue()
 
 
+def wipe_reading() -> None:
+    st.session_state.payload = ""
+    st.session_state.lang_pick = "Auto"
+    st.session_state.know_time = False
+    st.session_state.place_in = ""
+    st.session_state.lat_in = ""
+    st.session_state.lon_in = ""
+    st.session_state.track = "Off"
+
+
+if "payload" not in st.session_state:
+    st.session_state.payload = ""
+if "lang_pick" not in st.session_state:
+    st.session_state.lang_pick = "Auto"
+if "place_in" not in st.session_state:
+    st.session_state.place_in = "Naples, FL"
+if "lat_in" not in st.session_state:
+    st.session_state.lat_in = "26.1420"
+if "lon_in" not in st.session_state:
+    st.session_state.lon_in = "-81.7948"
+if "know_time" not in st.session_state:
+    st.session_state.know_time = False
+if "track" not in st.session_state:
+    st.session_state.track = "Off"
+
 moon = moon_phase()
-h1, h2 = st.columns([4, 1])
+h1, h2, h3 = st.columns([3.2, 1.1, 1])
 with h1:
     st.title("NUMBERIN")
     st.caption(
@@ -759,6 +784,12 @@ with h1:
         "Local math. Optional live lookups."
     )
 with h2:
+    st.write("")
+    if st.button("New reading", type="primary", use_container_width=True):
+        wipe_reading()
+        st.rerun()
+    st.caption("Clears the specimen. Starts a clean count.")
+with h3:
     st.markdown(
         f'<div style="text-align:center">{moon_svg(moon["fraction"], 80)}</div>',
         unsafe_allow_html=True,
@@ -766,13 +797,17 @@ with h2:
     st.caption(f"{moon['name']} · {moon['illumination']*100:.0f}% · {moon['note']}")
 
 with st.sidebar:
+    if st.button("New reading", use_container_width=True, key="reset_side"):
+        wipe_reading()
+        st.rerun()
     st.header("Lenses")
     lang = st.selectbox(
         "Language / script",
         list(LANG_FILTER.keys()),
+        key="lang_pick",
     )
     st.markdown("##### Grimes — ethereal")
-    track = st.selectbox("Play", ["Off"] + list(GRIMES.keys()))
+    track = st.selectbox("Play", ["Off"] + list(GRIMES.keys()), key="track")
     if track != "Off":
         vid = GRIMES[track]
         st.markdown(
@@ -789,11 +824,11 @@ with st.sidebar:
         min_value=date(1900, 1, 1),
         max_value=date(2026, 12, 31),
     )
-    know_time = st.toggle("I know the birth time", value=False)
+    know_time = st.toggle("I know the birth time", key="know_time")
     birth_time_in = st.time_input("Birth time", value=time(16, 27), disabled=not know_time)
-    place_in = st.text_input("Birth place", value="Naples, FL")
-    lat_in = st.text_input("Latitude", value="26.1420", placeholder="26.1420")
-    lon_in = st.text_input("Longitude", value="-81.7948", placeholder="-81.7948")
+    place_in = st.text_input("Birth place", key="place_in", placeholder="Naples, FL")
+    lat_in = st.text_input("Latitude", key="lat_in", placeholder="26.1420")
+    lon_in = st.text_input("Longitude", key="lon_in", placeholder="-81.7948")
     moon_date = st.date_input("Moon for date", value=date.today())
     st.markdown("---")
     st.markdown(
@@ -809,6 +844,7 @@ payload = st.text_area(
     "Drop anything",
     height=110,
     placeholder="Erin 11/19/1983 Naples FL 4:27pm\nPistis Sophia\nJohn 1:1\n26.1420, -81.7948",
+    key="payload",
 )
 
 if not payload.strip():
