@@ -11,6 +11,10 @@ AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 MASTERS = {11, 22, 33}
 KARMIC = {13, 14, 16, 19}
 
+# ---------------------------------------------------------------------------
+# Reduction
+# ---------------------------------------------------------------------------
+
 
 def reduce_number(n: int, keep_masters: bool = True) -> int:
     n = abs(int(n))
@@ -41,6 +45,10 @@ def cycle_19(ch: str) -> int:
 def ordinal(ch: str) -> int:
     return AZ.index(ch) + 1
 
+
+# ---------------------------------------------------------------------------
+# Latin ciphers
+# ---------------------------------------------------------------------------
 
 CHALDEAN = {
     "A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 8, "G": 3, "H": 5, "I": 1,
@@ -85,6 +93,10 @@ LATIN_CIPHERS: dict[str, dict] = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Non-Latin tables
+# ---------------------------------------------------------------------------
+
 HEBREW_STD = {
     "א": 1, "ב": 2, "ג": 3, "ד": 4, "ה": 5, "ו": 6, "ז": 7, "ח": 8, "ט": 9,
     "י": 10, "כ": 20, "ך": 20, "ל": 30, "מ": 40, "ם": 40, "נ": 50, "ן": 50,
@@ -115,6 +127,7 @@ COPTIC = {
     "Ϭ": 90, "ϭ": 90, "Ϯ": 900, "ϯ": 900,
 }
 
+# Square Aramaic / Imperial Aramaic uses the Hebrew letter values
 ARAMAIC_SQUARE = dict(HEBREW_STD)
 
 SYRIAC = {
@@ -216,6 +229,11 @@ def run_latin_cipher(text: str, name: str) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Name chart (Pythagorean)
+# ---------------------------------------------------------------------------
+
+
 def y_is_vowel(token: str) -> bool:
     letters = [c for c in token.upper() if c.isalpha()]
     return any(c == "Y" for c in letters) and not any(c in "AEIOU" for c in letters)
@@ -288,6 +306,10 @@ def personal_cycles(birth: date, when: date) -> dict:
 def extract_digits(text: str) -> str:
     return "".join(ch for ch in text if ch.isdigit())
 
+
+# ---------------------------------------------------------------------------
+# Meanings — layered, not slogan
+# ---------------------------------------------------------------------------
 
 MEANINGS = {
     0: {
@@ -423,10 +445,26 @@ MEANINGS = {
 }
 
 KARMIC_NOTE = {
-    13: "13/4 — effort without a shortcut. A past pattern of skipping the craft. The body wants the easy door. The current wants the long work. Build anyway. The laziness is not moral — it is an old exit.",
-    14: "14/5 — freedom that once cost too much. Appetite asking for a spine. Motion is still holy. Recklessness is the shadow of the same gift. Choose the change. Do not let change choose you.",
-    16: "16/7 — the tower. Ego structure that cannot hold the next voltage. Humility is not humiliation. It is the study. What collapses was never the temple — it was the scaffolding you mistook for God.",
-    19: "19/1 — independence that once left bodies behind. Leadership that must learn to stand alone without making aloneness a weapon. You can start the fire. You do not have to burn the room to prove you own the match.",
+    13: (
+        "13/4 — effort without a shortcut. A past pattern of skipping the craft. "
+        "The body wants the easy door. The current wants the long work. "
+        "Build anyway. The laziness is not moral — it is an old exit."
+    ),
+    14: (
+        "14/5 — freedom that once cost too much. Appetite asking for a spine. "
+        "Motion is still holy. Recklessness is the shadow of the same gift. "
+        "Choose the change. Do not let change choose you."
+    ),
+    16: (
+        "16/7 — the tower. Ego structure that cannot hold the next voltage. "
+        "Humility is not humiliation. It is the study. "
+        "What collapses was never the temple — it was the scaffolding you mistook for God."
+    ),
+    19: (
+        "19/1 — independence that once left bodies behind. "
+        "Leadership that must learn to stand alone without making aloneness a weapon. "
+        "You can start the fire. You do not have to burn the room to prove you own the match."
+    ),
 }
 
 ANGEL = {
@@ -472,6 +510,11 @@ def angel_read(digit_str: str) -> str | None:
         return f"Repeater {digit_str} — {info['title']} tone ×{len(digit_str)}. {info['light']}"
     return None
 
+
+# ---------------------------------------------------------------------------
+# Moon (Conway / simple synodic approximation)
+# Enough for a widget. Known-new-moon epoch: 2000-01-06 18:14 UTC.
+# ---------------------------------------------------------------------------
 
 SYNODIC = 29.530588853
 KNOWN_NEW = datetime(2000, 1, 6, 18, 14, tzinfo=timezone.utc)
@@ -524,6 +567,7 @@ def moon_phase(when: datetime | None = None) -> dict:
 
 
 def moon_svg(frac: float, size: int = 72) -> str:
+    """Lit disc with a shadow oval. frac 0=new, 0.5=full."""
     r = size / 2
     cx = cy = r
     if frac <= 0.5:
