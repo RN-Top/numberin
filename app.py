@@ -15,6 +15,7 @@ from engine import (
     KARMIC_NOTE,
     LATIN_CIPHERS,
     angel_read,
+    depth_lines,
     extract_digits,
     letters_latin,
     life_path,
@@ -30,12 +31,40 @@ from engine import (
 )
 
 st.set_page_config(page_title="NUMBERIN", page_icon="✦", layout="wide")
+
 st.markdown(
     """
 <style>
+html, body, [data-testid="stAppViewContainer"] {
+  background: radial-gradient(circle at 18% 0%, #1a1408 0%, #050506 42%, #000 100%);
+  color: #f3e6c4;
+}
 .block-container {padding-top: 1rem; max-width: 1180px;}
-h1 {font-weight: 800; letter-spacing: -0.03em;}
-.seal {font-size: 1.25rem; letter-spacing: .28rem; opacity: .8;}
+h1 {
+  font-weight: 900;
+  letter-spacing: .22em;
+  color: #f5d76e;
+  text-shadow: 0 0 6px #f5d76e, 0 0 22px #c9a227, 0 0 40px #00e5ff55;
+}
+.seal {
+  font-size: 1.25rem;
+  letter-spacing: .32rem;
+  color: #00e5ff;
+  text-shadow: 0 0 10px #00e5ff;
+}
+[data-testid="stSidebar"] {
+  background: #0a0a0c;
+  border-right: 1px solid #c9a22755;
+}
+[data-testid="stHeader"] {background: rgba(0,0,0,.85);}
+textarea {
+  background: #0b0b0d !important;
+  color: #f5d76e !important;
+  border: 1px solid #c9a227 !important;
+  box-shadow: 0 0 16px rgba(0,229,255,.15);
+}
+[data-testid="stMetricValue"] {color: #f5d76e;}
+div[data-baseweb="tab-list"] {border-bottom: 1px solid #c9a22744;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -54,6 +83,22 @@ MONTHS = {
         "January February March April May June July August September October November December".split(),
         1,
     )
+}
+
+LANG_FILTER = {
+    "Auto": None,
+    "English (Latin)": "latin",
+    "Sanskrit": "sanskrit",
+    "Greek": "greek",
+    "Coptic": "coptic",
+    "Aramaic (Square)": "square",
+    "Aramaic (Syriac)": "syriac",
+    "Hebrew": "hebrew",
+    "Arabic": "arabic",
+    "Russian": "russian",
+    "Ukrainian": "ukrainian",
+    "Georgian": "georgian",
+    "Armenian": "armenian",
 }
 
 
@@ -100,6 +145,13 @@ def detect_dates(text: str) -> list[date]:
     return out
 
 
+def filter_scripts(rows: list[dict], lang: str) -> list[dict]:
+    key = LANG_FILTER.get(lang)
+    if key is None or key == "latin":
+        return [] if key == "latin" else rows
+    return [r for r in rows if key in r.get("name", "").lower()]
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_number_fact(n: int) -> str | None:
     try:
@@ -138,27 +190,38 @@ def fetch_bible(ref: str) -> dict | None:
 def letter_chips(rows: list[dict]) -> None:
     chips = []
     for r in rows[:120]:
-        bg = "#dbeafe" if r["kind"] == "vowel" else "#f1f5f9"
+        gold = r["kind"] == "vowel"
+        bg = "rgba(245,215,110,.16)" if gold else "rgba(0,229,255,.12)"
+        border = "#f5d76e" if gold else "#00e5ff"
+        fg = "#f5d76e" if gold else "#00e5ff"
         chips.append(
-            f'<span style="display:inline-block;text-align:center;margin:2px;background:{bg};'
-            f'border-radius:8px;padding:4px 6px;min-width:26px">'
-            f'<div style="font-weight:700">{r["letter"]}</div>'
-            f'<div style="font-size:.68rem;color:#475569">{r["value"]}</div></span>'
+            f'<span style="display:inline-block;text-align:center;margin:3px;background:{bg};'
+            f'border:1px solid {border};border-radius:8px;padding:5px 7px;min-width:28px;'
+            f'box-shadow:0 0 10px {border}33">'
+            f'<div style="font-weight:800;color:{fg}">{r["letter"]}</div>'
+            f'<div style="font-size:.68rem;color:#c9a227">{r["value"]}</div></span>'
         )
     st.markdown("".join(chips) or "_No Latin letters._", unsafe_allow_html=True)
-    st.caption(
-        "Blue = vowel (Soul Urge). Gray = consonant (Personality). "
-        "Y is a vowel only when the token has no A/E/I/O/U."
-    )
+    st.caption("Gold = vowel (Soul Urge). Cyan = consonant (Personality). Y is a vowel only when the token has no A/E/I/O/U.")
+
+
+def render_depth(n: int, key: str) -> None:
+    info = meaning(n)
+    with st.expander(f"{n} · {info['title']} — full current", expanded=False, key=key):
+        st.caption(info["keywords"])
+        for label, line in depth_lines(n):
+            if line:
+                st.markdown(f"**{label}.** {line}")
 
 
 moon = moon_phase()
 h1, h2 = st.columns([4, 1])
 with h1:
-    st.title("✦ NUMBERIN")
+    st.title("NUMBERIN")
     st.caption(
-        "Type a letter, a name, a date, a verse, Hebrew, Greek, Arabic, Devanagari, "
-        "Cyrillic, a phone number, or junk from your notes. Local math. Optional live lookups."
+        "Type a letter, a name, a date, a verse, Hebrew, Greek, Coptic, Sanskrit, "
+        "Arabic, Aramaic, Russian, Ukrainian, Georgian, Armenian, a phone number, or junk from your notes. "
+        "Local math. Optional live lookups."
     )
 with h2:
     st.markdown(
@@ -169,6 +232,10 @@ with h2:
 
 with st.sidebar:
     st.header("Lenses")
+    lang = st.selectbox(
+        "Language / script",
+        list(LANG_FILTER.keys()),
+    )
     live = st.toggle("Live lookups (Numbers API + Bible API)", value=True)
     as_of = st.date_input("Personal cycles as of", value=date.today())
     birth_default = st.date_input(
@@ -191,7 +258,7 @@ if moon_date != date.today():
 payload = st.text_area(
     "Drop anything",
     height=110,
-    placeholder="Erin\nNovember 19 1983\nPistis Sophia\nJohn 1:1\nשלום\nΑγάπη\n444",
+    placeholder="Erin\nNovember 19 1983\nPistis Sophia\nJohn 1:1\nשלום\nΑγάπη\nσοφία\nज्ञान\nСофия\nСофія\nⲥⲟⲫⲓⲁ\n444",
 )
 
 if not payload.strip():
@@ -206,8 +273,8 @@ dates = detect_dates(text)
 digits = extract_digits(text)
 bible_m = BIBLE_RE.search(text)
 bible_ref = f"{bible_m.group('book')} {bible_m.group('ch')}:{bible_m.group('vs')}" if bible_m else None
-latin = letters_latin(text)
-scripts = script_readings(text)
+latin = letters_latin(text) if lang in ("Auto", "English (Latin)") else []
+scripts = filter_scripts(script_readings(text), lang)
 
 tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look = st.tabs(
     ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups"]
@@ -232,6 +299,10 @@ with tab_decode:
             col.caption(note)
             if raw in KARMIC:
                 col.warning(KARMIC_NOTE[raw])
+        st.markdown("##### Full current")
+        render_depth(prof["destiny"][1], "dec_dest")
+        render_depth(prof["soul"][1], "dec_soul")
+        render_depth(prof["personality"][1], "dec_pers")
     else:
         st.write("No Latin letters in this specimen. Check **All ciphers** for other scripts.")
 
@@ -246,6 +317,7 @@ with tab_decode:
         for k in KARMIC:
             if k in steps or raw_n == k:
                 st.info(KARMIC_NOTE[k])
+        render_depth(red, "dec_digits")
 
     if dates:
         st.caption("Dates found: " + ", ".join(d.isoformat() for d in dates[:8]))
@@ -263,6 +335,9 @@ with tab_chart:
         c2.write(meaning(nm["soul"][1])["light"])
         c3.metric("Personality", nm["personality"][1])
         c3.write(meaning(nm["personality"][1])["light"])
+        render_depth(nm["destiny"][1], "ch_dest")
+        render_depth(nm["soul"][1], "ch_soul")
+        render_depth(nm["personality"][1], "ch_pers")
 
     lp = life_path(use_date)
     st.markdown("##### Date cycles (3-cycle method — month, day, year reduced separately)")
@@ -288,6 +363,8 @@ with tab_chart:
     t1.write(meaning(cy["year"][1])["light"])
     t2.metric("Personal Month", cy["month"][1])
     t3.metric("Personal Day", cy["day"][1])
+    render_depth(lp["life_path"][1], "ch_lp")
+    render_depth(cy["year"][1], "ch_py")
 
 with tab_ciphers:
     st.write("Same specimen, many temples. Disagreement is information.")
@@ -302,7 +379,7 @@ with tab_ciphers:
                 st.caption(res["blurb"])
                 st.caption(" → ".join(map(str, res["steps"])))
     if scripts:
-        st.markdown("#### Detected non-Latin scripts")
+        st.markdown("#### Detected scripts")
         for r in scripts:
             st.write(
                 f"**{r['name']}** — raw `{r['raw']}` → **{r['reduced']}** "
@@ -310,6 +387,9 @@ with tab_ciphers:
             )
             shown = " ".join(f"{ch}={v}" for ch, v in r["pairs"][:40])
             st.caption(shown)
+            inf = meaning(r["reduced"])
+            st.write(inf["current"] if "current" in inf else inf["light"])
+            render_depth(r["reduced"], f"sc_{r['name']}")
     if not latin and not scripts:
         st.write("No mapped letters. Digit reduction lives on the Decode tab.")
 
