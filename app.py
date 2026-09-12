@@ -823,7 +823,7 @@ with st.sidebar:
         "Default birth date",
         value=date.today(),
         min_value=date(1900, 1, 1),
-        max_value=date(2026, 12, 31),
+        max_value=date.today(),
     )
     know_time = st.toggle("I know the birth time", key="know_time")
     birth_time_in = st.time_input("Birth time", value=None, disabled=not know_time)
@@ -1163,25 +1163,47 @@ with tab_moon:
         )
 
 with tab_pair:
+    st.caption("Four counts: Life Path, Destiny, Soul Urge (vowels), Personality (consonants).")
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    default_a = lines[0] if lines else ""
+    default_b = lines[1] if len(lines) > 1 else ""
+
     c1, c2 = st.columns(2)
     with c1:
-        a_txt = st.text_input("A — name", value=text.split("\n")[0])
-        a_date = st.date_input("A — birth", value=dates[0] if dates else birth_default, key="pa")
+        st.markdown("##### A")
+        a_txt = st.text_input("A — name", value=default_a, key="pair_a_name")
+        a_date = st.date_input(
+            "A — birth",
+            value=dates[0] if dates else birth_default,
+            min_value=date(1900, 1, 1),
+            max_value=date.today(),
+            key="pa",
+        )
     with c2:
-        b_txt = st.text_input("B — name", value="")
-        b_date = st.date_input("B — birth", value=date(1980, 1, 1), key="pb")
-    if a_txt.strip() and b_txt.strip():
+        st.markdown("##### B")
+        b_txt = st.text_input("B — name", value=default_b, key="pair_b_name")
+        b_date = st.date_input(
+            "B — birth",
+            value=dates[1] if len(dates) > 1 else date.today(),
+            min_value=date(1900, 1, 1),
+            max_value=date.today(),
+            key="pb",
+        )
+
+    if not a_txt.strip() or not b_txt.strip():
+        st.info("Type a name in both A and B. Or put two names on two lines in the main box.")
+    else:
         A = name_profile(a_txt)
         B = name_profile(b_txt)
         alp = life_path(a_date)["life_path"][1]
         blp = life_path(b_date)["life_path"][1]
         rows = [
-            ("Life Path", alp, blp),
-            ("Destiny", A["destiny"][1], B["destiny"][1]),
-            ("Soul Urge", A["soul"][1], B["soul"][1]),
-            ("Personality", A["personality"][1], B["personality"][1]),
+            ("Life Path", alp, blp, "Date. The road."),
+            ("Destiny", A["destiny"][1], B["destiny"][1], "Every letter. The vehicle."),
+            ("Soul Urge", A["soul"][1], B["soul"][1], "Vowels. Private hunger."),
+            ("Personality", A["personality"][1], B["personality"][1], "Consonants. The face the room meets."),
         ]
-        for lab, av, bv in rows:
+        for lab, av, bv, hint in rows:
             same = av == bv
             root_same = reduce_number(av, False) == reduce_number(bv, False)
             if same:
@@ -1190,7 +1212,17 @@ with tab_pair:
                 note = "Same root, different octave (master vs simple)."
             else:
                 note = f"{meaning(av)['title']} meeting {meaning(bv)['title']}."
-            st.markdown(f"**{lab}** · A **{av}** / B **{bv}** — {note}")
+            st.markdown(f"##### {lab}")
+            st.caption(hint)
+            left, right = st.columns(2)
+            left.metric("A", av)
+            left.caption(meaning(av)["title"])
+            right.metric("B", bv)
+            right.caption(meaning(bv)["title"])
+            st.write(note)
+            render_depth(av, f"pair_a_{lab}")
+            render_depth(bv, f"pair_b_{lab}")
+            st.markdown("---")
 
 with tab_look:
     st.write("Optional internet. Math still works if these fail.")
