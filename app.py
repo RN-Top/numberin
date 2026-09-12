@@ -215,6 +215,16 @@ TRACKS = {
 }
 
 
+def reading_stamp() -> dict:
+    now = datetime.now(timezone.utc)
+    return {
+        "when": now,
+        "iso": now.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "date": now.date().isoformat(),
+        "clock": now.strftime("%H:%M:%S"),
+    }
+
+
 def seed_sigil(text: str) -> str:
     h = hashlib.sha256(text.encode("utf-8")).hexdigest()
     glyphs = "✦✧✺❋❖☼☾☿♀♁♂♃♄☥ॐᛟᚠ"
@@ -533,12 +543,14 @@ def _slug(text: str) -> str:
     return clean or "reading"
 
 
-def build_report(text: str, latin: list, scripts: list, dates: list, digits: str, birth_time: time | None = None, earth: dict | None = None) -> str:
+def build_report(text: str, latin: list, scripts: list, dates: list, digits: str, birth_time: time | None = None, earth: dict | None = None, stamp: dict | None = None) -> str:
     lines = [
         "# NUMBERIN reading",
-        f"Saved {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        f"Saved {(stamp or reading_stamp())['iso']}",
         "",
         f"Seal: {seed_sigil(text)}",
+        "",
+        f"Stamp: {(stamp or reading_stamp())['iso']}",
         "",
         "## Input",
         text,
@@ -649,7 +661,7 @@ def _font(size: int, bold: bool = False):
     return ImageFont.load_default()
 
 
-def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str, birth_time: time | None = None, earth: dict | None = None) -> bytes:
+def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str, birth_time: time | None = None, earth: dict | None = None, stamp: dict | None = None) -> bytes:
     W, H = 1080, 1920
     img = Image.new("RGB", (W, H), "#050506")
     draw = ImageDraw.Draw(img)
@@ -742,8 +754,12 @@ def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str,
         if y > H - 160:
             break
 
-    draw.line((80, H - 90, W - 80, H - 90), fill=mute, width=1)
-    draw.text((W // 2, H - 50), "the click you feel is the reading", font=small_f, fill=cyan, anchor="mt")
+    stamp_line = (stamp or reading_stamp())["iso"]
+    if earth:
+        stamp_line += f"  {abs(earth['lat']):.2f}{earth['lat_hemi']} {abs(earth['lon']):.2f}{earth['lon_hemi']}"
+    draw.line((80, H - 110, W - 80, H - 110), fill=mute, width=1)
+    draw.text((W // 2, H - 78), stamp_line, font=small_f, fill=mute, anchor="mt")
+    draw.text((W // 2, H - 44), "the click you feel is the reading", font=small_f, fill=cyan, anchor="mt")
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -755,8 +771,6 @@ def wipe_reading() -> None:
     st.session_state.lang_pick = "Auto"
     st.session_state.know_time = False
     st.session_state.place_in = ""
-    st.session_state.lat_in = ""
-    st.session_state.lon_in = ""
     st.session_state.track = "Off"
 
 
@@ -766,10 +780,6 @@ if "lang_pick" not in st.session_state:
     st.session_state.lang_pick = "Auto"
 if "place_in" not in st.session_state:
     st.session_state.place_in = ""
-if "lat_in" not in st.session_state:
-    st.session_state.lat_in = ""
-if "lon_in" not in st.session_state:
-    st.session_state.lon_in = ""
 if "know_time" not in st.session_state:
     st.session_state.know_time = False
 if "track" not in st.session_state:
@@ -819,23 +829,28 @@ with st.sidebar:
         st.caption("Official upload. Use headphones.")
     live = st.toggle("Live lookups (Numbers API + Bible API)", value=True)
     as_of = st.date_input("Personal cycles as of", value=date.today())
-    birth_default = st.date_input(
-        "Default birth date",
-        value=date.today(),
-        min_value=date(1900, 1, 1),
-        max_value=date.today(),
-    )
+    st.markdown("##### Birth (optional)")
+    st.caption("Leave blank unless you want a natal chart. Nothing here is prefilled.")
     know_time = st.toggle("I know the birth time", key="know_time")
     birth_time_in = st.time_input("Birth time", value=None, disabled=not know_time)
-    place_in = st.text_input("Birth place", key="place_in", placeholder="City, ST")
-    lat_in = st.text_input("Latitude", key="lat_in", placeholder="0.0000")
-    lon_in = st.text_input("Longitude", key="lon_in", placeholder="0.0000")
+    place_in = st.text_input("Birth place", key="place_in", placeholder="City, country")
+    place_preview = geocode_place(place_in.strip()) if place_in.strip() else None
+    if place_in.strip() and place_preview:
+        st.caption(place_preview["label"])
+        st.caption(
+            f"{abs(place_preview['lat']):.4f}°{'N' if place_preview['lat'] >= 0 else 'S'}, "
+            f"{abs(place_preview['lon']):.4f}°{'E' if place_preview['lon'] >= 0 else 'W'}"
+        )
+    elif place_in.strip():
+        st.caption("Could not pin that place. Try City, State or City, Country.")
     moon_date = st.date_input("Moon for date", value=date.today())
     st.markdown("---")
     st.markdown(
         "Counting is local (Pythagorean 3-cycle Life Path, master 11/22/33 kept, "
         "karmic 13/14/16/19 flagged). APIs only decorate."
     )
+
+birth_default = date.today()
 
 if moon_date != date.today():
     m2 = moon_phase(datetime(moon_date.year, moon_date.month, moon_date.day, 12, tzinfo=timezone.utc))
@@ -844,7 +859,7 @@ if moon_date != date.today():
 payload = st.text_area(
     "Drop anything",
     height=110,
-    placeholder="Name\n11/19/1983\nCity, ST\n4:27pm",
+    placeholder="Name\nMonth/Day/Year\nCity, Country",
     key="payload",
 )
 
@@ -867,18 +882,21 @@ lat = lon = None
 place_label = place_guess
 if coords_guess:
     lat, lon = coords_guess
-else:
-    try:
-        if lat_in.strip() and lon_in.strip():
-            lat, lon = float(lat_in), float(lon_in)
-    except ValueError:
-        lat = lon = None
 geo = geocode_place(place_guess) if place_guess else None
 if geo:
     place_label = geo["label"]
     if lat is None or lon is None:
         lat, lon = geo["lat"], geo["lon"]
 earth = earth_profile(place_label, lat, lon) if (place_label and lat is not None and lon is not None) else None
+stamp = reading_stamp()
+stamp_bits = [f"Stamped {stamp['iso']}"]
+if earth:
+    stamp_bits.append(
+        f"{earth['place']} · {abs(earth['lat']):.4f}°{earth['lat_hemi']}, "
+        f"{abs(earth['lon']):.4f}°{earth['lon_hemi']}"
+    )
+st.caption(" · ".join(stamp_bits))
+
 bible_m = BIBLE_RE.search(text)
 bible_ref = f"{bible_m.group('book')} {bible_m.group('ch')}:{bible_m.group('vs')}" if bible_m else None
 script_text = text
@@ -898,14 +916,14 @@ save_l, save_r = st.columns(2)
 with save_l:
     st.download_button(
         "Save reading as file",
-        data=build_report(text, latin, scripts, dates, digits, birth_time, earth),
+        data=build_report(text, latin, scripts, dates, digits, birth_time, earth, stamp),
         file_name=f"numberin_{_slug(text)}.md",
         mime="text/markdown",
     )
 with save_r:
     st.download_button(
         "Save reading as photo",
-        data=build_photo(text, latin, scripts, dates, digits, birth_time, earth),
+        data=build_photo(text, latin, scripts, dates, digits, birth_time, earth, stamp),
         file_name=f"numberin_{_slug(text)}.png",
         mime="image/png",
     )
