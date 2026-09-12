@@ -85,7 +85,7 @@ TIME_RE = re.compile(
 )
 COORD_RE = re.compile(r"(-?\d{1,3}\.\d+)\s*[,/ ]\s*(-?\d{1,3}\.\d+)")
 PLACE_HINT = re.compile(
-    r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*,?\s*(FL|Florida|TX|Texas|CA|NY|OH|GA|NC|SC)\b",
+    r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*,?\s*(FL|Florida|TX|Texas|CA|NY|OH|GA|NC|SC|MI|Michigan)\b",
     re.I,
 )
 KNOWN_COORDS = {
@@ -96,6 +96,9 @@ KNOWN_COORDS = {
     "cape coral fl": (26.5628, -81.9495, "Cape Coral, Florida, US"),
     "mcallen": (26.2034, -98.2300, "McAllen, Texas, US"),
     "mcallen tx": (26.2034, -98.2300, "McAllen, Texas, US"),
+    "canton mi": (42.3087, -83.4822, "Canton, Michigan, US"),
+    "canton michigan": (42.3087, -83.4822, "Canton, Michigan, US"),
+    "canton": (42.3087, -83.4822, "Canton, Michigan, US"),
 }
 MONTHS = {
     m.lower(): i
@@ -203,13 +206,12 @@ LATIN_TO_SCRIPT = {
     },
 }
 
-GRIMES = {
+TRACKS = {
     "Genesis": "1FH-q0I1fJY",
-    "Genesis (audio)": "WizNXQGBMEk",
     "So Heavy I Fell Through the Earth": "eLo1pQ45XYs",
-    "Oblivion": "kTwA6IQS5Lw",
-    "4ÆM": "lZk7G-pX6s0",
-    "You'll miss me when I'm not around": "grY7et4ZZjU",
+    "Alien": "hky6cifwWyo",
+    "Cellophane": "YkLjqFpBh84",
+    "The First Time Ever I Saw Your Face": "VqW-eO3jTVU",
 }
 
 
@@ -305,7 +307,6 @@ def geocode_place(place: str) -> dict | None:
     if key in KNOWN_COORDS:
         lat, lon, label = KNOWN_COORDS[key]
         return {"label": label, "lat": lat, "lon": lon, "source": "known"}
-    # fuzzy known
     for k, (lat, lon, label) in KNOWN_COORDS.items():
         if k in key or key in k:
             return {"label": label, "lat": lat, "lon": lon, "source": "known"}
@@ -764,11 +765,11 @@ if "payload" not in st.session_state:
 if "lang_pick" not in st.session_state:
     st.session_state.lang_pick = "Auto"
 if "place_in" not in st.session_state:
-    st.session_state.place_in = "Naples, FL"
+    st.session_state.place_in = ""
 if "lat_in" not in st.session_state:
-    st.session_state.lat_in = "26.1420"
+    st.session_state.lat_in = ""
 if "lon_in" not in st.session_state:
-    st.session_state.lon_in = "-81.7948"
+    st.session_state.lon_in = ""
 if "know_time" not in st.session_state:
     st.session_state.know_time = False
 if "track" not in st.session_state:
@@ -806,29 +807,29 @@ with st.sidebar:
         list(LANG_FILTER.keys()),
         key="lang_pick",
     )
-    st.markdown("##### Grimes — ethereal")
-    track = st.selectbox("Play", ["Off"] + list(GRIMES.keys()), key="track")
+    st.markdown("##### Tracks")
+    track = st.selectbox("Play", ["Off"] + list(TRACKS.keys()), key="track")
     if track != "Off":
-        vid = GRIMES[track]
+        vid = TRACKS[track]
         st.markdown(
             f'<iframe width="100%" height="160" src="https://www.youtube.com/embed/{vid}?rel=0" '
             f'frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>',
             unsafe_allow_html=True,
         )
-        st.caption("Official Grimes / 4AD upload. Use headphones.")
+        st.caption("Official upload. Use headphones.")
     live = st.toggle("Live lookups (Numbers API + Bible API)", value=True)
     as_of = st.date_input("Personal cycles as of", value=date.today())
     birth_default = st.date_input(
         "Default birth date",
-        value=date(1983, 11, 19),
+        value=date.today(),
         min_value=date(1900, 1, 1),
         max_value=date(2026, 12, 31),
     )
     know_time = st.toggle("I know the birth time", key="know_time")
-    birth_time_in = st.time_input("Birth time", value=time(16, 27), disabled=not know_time)
-    place_in = st.text_input("Birth place", key="place_in", placeholder="Naples, FL")
-    lat_in = st.text_input("Latitude", key="lat_in", placeholder="26.1420")
-    lon_in = st.text_input("Longitude", key="lon_in", placeholder="-81.7948")
+    birth_time_in = st.time_input("Birth time", value=None, disabled=not know_time)
+    place_in = st.text_input("Birth place", key="place_in", placeholder="City, ST")
+    lat_in = st.text_input("Latitude", key="lat_in", placeholder="0.0000")
+    lon_in = st.text_input("Longitude", key="lon_in", placeholder="0.0000")
     moon_date = st.date_input("Moon for date", value=date.today())
     st.markdown("---")
     st.markdown(
@@ -843,7 +844,7 @@ if moon_date != date.today():
 payload = st.text_area(
     "Drop anything",
     height=110,
-    placeholder="Erin 11/19/1983 Naples FL 4:27pm\nPistis Sophia\nJohn 1:1\n26.1420, -81.7948",
+    placeholder="Name\n11/19/1983\nCity, ST\n4:27pm",
     key="payload",
 )
 
