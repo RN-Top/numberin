@@ -566,6 +566,48 @@ def moon_phase(when: datetime | None = None) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Moon of Eden — lunar-year span
+# Mean synodic month × 12. Solar year is Julian (365.25), the count
+# used in the old ecclesiastical tables.
+# Life of Adam and Eve / Gospel of Nicodemus: 5,500 years Adam → Christ.
+# ---------------------------------------------------------------------------
+
+LUNAR_YEAR_DAYS = 12 * SYNODIC  # 354.367066236
+SOLAR_YEAR_DAYS = 365.25
+EDEN_LUNAR_YEARS = 5500
+
+
+def lunar_to_solar(lunar_years: float) -> float:
+    return float(lunar_years) * LUNAR_YEAR_DAYS / SOLAR_YEAR_DAYS
+
+
+def solar_to_lunar(solar_years: float) -> float:
+    return float(solar_years) * SOLAR_YEAR_DAYS / LUNAR_YEAR_DAYS
+
+
+def eden_span(lunar_years: float = EDEN_LUNAR_YEARS, christ_ad: int = 1) -> dict:
+    """Map a lunar-year count from Creation onto solar years and a BC label.
+
+    Python cannot store a BC date, so the BC figure is a label, not a date object.
+    """
+    lunar = float(lunar_years)
+    solar = lunar_to_solar(lunar)
+    # If Christ is year `christ_ad` AD, Creation sits this many years before year 1.
+    creation_bc = int(round(solar - (christ_ad - 1)))
+    raw = int(round(lunar))
+    red, steps = reduce_trace(raw)
+    solar_red, solar_steps = reduce_trace(int(round(solar)))
+    return {
+        "lunar_years": lunar,
+        "solar_years": solar,
+        "creation_bc": creation_bc,
+        "christ_ad": christ_ad,
+        "lunar_number": (raw, red, steps),
+        "solar_number": (int(round(solar)), solar_red, solar_steps),
+    }
+
+
 def moon_svg(frac: float, size: int = 72) -> str:
     """Lit disc with a shadow oval. frac 0=new, 0.5=full."""
     r = size / 2
