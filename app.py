@@ -6,6 +6,7 @@ import hashlib
 import io
 import re
 import textwrap
+from calendar import monthrange
 from datetime import date, datetime, time, timezone
 from urllib.parse import quote
 
@@ -40,6 +41,41 @@ from engine import (
 # Python date floor is year 1. BC lives in Moon of Eden as a count, not a date.
 DATE_FLOOR = date(1, 1, 1)
 DATE_CEILING = date(9999, 12, 31)
+
+
+def ancient_date_input(
+    label: str,
+    value: date,
+    key: str,
+    min_value: date = DATE_FLOOR,
+    max_value: date = DATE_CEILING,
+) -> date:
+    """Calendar + typed year so the picker is not stuck paging from 2016."""
+    year_key = f"{key}__y"
+    col_cal, col_year = st.columns([3, 1])
+    with col_year:
+        typed_year = st.number_input(
+            "Year",
+            min_value=1,
+            max_value=9999,
+            value=int(value.year),
+            step=1,
+            key=year_key,
+        )
+    last = monthrange(int(typed_year), int(value.month))[1]
+    seed = date(int(typed_year), int(value.month), min(int(value.day), last))
+    if seed < min_value:
+        seed = min_value
+    if seed > max_value:
+        seed = max_value
+    with col_cal:
+        return st.date_input(
+            label,
+            value=seed,
+            min_value=min_value,
+            max_value=max_value,
+            key=key,
+        )
 
 st.set_page_config(page_title="NUMBERIN", page_icon="✦", layout="wide")
 
@@ -171,59 +207,84 @@ button[kind="headerNoPadding"] svg {
   stroke: #00e5ff !important;
 }
 
-/* Date field */
+/* Date / time / select fields */
 [data-testid="stDateInput"] input,
 [data-testid="stTimeInput"] input,
+[data-testid="stNumberInput"] input,
 [data-baseweb="input"] input,
 [data-baseweb="select"] {
   background: #071018 !important;
-  color: #f8f4e6 !important;
+  color: #7ef6ff !important;
   border-color: #00e5ff !important;
   caret-color: #00e5ff !important;
 }
 
-/* Open calendar popup — dark grid, not pale gold */
+/* Every pull-down: language, tracks, year list, popovers */
 [data-baseweb="popover"],
+[data-baseweb="menu"],
+[data-baseweb="list"],
+[data-baseweb="select"] ul,
+ul[role="listbox"],
+li[role="option"],
+[role="listbox"],
+[role="option"] {
+  background: #071018 !important;
+  color: #7ef6ff !important;
+  border-color: #00e5ff !important;
+}
+li[role="option"]:hover,
+[role="option"]:hover,
+[aria-selected="true"][role="option"] {
+  background: #00303a !important;
+  color: #f5d76e !important;
+}
+
+/* Calendar innards — day numbers 1–31 */
 [data-baseweb="calendar"],
 [data-baseweb="datepicker"],
 [data-baseweb="month"],
-div[data-baseweb="calendar"],
-[data-testid="stPopoverBody"] {
-  background: #071018 !important;
-  color: #f8f4e6 !important;
-  border: 1px solid #00e5ff !important;
+[data-baseweb="calendar"] [role="grid"],
+[data-baseweb="calendar"] [role="row"] {
+  background: #031016 !important;
+  color: #7ef6ff !important;
 }
-[data-baseweb="calendar"] *,
-[data-baseweb="datepicker"] *,
-[data-baseweb="month"] * {
-  color: #f8f4e6 !important;
+[data-baseweb="calendar"] [role="columnheader"],
+[data-baseweb="calendar"] [role="columnheader"] * {
+  background: #031016 !important;
+  color: #f5d76e !important;
+  font-weight: 800 !important;
 }
-[data-baseweb="calendar"] button,
-[data-baseweb="datepicker"] button,
 [data-baseweb="calendar"] [role="gridcell"],
-[data-baseweb="calendar"] [role="gridcell"] div {
-  background: transparent !important;
-  color: #f8f4e6 !important;
-  border: none !important;
-  box-shadow: none !important;
+[data-baseweb="calendar"] [role="gridcell"] > div,
+[data-baseweb="calendar"] [role="gridcell"] div,
+[data-baseweb="calendar"] [role="gridcell"] span,
+[data-baseweb="calendar"] [role="gridcell"] button,
+[data-baseweb="calendar"] [role="button"] {
+  background: #031016 !important;
+  color: #7ef6ff !important;
+  font-weight: 900 !important;
+  font-size: 0.95rem !important;
+  opacity: 1 !important;
   text-shadow: none !important;
+  box-shadow: none !important;
+  border: 1px solid #12303a !important;
 }
-/* selected / today */
 [data-baseweb="calendar"] [aria-selected="true"],
 [data-baseweb="calendar"] [aria-selected="true"] *,
-[data-baseweb="calendar"] [aria-current="date"] {
-  background: #00e5ff !important;
+[data-baseweb="calendar"] [aria-current="date"],
+[data-baseweb="calendar"] [aria-current="date"] * {
+  background: #f5d76e !important;
   color: #031016 !important;
-  font-weight: 800 !important;
+  font-weight: 900 !important;
 }
 [data-baseweb="calendar"] [aria-disabled="true"],
 [data-baseweb="calendar"] [aria-disabled="true"] * {
-  color: #6b7280 !important;
+  color: #4b5563 !important;
 }
 [data-baseweb="calendar-header"],
-[data-baseweb="month-year-select"],
-[data-baseweb="calendar"] [data-baseweb="select"] {
-  background: #071018 !important;
+[data-baseweb="calendar-header"] *,
+[data-baseweb="month-year-select"] {
+  background: #031016 !important;
   color: #f5d76e !important;
 }
 [data-baseweb="calendar-header"] button,
@@ -994,11 +1055,10 @@ with st.sidebar:
         )
         st.caption("Official upload. Use headphones.")
     live = st.toggle("Live lookups (Numbers API + Bible API)", value=True)
-    as_of = st.date_input(
+    as_of = ancient_date_input(
         "Personal cycles as of",
-        value=date.today(),
-        min_value=DATE_FLOOR,
-        max_value=DATE_CEILING,
+        date.today(),
+        "as_of",
     )
     st.markdown("##### Birth (optional)")
     st.caption("Leave blank unless you want a natal chart. Nothing here is prefilled.")
@@ -1014,11 +1074,10 @@ with st.sidebar:
         )
     elif place_in.strip():
         st.caption("Could not pin that place. Try City, State or City, Country.")
-    moon_date = st.date_input(
+    moon_date = ancient_date_input(
         "Moon for date",
-        value=date.today(),
-        min_value=DATE_FLOOR,
-        max_value=DATE_CEILING,
+        date.today(),
+        "moon_date",
     )
     st.markdown("---")
     st.markdown("### Moon of Eden")
@@ -1273,12 +1332,11 @@ with tab_decode:
 
 with tab_chart:
     name_line = st.text_input("Name to chart", value=text.split("\n")[0])
-    use_date = st.date_input(
+    use_date = ancient_date_input(
         "Birth date",
-        value=dates[0] if dates else birth_default,
-        min_value=DATE_FLOOR,
+        dates[0] if dates else birth_default,
+        "chart_d",
         max_value=date.today(),
-        key="chart_d",
     )
     use_time = st.time_input(
         "Birth time (optional)",
@@ -1372,12 +1430,10 @@ with tab_ciphers:
         st.write("No mapped letters. Digit reduction lives on the Decode tab.")
 
 with tab_moon:
-    pick = st.date_input(
+    pick = ancient_date_input(
         "Phase for",
-        value=moon_date,
-        min_value=DATE_FLOOR,
-        max_value=DATE_CEILING,
-        key="moon_tab",
+        moon_date,
+        "moon_tab",
     )
     m = moon_phase(datetime(pick.year, pick.month, pick.day, 12, tzinfo=timezone.utc))
     left, right = st.columns([1, 2])
@@ -1433,22 +1489,20 @@ with tab_pair:
     with c1:
         st.markdown("##### A")
         a_txt = st.text_input("A — name", value=default_a, key="pair_a_name")
-        a_date = st.date_input(
+        a_date = ancient_date_input(
             "A — birth",
-            value=dates[0] if dates else birth_default,
-            min_value=DATE_FLOOR,
+            dates[0] if dates else birth_default,
+            "pa",
             max_value=date.today(),
-            key="pa",
         )
     with c2:
         st.markdown("##### B")
         b_txt = st.text_input("B — name", value=default_b, key="pair_b_name")
-        b_date = st.date_input(
+        b_date = ancient_date_input(
             "B — birth",
-            value=dates[1] if len(dates) > 1 else date.today(),
-            min_value=DATE_FLOOR,
+            dates[1] if len(dates) > 1 else date.today(),
+            "pb",
             max_value=date.today(),
-            key="pb",
         )
 
     if not a_txt.strip() or not b_txt.strip():
