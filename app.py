@@ -883,7 +883,78 @@ NAG_HAMMADI = {'id': 'nag_hammadi',
                'en': '',
                'note': 'Valentinian sermon on Error and the Name. Paste a page.'}]}
 
-SEED_BOOKS = [PISTIS_SOPHIA, NAG_HAMMADI]
+VOYNICH = {
+    "id": "voynich",
+    "title": "Voynich manuscript",
+    "short": "MS408",
+    "tradition": "Beinecke MS 408 / unknown script",
+    "edition": "EVA (Extensible Voynich Alphabet) folio lines. Not a decipherment.",
+    "source_language": "Voynichese (EVA transcription)",
+    "note": (
+        "The manuscript is not solved. These pages are letter-counts on a public "
+        "transcription, not English hiding under the plants. EVA turns the glyphs "
+        "into Latin keystrokes so the same funnel can run. A pretty total here is "
+        "texture. Treat it as signal only if a second independent layer agrees."
+    ),
+    "numbers": {
+        "116": "About 116 surviving folios. The book is a body count before it is a cipher.",
+        "18": "Quires. The binding is a structure. Count gatherings, not vibes.",
+        "2": "Currier A and Currier B. Two statistical hands, maybe two languages, maybe two moods.",
+        "7": "Seven sections in the usual map: herbal, astronomical, biological, cosmological, pharmaceutical, recipes, plus front matter.",
+    },
+    "names": [
+        {"label": "EVA", "text": "EVA", "note": "Extensible Voynich Alphabet. A keyboard, not a translation."},
+        {"label": "Currier A", "text": "Currier A", "note": "Earlier statistical language. Herbal pages lean this way."},
+        {"label": "Currier B", "text": "Currier B", "note": "Later statistical language. Bio and recipes lean this way."},
+        {"label": "Beinecke MS 408", "text": "Beinecke MS 408", "note": "The shelf mark. The object has a name before it has a reading."},
+    ],
+    "passages": [
+        {
+            "ref": "f1r",
+            "title": "Opening page — herbal",
+            "en": "fachys ykal ar ataiin shol shory cthres ykor sholdy sory ckhar or ykair chtaiin shar are cthar cthar dan syaiir sheky or ykaiin shod cthoary cthes daraiin sa",
+            "note": "Takahashi-style EVA for the first lines of f1r. Count the letters. Do not invent a sentence.",
+        },
+        {
+            "ref": "f2r",
+            "title": "Herbal",
+            "en": "kydainy epaiin otaiin chol otaiin cthor oky chaiin cthar ykchy cthy",
+            "note": "Herbal section, Currier A neighborhood. Plant page, same script.",
+        },
+        {
+            "ref": "f68r",
+            "title": "Astronomical / zodiac",
+            "en": "otol daiin cthody shedy qokedy qokeedy qokain shedy qokedy",
+            "note": "Star/zodiac gathering. Different pictures, same token habits.",
+        },
+        {
+            "ref": "f75r",
+            "title": "Biological / balneological",
+            "en": "qokeedy qokedy qokain shedy qokeedy qokedy shedy qokain",
+            "note": "The bath pages. Currier B likes qokeedy / shedy loops. That repetition is the fact.",
+        },
+        {
+            "ref": "f86v",
+            "title": "Rosette / cosmological",
+            "en": "otedy shedy qokedy qokeedy shedy qokain okeedy qokedy",
+            "note": "Foldout cosmology. Count it as a page, not a map of heaven.",
+        },
+        {
+            "ref": "f103r",
+            "title": "Recipes / stars",
+            "en": "qokeedy qokain shedy qokedy qokeedy shedy qokain qokeedy",
+            "note": "Starred paragraphs. Late book, Currier B again.",
+        },
+        {
+            "ref": "catalog",
+            "title": "Section map",
+            "en": "Herbal f1-f66. Astronomical and zodiac f67-f74. Biological f75-f84. Cosmological f85-f86. Pharmaceutical f87-f102. Recipes and stars f103-f116.",
+            "note": "A filing system. The numbers are folio ranges, not a code.",
+        },
+    ],
+}
+
+SEED_BOOKS = [PISTIS_SOPHIA, NAG_HAMMADI, VOYNICH]
 
 CORPUS_DIR = Path(__file__).resolve().parent / "corpus"
 
@@ -902,13 +973,34 @@ def _clean_passage(raw: dict, book_id: str) -> dict:
 
 
 def normalize_book(data: dict) -> dict:
+    if isinstance(data, list):
+        data = {
+            "id": "uploaded",
+            "title": "Uploaded pages",
+            "passages": data,
+        }
     if not isinstance(data, dict):
         raise ValueError("Book file must be a JSON object.")
-    missing = [k for k in REQUIRED if k not in data]
-    if missing:
-        raise ValueError(f"Book missing fields: {', '.join(missing)}")
-    book_id = str(data["id"]).strip()
-    passages = [_clean_passage(p, book_id) for p in (data.get("passages") or [])]
+    # A single passage (title + text) is not a whole book — wrap it.
+    if "passages" not in data and (
+        data.get("en") or data.get("text") or data.get("ref") or data.get("title")
+    ):
+        data = {
+            "id": str(data.get("id") or data.get("ref") or "pasted").strip() or "pasted",
+            "title": str(data.get("title") or data.get("ref") or "Pasted page"),
+            "passages": [data],
+        }
+    if "id" not in data:
+        data["id"] = str(data.get("title") or "book").lower().replace(" ", "_")
+    if "title" not in data:
+        data["title"] = data["id"]
+    if "passages" not in data:
+        data["passages"] = []
+    book_id = str(data["id"]).strip() or "book"
+    raw_passages = data.get("passages") or []
+    if isinstance(raw_passages, dict):
+        raw_passages = [raw_passages]
+    passages = [_clean_passage(p, book_id) for p in raw_passages if isinstance(p, dict)]
     names = []
     for n in data.get("names") or []:
         if not isinstance(n, dict):
@@ -1275,6 +1367,19 @@ DATE_FLOOR = date(1, 1, 1)
 DATE_CEILING = date(9999, 12, 31)
 
 
+def _as_date(val, fallback: date | None = None) -> date:
+    """st.date_input sometimes returns a (start, end) tuple. We want one day."""
+    if fallback is None:
+        fallback = date.today()
+    if isinstance(val, datetime):
+        return val.date()
+    if isinstance(val, date):
+        return val
+    if isinstance(val, (tuple, list)) and val:
+        return _as_date(val[0], fallback)
+    return fallback
+
+
 def ancient_date_input(
     label: str,
     value: date,
@@ -1283,6 +1388,7 @@ def ancient_date_input(
     max_value: date = DATE_CEILING,
 ) -> date:
     """Calendar + typed year so the picker is not stuck paging from 2016."""
+    value = _as_date(value)
     year_key = f"{key}__y"
     col_cal, col_year = st.columns([3, 1])
     with col_year:
@@ -1301,13 +1407,14 @@ def ancient_date_input(
     if seed > max_value:
         seed = max_value
     with col_cal:
-        return st.date_input(
+        picked = st.date_input(
             label,
             value=seed,
             min_value=min_value,
             max_value=max_value,
             key=key,
         )
+    return _as_date(picked, seed)
 
 st.set_page_config(page_title="NUMBERIN", page_icon="✦", layout="wide")
 
@@ -2747,6 +2854,7 @@ with tab_moon:
         moon_date,
         "moon_tab",
     )
+    pick = _as_date(pick)
     m = moon_phase(datetime(pick.year, pick.month, pick.day, 12, tzinfo=timezone.utc))
     left, right = st.columns([1, 2])
     with left:
