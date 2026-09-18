@@ -170,6 +170,70 @@ button[kind="headerNoPadding"] svg {
   color: #00e5ff !important;
   stroke: #00e5ff !important;
 }
+
+/* Date field */
+[data-testid="stDateInput"] input,
+[data-testid="stTimeInput"] input,
+[data-baseweb="input"] input,
+[data-baseweb="select"] {
+  background: #071018 !important;
+  color: #f8f4e6 !important;
+  border-color: #00e5ff !important;
+  caret-color: #00e5ff !important;
+}
+
+/* Open calendar popup — dark grid, not pale gold */
+[data-baseweb="popover"],
+[data-baseweb="calendar"],
+[data-baseweb="datepicker"],
+[data-baseweb="month"],
+div[data-baseweb="calendar"],
+[data-testid="stPopoverBody"] {
+  background: #071018 !important;
+  color: #f8f4e6 !important;
+  border: 1px solid #00e5ff !important;
+}
+[data-baseweb="calendar"] *,
+[data-baseweb="datepicker"] *,
+[data-baseweb="month"] * {
+  color: #f8f4e6 !important;
+}
+[data-baseweb="calendar"] button,
+[data-baseweb="datepicker"] button,
+[data-baseweb="calendar"] [role="gridcell"],
+[data-baseweb="calendar"] [role="gridcell"] div {
+  background: transparent !important;
+  color: #f8f4e6 !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+/* selected / today */
+[data-baseweb="calendar"] [aria-selected="true"],
+[data-baseweb="calendar"] [aria-selected="true"] *,
+[data-baseweb="calendar"] [aria-current="date"] {
+  background: #00e5ff !important;
+  color: #031016 !important;
+  font-weight: 800 !important;
+}
+[data-baseweb="calendar"] [aria-disabled="true"],
+[data-baseweb="calendar"] [aria-disabled="true"] * {
+  color: #6b7280 !important;
+}
+[data-baseweb="calendar-header"],
+[data-baseweb="month-year-select"],
+[data-baseweb="calendar"] [data-baseweb="select"] {
+  background: #071018 !important;
+  color: #f5d76e !important;
+}
+[data-baseweb="calendar-header"] button,
+[data-baseweb="calendar-header"] svg {
+  background: transparent !important;
+  color: #00e5ff !important;
+  fill: #00e5ff !important;
+  border: none !important;
+  box-shadow: none !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
