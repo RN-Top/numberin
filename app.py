@@ -76,6 +76,42 @@ textarea {
 }
 [data-testid="stMetricValue"] {color: #f5d76e;}
 div[data-baseweb="tab-list"] {border-bottom: 1px solid #c9a22744;}
+
+/* Dark-mode buttons: dark fill, neon edge, no washed-out gold */
+div.stButton > button,
+div.stDownloadButton > button,
+div.stFormSubmitButton > button,
+[data-testid="stSidebar"] button,
+button[kind="primary"],
+button[kind="secondary"],
+[data-testid="baseButton-primary"],
+[data-testid="baseButton-secondary"],
+[data-testid="stBaseButton-primary"],
+[data-testid="stBaseButton-secondary"] {
+  background: #071018 !important;
+  color: #7ef6ff !important;
+  border: 1.5px solid #00e5ff !important;
+  font-weight: 800 !important;
+  letter-spacing: .04em;
+  text-shadow: 0 0 8px #00e5ff88;
+  box-shadow: 0 0 14px rgba(0,229,255,.28);
+}
+div.stButton > button:hover,
+div.stDownloadButton > button:hover,
+div.stFormSubmitButton > button:hover,
+[data-testid="stSidebar"] button:hover,
+button[kind="primary"]:hover,
+button[kind="secondary"]:hover {
+  background: #00222c !important;
+  color: #f8f4e6 !important;
+  border-color: #f5d76e !important;
+  box-shadow: 0 0 18px rgba(245,215,110,.35);
+}
+div.stButton > button:focus,
+div.stDownloadButton > button:focus {
+  outline: 2px solid #00e5ff !important;
+  outline-offset: 2px;
+}
 </style>
 """,
     unsafe_allow_html=True,
