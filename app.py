@@ -41,6 +41,1235 @@ from engine import (
     script_readings,
 )
 
+# =============================================================================
+# Inlined shelf (no extra files). Bible vault, Pistis Sophia, Nag Hammadi, patterns.
+# =============================================================================
+import json
+import unicodedata
+from collections import defaultdict
+from pathlib import Path
+
+CANON = [
+    "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
+    "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
+    "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra",
+    "Nehemiah", "Esther", "Job", "Psalms", "Proverbs",
+    "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah", "Lamentations",
+    "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+    "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk",
+    "Zephaniah", "Haggai", "Zechariah", "Malachi",
+    "Matthew", "Mark", "Luke", "John",
+    "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians",
+    "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians",
+    "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews",
+    "James", "1 Peter", "2 Peter", "1 John", "2 John",
+    "3 John", "Jude", "Revelation",
+]
+BOOK_INDEX = {name.lower(): i + 1 for i, name in enumerate(CANON)}
+BOOK_INDEX.update({
+    "psalm": 19, "song of songs": 22, "canticles": 22,
+    "matt": 40, "mt": 40, "mk": 41, "mrk": 41, "lk": 42, "luk": 42,
+    "jn": 43, "jhn": 43, "act": 44, "rom": 45,
+    "1 cor": 46, "2 cor": 47, "gal": 48, "eph": 49, "phil": 50, "col": 51,
+    "1 thess": 52, "2 thess": 53, "1 tim": 54, "2 tim": 55,
+    "tit": 56, "phlm": 57, "heb": 58, "jas": 59,
+    "1 pet": 60, "2 pet": 61, "1 jn": 62, "2 jn": 63, "3 jn": 64,
+    "rev": 66, "apocalypse": 66,
+})
+GOSPELS = {
+    "matthew": 1, "mark": 2, "luke": 3, "john": 4,
+    "matt": 1, "mt": 1, "mk": 2, "lk": 3, "jn": 4, "jhn": 4,
+}
+
+BIBLE_NUMBERS = {
+    1: "Unity. Beginning. The One. In John, the Word already is.",
+    2: "Witness. Two tablets, two advents, two natures. A pairing that can testify.",
+    3: "Completeness of testimony. Father, Son, Spirit. Three days in the tomb.",
+    4: "The world. Four winds, four corners, four Gospels — the story facing every direction.",
+    5: "Grace and the pentateuch. Five wounds in later Christian counting. Five loaves.",
+    6: "Human labor. Sixth day of making. Incomplete seven. The number of man in Revelation's riddle.",
+    7: "Sabbath fullness. Seven churches, seals, trumpets, bowls. The week God rests inside.",
+    8: "New creation. Circumcision on the eighth day. Octave — the week starts again.",
+    9: "Fruit and finality. Nine fruits of the Spirit in Galatians 5. The last single digit.",
+    10: "Law and testing. Ten words on Sinai. Ten plagues. A complete human count.",
+    11: "Disorder next to twelve, or a master current in the Western board. Judas leaves; eleven remain.",
+    12: "Covenant government. Tribes. Apostles. Gates of the city. The people made whole.",
+    13: "In this board, karmic 13/4 — the long work. In the supper, the thirteenth at the table.",
+    14: "Matthew's generations run in 14s. David gematria. Karmic 14/5 on the Western board.",
+    17: "Joseph is 17 when sold. Some readers treat 17 as victory after 10+7.",
+    24: "Priestly courses. Twenty-four elders around the throne.",
+    30: "Joseph sold for twenty, Jesus for thirty. Maturity in Hebrew counting.",
+    33: "Traditional age of the crucifixion. Master teacher on the Western board.",
+    40: "Trial and formation. Flood, Moses on the mount, Elijah, Jesus in the wilderness.",
+    42: "Matthew's three fourteens. 42 months the beast is given in Revelation.",
+    50: "Jubilee. Pentecost. Freedom after seven sevens.",
+    70: "Nations in Genesis 10. Seventy sent in Luke. Completeness of the peoples.",
+    72: "Seventy-two in some Luke manuscripts. The Name in later Kabbalah has 72 faces.",
+    77: "Forgive seventy times seven. Mercy past the neat count.",
+    120: "Days of Genesis 6:3 in one reading. Upper room company in Acts 1:15.",
+    144: "12 × 12. The measured city and the sealed of Israel, before the extra zeros.",
+    153: "Fish in John 21. A triangular number. Readers have argued over it since Augustine.",
+    666: "Number of the beast — and of a man. Count the name; do not worship the riddle.",
+    888: "ΙΗΣΟΥΣ (Iēsous) in standard Greek isopsephy. The name, not the English spelling.",
+    144000: "12 × 12 × 1000. Sealed servants in Revelation. A census, not a club password.",
+}
+
+NAMES_OF_POWER = [
+    {"label": "Jesus (English)", "text": "Jesus",
+     "note": "English overlay. The historical letter-number is Greek Iēsous."},
+    {"label": "Iēsous (Greek)", "text": "ΙΗΣΟΥΣ",
+     "note": "Iota 10 + Eta 8 + Sigma 200 + Omicron 70 + Upsilon 400 + Sigma 200 = 888."},
+    {"label": "Christ (English)", "text": "Christ",
+     "note": "English overlay of Χριστός."},
+    {"label": "Christos (Greek)", "text": "ΧΡΙΣΤΟΣ",
+     "note": "Chi 600 + Rho 100 + Iota 10 + Sigma 200 + Tau 300 + Omicron 70 + Sigma 200 = 1480."},
+    {"label": "YHWH", "text": "יהוה",
+     "note": "Yod 10 + He 5 + Vav 6 + He 5 = 26."},
+    {"label": "Elohim", "text": "אלהים",
+     "note": "Aleph 1 + Lamed 30 + He 5 + Yod 10 + Mem 40 = 86."},
+    {"label": "Ehyeh Asher Ehyeh", "text": "אהיה אשר אהיה",
+     "note": "Exodus 3:14. I AM THAT I AM. Each אהיה is 21; the clause is 543."},
+    {"label": "Emmanuel", "text": "Emmanuel",
+     "note": "Matthew 1:23 — God with us."},
+    {"label": "Logos / Word", "text": "ΛΟΓΟΣ",
+     "note": "Lambda 30 + Omicron 70 + Gamma 3 + Omicron 70 + Sigma 200 = 373."},
+    {"label": "Theos", "text": "ΘΕΟΣ",
+     "note": "Theta 9 + Epsilon 5 + Omicron 70 + Sigma 200 = 284."},
+    {"label": "Alpha and Omega", "text": "ΑΩ",
+     "note": "First and last Greek letters. Revelation's signature of the speaker."},
+    {"label": "David", "text": "דוד",
+     "note": "Dalet 4 + Vav 6 + Dalet 4 = 14. Matthew's generations run on this count."},
+]
+
+# English is KJV-shaped. Greek is ecclesiastical, not a critical edition.
+# Hebrew is unpointed so the mispar can actually see the letters.
+VAULT = {
+    "Genesis 1:1": {
+        "en": "In the beginning God created the heaven and the earth.",
+        "he": "בראשית ברא אלהים את השמים ואת הארץ",
+        "note": "Unpointed Bereshit. Famous mispar on this clause is 2701.",
+    },
+    "Exodus 3:14": {
+        "en": "And God said unto Moses, I AM THAT I AM: and he said, Thus shalt thou say unto the children of Israel, I AM hath sent me unto you.",
+        "he": "אהיה אשר אהיה",
+        "note": "The Name given at the bush. Count the Hebrew, not the English capitals.",
+    },
+    "Psalm 23:1": {
+        "en": "The LORD is my shepherd; I shall not want.",
+        "he": "יהוה רעי לא אחסר",
+        "note": "YHWH + shepherd. Short enough that the Name dominates the count.",
+    },
+    "Isaiah 7:14": {
+        "en": "Therefore the Lord himself shall give you a sign; Behold, a virgin shall conceive, and bear a son, and shall call his name Immanuel.",
+        "he": "לכן יתן אדני הוא לכם אות הנה העלמה הרה וילדת בן וקראת שמו עמנו אל",
+        "note": "The source Matthew quotes. Immanuel is the payload.",
+    },
+    "Isaiah 9:6": {
+        "en": "For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace.",
+        "note": "Four titles after the child. English overlay is lush; the Hebrew names are the older board.",
+    },
+    "Isaiah 53:5": {
+        "en": "But he was wounded for our transgressions, he was bruised for our iniquities: the chastisement of our peace was upon him; and with his stripes we are healed.",
+        "note": "The servant song the Gospels keep touching.",
+    },
+    "John 1:1": {
+        "en": "In the beginning was the Word, and the Word was with God, and the Word was God.",
+        "el": "Ἐν ἀρχῇ ἦν ὁ λόγος, καὶ ὁ λόγος ἦν πρὸς τὸν θεόν, καὶ θεὸς ἦν ὁ λόγος.",
+        "note": "Prologue. ΛΟΓΟΣ = 373. English 'Word' is a different cipher.",
+    },
+    "John 1:5": {
+        "en": "And the light shineth in darkness; and the darkness comprehended it not.",
+        "el": "καὶ τὸ φῶς ἐν τῇ σκοτίᾳ φαίνει, καὶ ἡ σκοτία αὐτὸ οὐ κατέλαβεν.",
+        "note": "Light vs grasp. The darkness does not seize it.",
+    },
+    "John 1:14": {
+        "en": "And the Word was made flesh, and dwelt among us, (and we beheld his glory, the glory as of the only begotten of the Father,) full of grace and truth.",
+        "el": "Καὶ ὁ λόγος σὰρξ ἐγένετο καὶ ἐσκήνωσεν ἐν ἡμῖν.",
+        "note": "Flesh. The tent verb (eskēnōsen) is the shekinah echo.",
+    },
+    "John 3:16": {
+        "en": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+        "el": "Οὕτως γὰρ ἠγάπησεν ὁ θεὸς τὸν κόσμον, ὥστε τὸν υἱὸν τὸν μονογενῆ ἔδωκεν.",
+        "note": "Most quoted English verse. Its Pythagorean total is a translation artifact.",
+    },
+    "John 6:35": {
+        "en": "And Jesus said unto them, I am the bread of life: he that cometh to me shall never hunger; and he that believeth on me shall never thirst.",
+        "el": "Ἐγώ εἰμι ὁ ἄρτος τῆς ζωῆς.",
+        "note": "First of the I AM images in John.",
+    },
+    "John 8:12": {
+        "en": "Then spake Jesus again unto them, saying, I am the light of the world: he that followeth me shall not walk in darkness, but shall have the light of life.",
+        "el": "Ἐγώ εἰμι τὸ φῶς τοῦ κόσμου.",
+        "note": "I AM + light. Pair with John 1:5.",
+    },
+    "John 8:58": {
+        "en": "Jesus said unto them, Verily, verily, I say unto you, Before Abraham was, I am.",
+        "el": "πρὶν Ἀβραὰμ γενέσθαι ἐγὼ εἰμί.",
+        "note": "The tense is the claim. I AM, not I was.",
+    },
+    "John 10:11": {
+        "en": "I am the good shepherd: the good shepherd giveth his life for the sheep.",
+        "el": "Ἐγώ εἰμι ὁ ποιμὴν ὁ καλός.",
+        "note": "Pair with Psalm 23:1.",
+    },
+    "John 11:25": {
+        "en": "Jesus said unto her, I am the resurrection, and the life: he that believeth in me, though he were dead, yet shall he live.",
+        "el": "Ἐγώ εἰμι ἡ ἀνάστασις καὶ ἡ ζωή.",
+        "note": "Spoken before the tomb of Lazarus.",
+    },
+    "John 14:6": {
+        "en": "Jesus saith unto him, I am the way, the truth, and the life: no man cometh unto the Father, but by me.",
+        "el": "Ἐγώ εἰμι ἡ ὁδὸς καὶ ἡ ἀλήθεια καὶ ἡ ζωή.",
+        "note": "I AM + three titles.",
+    },
+    "John 15:5": {
+        "en": "I am the vine, ye are the branches: He that abideth in me, and I in him, the same bringeth forth much fruit: for without me ye can do nothing.",
+        "el": "Ἐγώ εἰμι ἡ ἄμπελος, ὑμεῖς τὰ κλήματα.",
+        "note": "Vine and branches. 15 is a 6-current if you fold it.",
+    },
+    "John 19:30": {
+        "en": "When Jesus therefore had received the vinegar, he said, It is finished: and he bowed his head, and gave up the ghost.",
+        "el": "Ὅτε οὖν ἔλαβεν τὸ ὄξος ὁ Ἰησοῦς εἶπεν· Τετέλεσται.",
+        "note": "Tetelestai. Completion, not a cliffhanger.",
+    },
+    "John 20:16": {
+        "en": "Jesus saith unto her, Mary. She turned herself, and saith unto him, Rabboni; which is to say, Master.",
+        "el": "λέγει αὐτῇ ὁ Ἰησοῦς· Μαριάμ.",
+        "note": "The name is the recognition. One word turns her.",
+    },
+    "John 21:11": {
+        "en": "Simon Peter went up, and drew the net to land full of great fishes, an hundred and fifty and three: and for all there were so many, yet was not the net broken.",
+        "el": "ἀνέβη Σίμων Πέτρος καὶ εἵλκυσεν τὸ δίκτυον εἰς τὴν γῆν μεστὸν ἰχθύων μεγάλων ἑκατὸν πεντήκοντα τριῶν.",
+        "note": "153. Triangular number of 17.",
+    },
+    "Matthew 1:21": {
+        "en": "And she shall bring forth a son, and thou shalt call his name JESUS: for he shall save his people from their sins.",
+        "el": "τέξεται δὲ υἱὸν καὶ καλέσεις τὸ ὄνομα αὐτοῦ Ἰησοῦν· αὐτὸς γὰρ σώσει τὸν λαὸν αὐτοῦ ἀπὸ τῶν ἁμαρτιῶν αὐτῶν.",
+        "note": "Name assigned. 888 is the Greek count.",
+    },
+    "Matthew 1:23": {
+        "en": "Behold, a virgin shall be with child, and shall bring forth a son, and they shall call his name Emmanuel, which being interpreted is, God with us.",
+        "el": "ἰδοὺ ἡ παρθένος ἐν γαστρὶ ἕξει καὶ τέξεται υἱόν, καὶ καλέσουσιν τὸ ὄνομα αὐτοῦ Ἐμμανουήλ.",
+        "note": "Isaiah 7:14 carried into the Gospel.",
+    },
+    "Matthew 5:3": {
+        "en": "Blessed are the poor in spirit: for theirs is the kingdom of heaven.",
+        "el": "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι, ὅτι αὐτῶν ἐστιν ἡ βασιλεία τῶν οὐρανῶν.",
+        "note": "First beatitude. Gate of the sermon.",
+    },
+    "Matthew 5:9": {
+        "en": "Blessed are the peacemakers: for they shall be called the children of God.",
+        "el": "μακάριοι οἱ εἰρηνοποιοί, ὅτι αὐτοὶ υἱοὶ θεοῦ κληθήσονται.",
+        "note": "Seventh beatitude. Peace as family name.",
+    },
+    "Matthew 5:14": {
+        "en": "Ye are the light of the world. A city that is set on an hill cannot be hid.",
+        "el": "Ὑμεῖς ἐστε τὸ φῶς τοῦ κόσμου.",
+        "note": "The I AM of John 8:12 handed to the crowd.",
+    },
+    "Matthew 6:9": {
+        "en": "After this manner therefore pray ye: Our Father which art in heaven, Hallowed be thy name.",
+        "el": "Πάτερ ἡμῶν ὁ ἐν τοῖς οὐρανοῖς· ἁγιασθήτω τὸ ὄνομά σου.",
+        "note": "The prayer's opening. Name first, bread later.",
+    },
+    "Matthew 7:7": {
+        "en": "Ask, and it shall be given you; seek, and ye shall find; knock, and it shall be opened unto you.",
+        "el": "Αἰτεῖτε, καὶ δοθήσεται ὑμῖν· ζητεῖτε, καὶ εὑρήσετε· κρούετε, καὶ ἀνοιγήσεται ὑμῖν.",
+        "note": "Ask, seek, knock — a three.",
+    },
+    "Matthew 11:28": {
+        "en": "Come unto me, all ye that labour and are heavy laden, and I will give you rest.",
+        "el": "Δεῦτε πρός με πάντες οἱ κοπιῶντες καὶ πεφορτισμένοι, κἀγὼ ἀναπαύσω ὑμᾶς.",
+        "note": "Rest as the gift, not the wage.",
+    },
+    "Matthew 16:16": {
+        "en": "And Simon Peter answered and said, Thou art the Christ, the Son of the living God.",
+        "el": "Σὺ εἶ ὁ χριστὸς ὁ υἱὸς τοῦ θεοῦ τοῦ ζῶντος.",
+        "note": "The confession the church keeps quoting.",
+    },
+    "Matthew 18:20": {
+        "en": "For where two or three are gathered together in my name, there am I in the midst of them.",
+        "el": "οὗ γάρ εἰσιν δύο ἢ τρεῖς συνηγμένοι εἰς τὸ ἐμὸν ὄνομα, ἐκεῖ εἰμι ἐν μέσῳ αὐτῶν.",
+        "note": "2 or 3. Presence as quorum.",
+    },
+    "Matthew 22:37": {
+        "en": "Jesus said unto him, Thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind.",
+        "el": "Ἀγαπήσεις κύριον τὸν θεόν σου ἐν ὅλῃ τῇ καρδίᾳ σου καὶ ἐν ὅλῃ τῇ ψυχῇ σου καὶ ἐν ὅλῃ τῇ διανοίᾳ σου.",
+        "note": "Shema carried forward.",
+    },
+    "Matthew 28:6": {
+        "en": "He is not here: for he is risen, as he said. Come, see the place where the Lord lay.",
+        "el": "οὐκ ἔστιν ὧδε, ἠγέρθη γὰρ καθὼς εἶπεν.",
+        "note": "The empty place is the proof the women are given.",
+    },
+    "Matthew 28:19": {
+        "en": "Go ye therefore, and teach all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Ghost.",
+        "el": "πορευθέντες οὖν μαθητεύσατε πάντα τὰ ἔθνη, βαπτίζοντες αὐτοὺς εἰς τὸ ὄνομα τοῦ πατρὸς καὶ τοῦ υἱοῦ καὶ τοῦ ἁγίου πνεύματος.",
+        "note": "One name, three titles.",
+    },
+    "Mark 1:1": {
+        "en": "The beginning of the gospel of Jesus Christ, the Son of God.",
+        "el": "Ἀρχὴ τοῦ εὐαγγελίου Ἰησοῦ Χριστοῦ υἱοῦ θεοῦ.",
+        "note": "Mark does not warm up. Title first.",
+    },
+    "Mark 1:15": {
+        "en": "And saying, The time is fulfilled, and the kingdom of God is at hand: repent ye, and believe the gospel.",
+        "el": "Πεπλήρωται ὁ καιρὸς καὶ ἤγγικεν ἡ βασιλεία τοῦ θεοῦ.",
+        "note": "Kairos full. Kingdom near.",
+    },
+    "Mark 10:45": {
+        "en": "For even the Son of man came not to be ministered unto, but to minister, and to give his life a ransom for many.",
+        "el": "καὶ γὰρ ὁ υἱὸς τοῦ ἀνθρώπου οὐκ ἦλθεν διακονηθῆναι ἀλλὰ διακονῆσαι καὶ δοῦναι τὴν ψυχὴν αὐτοῦ λύτρον ἀντὶ πολλῶν.",
+        "note": "Ransom. The purpose sentence of Mark.",
+    },
+    "Mark 15:34": {
+        "en": "And at the ninth hour Jesus cried with a loud voice, saying, Eloi, Eloi, lama sabachthani? which is, being interpreted, My God, my God, why hast thou forsaken me?",
+        "el": "Ἐλωῒ Ἐλωῒ λεμὰ σαβαχθάνι;",
+        "note": "Psalm 22. Ninth hour. Aramaic inside Greek inside English.",
+    },
+    "Luke 1:28": {
+        "en": "And the angel came in unto her, and said, Hail, thou that art highly favoured, the Lord is with thee: blessed art thou among women.",
+        "el": "Χαῖρε, κεχαριτωμένη, ὁ κύριος μετὰ σοῦ.",
+        "note": "Kecharitōmenē — already graced.",
+    },
+    "Luke 1:38": {
+        "en": "And Mary said, Behold the handmaid of the Lord; be it unto me according to thy word.",
+        "el": "Ἰδοὺ ἡ δούλη κυρίου· γένοιτό μοι κατὰ τὸ ῥῆμά σου.",
+        "note": "Consent as the hinge of the infancy narrative.",
+    },
+    "Luke 2:11": {
+        "en": "For unto you is born this day in the city of David a Saviour, which is Christ the Lord.",
+        "el": "ὅτι ἐτέχθη ὑμῖν σήμερον σωτὴρ ὅς ἐστιν χριστὸς κύριος ἐν πόλει Δαυίδ.",
+        "note": "Saviour, Christ, Lord — three titles.",
+    },
+    "Luke 4:18": {
+        "en": "The Spirit of the Lord is upon me, because he hath anointed me to preach the gospel to the poor.",
+        "el": "Πνεῦμα κυρίου ἐπ’ ἐμέ, οὗ εἵνεκεν ἔχρισέν με εὐαγγελίσασθαι πτωχοῖς.",
+        "note": "Isaiah 61 read aloud.",
+    },
+    "Luke 15:20": {
+        "en": "And he arose, and came to his father. But when he was yet a great way off, his father saw him, and had compassion, and ran, and fell on his neck, and kissed him.",
+        "el": "ἔτι δὲ αὐτοῦ μακρὰν ἀπέχοντος εἶδεν αὐτὸν ὁ πατὴρ αὐτοῦ καὶ ἐσπλαγχνίσθη.",
+        "note": "The father runs. That is the theology.",
+    },
+    "Luke 22:19": {
+        "en": "And he took bread, and gave thanks, and brake it, and gave unto them, saying, This is my body which is given for you: this do in remembrance of me.",
+        "el": "Τοῦτό ἐστιν τὸ σῶμά μου τὸ ὑπὲρ ὑμῶν διδόμενον· τοῦτο ποιεῖτε εἰς τὴν ἐμὴν ἀνάμνησιν.",
+        "note": "Body as gift. Memory as the instruction.",
+    },
+    "Luke 23:34": {
+        "en": "Then said Jesus, Father, forgive them; for they know not what they do.",
+        "el": "Πάτερ, ἄφες αὐτοῖς, οὐ γὰρ οἴδασιν τί ποιοῦσιν.",
+        "note": "Forgiveness in the present tense of the nails.",
+    },
+    "Luke 24:6": {
+        "en": "He is not here, but is risen: remember how he spake unto you when he was yet in Galilee.",
+        "el": "οὐκ ἔστιν ὧδε, ἀλλὰ ἠγέρθη.",
+        "note": "Memory is the instruction. The body is already gone.",
+    },
+    "Acts 2:4": {
+        "en": "And they were all filled with the Holy Ghost, and began to speak with other tongues, as the Spirit gave them utterance.",
+        "el": "καὶ ἐπλήσθησαν πάντες πνεύματος ἁγίου.",
+        "note": "Pentecost. 50 in the number board.",
+    },
+    "Romans 8:28": {
+        "en": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+        "note": "The sentence people tattoo. Count it, then read the next two verses.",
+    },
+    "1 Corinthians 13:13": {
+        "en": "And now abideth faith, hope, charity, these three; but the greatest of these is charity.",
+        "note": "Three remain. The greatest is the 7-fold love in the same chapter.",
+    },
+    "Philippians 2:9": {
+        "en": "Wherefore God also hath highly exalted him, and given him a name which is above every name.",
+        "el": "διὸ καὶ ὁ θεὸς αὐτὸν ὑπερύψωσεν καὶ ἐχαρίσατο αὐτῷ τὸ ὄνομα τὸ ὑπὲρ πᾶν ὄνομα.",
+        "note": "The Name above names. Pair with Iēsous = 888.",
+    },
+    "Revelation 1:8": {
+        "en": "I am Alpha and Omega, the beginning and the ending, saith the Lord, which is, and which was, and which is to come, the Almighty.",
+        "el": "Ἐγώ εἰμι τὸ ἄλφα καὶ τὸ ὦ.",
+        "note": "Α and Ω. First last, last first.",
+    },
+    "Revelation 13:18": {
+        "en": "Here is wisdom. Let him that hath understanding count the number of the beast: for it is the number of a man; and his number is Six hundred threescore and six.",
+        "el": "ἀριθμὸς γὰρ ἀνθρώπου ἐστίν, καὶ ὁ ἀριθμὸς αὐτοῦ ἑξακόσιοι ἑξήκοντα ἕξ.",
+        "note": "The text tells you to count. 666 is a name-count, not a costume.",
+    },
+    "Revelation 22:13": {
+        "en": "I am Alpha and Omega, the beginning and the end, the first and the last.",
+        "el": "ἐγὼ τὸ ἄλφα καὶ τὸ ὦ, ὁ πρῶτος καὶ ὁ ἔσχατος, ἡ ἀρχὴ καὶ τὸ τέλος.",
+        "note": "The book closes on the same signature it opened with.",
+    },
+}
+
+PERICOPES = {
+    "The beginning": ["Genesis 1:1", "Mark 1:1", "John 1:1", "Luke 2:11"],
+    "The Name": ["Exodus 3:14", "Matthew 1:21", "Matthew 1:23", "Philippians 2:9"],
+    "I AM": ["John 6:35", "John 8:12", "John 8:58", "John 10:11", "John 11:25", "John 14:6"],
+    "The prayer": ["Matthew 6:9", "Luke 1:28", "Luke 1:38"],
+    "The claim": ["John 14:6", "John 3:16", "Matthew 16:16", "Matthew 22:37"],
+    "The cross": ["Mark 15:34", "Luke 23:34", "John 19:30", "Isaiah 53:5"],
+    "The rising": ["Matthew 28:6", "Luke 24:6", "John 20:16", "John 21:11"],
+    "The sending": ["Matthew 28:19", "Mark 1:15", "Luke 4:18", "Acts 2:4"],
+    "The end of the book": ["Revelation 1:8", "Revelation 13:18", "Revelation 22:13"],
+}
+
+TRANSLATIONS = {
+    "kjv": "King James",
+    "web": "World English",
+    "bbe": "Bible in Basic English",
+    "oeb-us": "Open English Bible",
+}
+
+# John 1        → whole chapter
+# John 1:1      → one verse
+# John 1:1-18   → range
+REF_RE = re.compile(
+    r"^\s*(?P<book>(?:[1-3]\s*)?[A-Za-z][A-Za-z]+(?:\s+[A-Za-z]+)?)\s+"
+    r"(?P<ch>\d{1,3})"
+    r"(?:\s*:\s*(?P<vs>\d{1,3})(?:\s*-\s*(?P<end>\d{1,3}))?)?\s*$",
+    re.I,
+)
+
+
+def fold_marks(text: str) -> str:
+    return "".join(
+        ch for ch in unicodedata.normalize("NFKD", text or "")
+        if unicodedata.category(ch) != "Mn"
+    )
+
+
+def normalize_book(name: str) -> str:
+    return re.sub(r"\s+", " ", (name or "").strip())
+
+
+def book_numbers(book: str) -> dict:
+    key = re.sub(r"\s+", " ", book.strip().lower())
+    return {
+        "canon": BOOK_INDEX.get(key),
+        "gospel": GOSPELS.get(key),
+        "key": key,
+    }
+
+
+def parse_ref(raw: str) -> dict | None:
+    m = REF_RE.match(raw or "")
+    if not m:
+        return None
+    book = normalize_book(m.group("book"))
+    ch = int(m.group("ch"))
+    vs = int(m.group("vs")) if m.group("vs") else None
+    end = int(m.group("end")) if m.group("end") else vs
+    if vs is None:
+        label = f"{book} {ch}"
+        kind = "chapter"
+        end = None
+    elif end and end != vs:
+        if end < vs:
+            end = vs
+        label = f"{book} {ch}:{vs}-{end}"
+        kind = "range"
+    else:
+        label = f"{book} {ch}:{vs}"
+        kind = "verse"
+        end = vs
+    return {
+        "book": book,
+        "ch": ch,
+        "vs": vs,
+        "end": end,
+        "label": label,
+        "kind": kind,
+    }
+
+
+def ref_count(parsed: dict) -> dict:
+    books = book_numbers(parsed["book"])
+    ch = parsed["ch"]
+    vs = parsed["vs"] or 0
+    end = parsed["end"] or vs
+    parts = {
+        "chapter": ch,
+        "verse": vs or ch,
+        "last_verse": end or vs or ch,
+        "chapter_plus_verse": ch + (vs or 0),
+        "digits": int(f"{ch}{vs}" if vs else f"{ch}"),
+    }
+    if books["canon"]:
+        parts["canon_index"] = books["canon"]
+        parts["canon_plus_ref"] = books["canon"] + ch + (vs or 0)
+    if books["gospel"]:
+        parts["gospel_index"] = books["gospel"]
+    reduced, traces = {}, {}
+    for name, n in parts.items():
+        red, steps = reduce_trace(n)
+        reduced[name] = red
+        traces[name] = steps
+    return {"parts": parts, "reduced": reduced, "traces": traces, "books": books}
+
+
+def vault_hit(label: str) -> dict | None:
+    if label in VAULT:
+        return VAULT[label]
+    parts = label.split(" ", 1)
+    if len(parts) == 2:
+        return VAULT.get(parts[0].title() + " " + parts[1])
+    return None
+
+
+def bible_note(n: int) -> str | None:
+    if n in BIBLE_NUMBERS:
+        return BIBLE_NUMBERS[n]
+    folded = reduce_number(n, True)
+    if folded in BIBLE_NUMBERS and folded != n:
+        return f"(via {n} → {folded}) " + BIBLE_NUMBERS[folded]
+    return None
+
+
+def fetch_bible(ref: str, translation: str = "kjv") -> dict | None:
+    try:
+        r = requests.get(
+            f"https://bible-api.com/{quote(ref)}?translation={quote(translation)}",
+            timeout=10,
+            headers={"User-Agent": "NumerologyLab/3.1-Gospels"},
+        )
+        if not r.ok:
+            return None
+        data = r.json()
+        verses = []
+        for v in data.get("verses") or []:
+            verses.append({
+                "ref": f"{v.get('book_name', '')} {v.get('chapter')}:{v.get('verse')}".strip(),
+                "chapter": v.get("chapter"),
+                "verse": v.get("verse"),
+                "text": re.sub(r"\s+", " ", (v.get("text") or "")).strip(),
+            })
+        return {
+            "ref": data.get("reference", ref),
+            "text": re.sub(r"\s+", " ", (data.get("text") or "")).strip(),
+            "translation": data.get("translation_name", translation),
+            "verses": verses,
+        }
+    except Exception:
+        return None
+
+
+
+def collect_passage(parsed: dict, translation: str = "kjv", live: bool = True) -> dict:
+    """English (+ vault Greek/Hebrew) for a verse, range, or whole chapter."""
+    packed = vault_hit(parsed["label"]) if parsed["kind"] == "verse" else None
+    live_hit = fetch_bible(parsed["label"], translation) if live else None
+    english = (live_hit or {}).get("text") or (packed or {}).get("en") or ""
+    verses = (live_hit or {}).get("verses") or []
+    if parsed["kind"] == "verse" and not verses and english:
+        verses = [{"ref": parsed["label"], "chapter": parsed["ch"],
+                   "verse": parsed["vs"], "text": english}]
+    sources = []
+    if live_hit:
+        sources.append(live_hit.get("translation") or translation)
+    if packed and not live_hit:
+        sources.append("offline vault")
+    if packed and (packed.get("el") or packed.get("he")):
+        sources.append("vault source-language attached")
+    return {
+        "parsed": parsed,
+        "english": english,
+        "greek": (packed or {}).get("el") or "",
+        "hebrew": (packed or {}).get("he") or "",
+        "note": (packed or {}).get("note") or "",
+        "verses": verses,
+        "translation": (live_hit or {}).get("translation") or ("vault" if packed else ""),
+        "sources": sources,
+        "counts": ref_count(parsed),
+    }
+
+
+def count_text(text: str) -> dict:
+    folded = fold_marks(text)
+    latin = {
+        name: run_latin_cipher(folded, name)
+        for name in LATIN_CIPHERS
+        if any(ch.isascii() and ch.isalpha() for ch in folded)
+    }
+    scripts = script_readings(folded) or script_readings(text)
+    digits = extract_digits(text)
+    digit_pack = None
+    angels = []
+    if digits:
+        red, steps = reduce_trace(int(digits))
+        digit_pack = {"digits": digits, "reduced": red, "steps": steps}
+        seen = set()
+        for m in re.finditer(r"(\d)\1{1,}", digits):
+            token = m.group(0)
+            if token in seen:
+                continue
+            seen.add(token)
+            note = angel_read(token)
+            if note:
+                angels.append(note)
+    return {
+        "folded": folded,
+        "latin": latin,
+        "scripts": scripts or [],
+        "digits": digit_pack,
+        "angels": angels,
+        "pythagorean": latin.get("Pythagorean"),
+    }
+
+
+def chapter_table(verses: list[dict]) -> list[dict]:
+    rows = []
+    for v in verses:
+        body = v.get("text") or ""
+        core = run_latin_cipher(body, "Pythagorean") if body else None
+        n = v.get("verse") or 0
+        red, steps = reduce_trace(n) if n else (0, [0])
+        rows.append({
+            "ref": v.get("ref", ""),
+            "verse": n,
+            "text": body,
+            "verse_reduced": red,
+            "verse_steps": steps,
+            "raw": core["raw"] if core else 0,
+            "reduced": core["reduced"] if core else 0,
+            "title": meaning(core["reduced"])["title"] if core else "",
+        })
+    return rows
+
+PISTIS_SOPHIA = {'id': 'pistis_sophia',
+ 'title': 'Pistis Sophia',
+ 'short': 'PS',
+ 'tradition': 'Gnostic / Askew Codex',
+ 'edition': 'G.R.S. Mead, 1921 (public domain)',
+ 'source_language': 'Coptic (Askew Codex), probably from Greek',
+ 'note': 'A post-resurrection teaching book. Jesus spends eleven years on the Mount of Olives '
+         'speaking through the First Mystery. Pistis Sophia falls from the thirteenth aeon, is '
+         'oppressed by Authades and the lion-faced power, and sings thirteen repentances until '
+         'the Light hears her. Mary Magdalene is the chief questioner. Peter resents it.',
+ 'numbers': {'11': 'Eleven years of discourse after the rising, still below the First Mystery.',
+             '12': 'Twelve aeons. The ordered heavens Sophia falls through.',
+             '13': "The thirteenth aeon. Sophia's home, and the number of her repentances.",
+             '24': 'Twenty-four invisibles. The company of the thirteenth aeon.',
+             '30': 'A Valentinian echo: thirty aeons as the fullness. PS prefers 12 + 13 + 24.',
+             '49': 'Seven times seven. The treasury arithmetic of later chapters.'},
+ 'names': [{'label': 'Pistis Sophia',
+            'text': 'Pistis Sophia',
+            'note': 'Faith-Wisdom. The soul that falls, remembers, and sings its way back.'},
+           {'label': 'Sophia',
+            'text': 'Sophia',
+            'note': 'Wisdom. Greek ΣΟΦΙΑ = 1+70+500+10+1 = 582 in isopsephy.'},
+           {'label': 'First Mystery',
+            'text': 'First Mystery',
+            'note': 'The veil-name Jesus finally speaks from. Look, not a mascot.'},
+           {'label': 'Mary Magdalene',
+            'text': 'Mary Magdalene',
+            'note': 'Chief interpreter in this book. Peter cannot bear how often she speaks.'},
+           {'label': 'Authades',
+            'text': 'Authades',
+            'note': 'Self-willed. The arrogant power that sends the lion-faced emanation.'},
+           {'label': 'Jeu',
+            'text': 'Jeu',
+            'note': 'Overseer of the Light. A book-inside-the-book name.'}],
+ 'passages': [{'ref': '1.1',
+               'title': 'Eleven years after the rising',
+               'en': 'It came to pass, when Jesus had risen from the dead, that he passed '
+                     'eleven years discoursing with his disciples, and instructing them only '
+                     'up to the regions of the First Commandment and up to the regions of the '
+                     'First Mystery, the Mystery within the Veil, within the First '
+                     'Commandment, which is the four-and-twentieth mystery without and below, '
+                     'those [four-and-twenty] which are in the second space of the First '
+                     'Mystery, which is before all mysteries, the Father in the form of a '
+                     'dove.',
+               'note': 'The clock of the book: eleven years, twenty-four mysteries, the First '
+                       'Mystery still veiled. Count 11 and 24 before you count the English.'},
+              {'ref': '1.2',
+               'title': 'The Mount of Olives',
+               'en': 'It came to pass, therefore, on the fifteenth day of the moon in the '
+                     'month Tybi, which is the day on which the moon is full, on that day '
+                     'then, when the sun had come forth in its going, that there came forth '
+                     'behind it a great light-power shining exceedingly. And that light-power '
+                     'descended over Jesus and surrounded him wholly, while he sat apart from '
+                     'his disciples, and he shone most exceedingly. And there was no measure '
+                     'for the light which was on him.',
+               'note': 'Full moon of Tybi. A date you can count. Light-power as garment.'},
+              {'ref': '10',
+               'title': 'Sophia looks down',
+               'en': 'It came to pass, when Pistis Sophia was in the thirteenth aeon, in the '
+                     'region of all her brethren the invisibles, that is the four-and-twenty '
+                     'emanations of the great Invisible, — it came to pass then, through the '
+                     'commandment of the First Mystery, that Pistis Sophia gazed into the '
+                     'height. She saw the light of the veil of the Treasury of the Light, and '
+                     'she desired to go to that region, and she could not go to that region. '
+                     'She ceased to do the mystery of the thirteenth aeon, and she sang '
+                     'praises to the light of the height, which she had seen in the light of '
+                     'the veil of the Treasury of the Light.',
+               'note': 'The fall begins as a gaze. Desire for a region she has not been given. '
+                       '13 and 24 again.'},
+              {'ref': '13',
+               'title': 'The lion-faced power',
+               'en': 'And the lion-faced power, that self-willed one, which is below in chaos, '
+                     'which belongs to him, — he continued to emanate emanations out of '
+                     'himself, very fierce, and rushed down into chaos. And he oppressed '
+                     'Pistis Sophia, and took her light, and swallowed it, and her matter was '
+                     'thrust down into chaos.',
+               'note': 'Authades works through a lion face. Light is eaten. Matter falls.'},
+              {'ref': '32',
+               'title': 'The first repentance',
+               'en': 'Pistis Sophia cried out most exceedingly, she cried to the Light of '
+                     'lights which she had seen from the beginning, in which she had had '
+                     'faith, and uttered this repentance, saying: O Light of lights, in whom I '
+                     'have had faith from the beginning, hearken now then, O Light, unto my '
+                     'repentance. Save me, O Light, for evil thoughts have entered into me.',
+               'note': 'First of thirteen repentances. Faith is the method, not the ornament.'},
+              {'ref': '48',
+               'title': 'The thirteenth repentance',
+               'en': 'Pistis Sophia again continued and uttered her thirteenth repentance, '
+                     'saying: Hearken unto me, and save me, O Light. For thou hast received my '
+                     'song of praise. Let them who take away my light be put to shame. Let '
+                     'them who desire to take away my power turn backward. Let them be put to '
+                     'shame who desire to swallow my power.',
+               'note': 'Thirteenth song. The number of the home aeon used as a weapon of '
+                       'return.'},
+              {'ref': '81',
+               'title': 'Mary speaks',
+               'en': 'It came to pass then, when Jesus had finished saying these words unto '
+                     'his disciples, that Mary Magdalene came forward. She kissed the feet of '
+                     'Jesus and said: My Lord, my mind is ever understanding, at every time to '
+                     'come forward and proclaim the solution of the words which thou hast '
+                     'spoken; but I am afraid of Peter, because he threatened me and hateth '
+                     'our sex.',
+               'note': 'The political sentence of the book. The decoder is a woman and the '
+                       'inner circle cannot stand it.'},
+              {'ref': '100',
+               'title': 'The solution is a key',
+               'en': 'Jesus said unto Mary: Well said, Mary. This is the solution of the '
+                     'mystery. And Mary continued and said: My Lord, will all who know the '
+                     'mystery of the Ineffable, and all who have received the mystery of the '
+                     'First Mystery, inherit the kingdom of the Light?'}]}
+
+NAG_HAMMADI = {'id': 'nag_hammadi',
+ 'title': 'Nag Hammadi library',
+ 'short': 'NHC',
+ 'tradition': 'Coptic Gnostic / 1945 find',
+ 'edition': 'Catalog of the thirteen codices. English bodies here are public-domain '
+            'Oxyrhynchus fragments (Grenfell & Hunt 1897, 1904) plus short labels — not the '
+            '1977 Robinson / Lambdin translations.',
+ 'source_language': 'Coptic (Sahidic), some from Greek',
+ 'note': 'Twelve books plus loose leaves, buried near Nag Hammadi. Modern English translations '
+         'of the Coptic tractates are still under copyright. This plug-in ships the library '
+         'map, the Oxyrhynchus Greek Thomas fragments (public domain), and empty sockets so '
+         "you can paste a page you have the right to count. Do not paste a living translator's "
+         "page and call it the board's.",
+ 'numbers': {'13': 'Thirteen codices (twelve bound books + leaves often numbered as XIII).',
+             '114': 'Sayings in the Gospel of Thomas.',
+             '30': 'Valentinian fullness: thirty aeons.',
+             '49': 'Seven sevens. Recurs in Sethian and Valentinian counting.'},
+ 'names': [{'label': 'Thomas',
+            'text': 'Didymus Judas Thomas',
+            'note': 'Twin. The name the sayings are stored under.'},
+           {'label': 'Barbelo',
+            'text': 'Barbelo',
+            'note': 'First thought in the Apocryphon of John. Fore-providence.'},
+           {'label': 'Yaldabaoth',
+            'text': 'Yaldabaoth',
+            'note': 'The craftsman who does not know the height. Lion-serpent in some '
+                    'pictures.'},
+           {'label': 'Sophia',
+            'text': 'Sophia',
+            'note': 'The aeon whose mistake starts the lower world in several tractates.'},
+           {'label': 'Seth',
+            'text': 'Seth',
+            'note': 'The other seed. Sethian books treat him as the true human line.'},
+           {'label': 'Thunder',
+            'text': 'Thunder Perfect Mind',
+            'note': 'The voice that is first and last, whore and holy, mother and daughter.'}],
+ 'passages': [{'ref': 'catalog',
+               'title': 'The thirteen books',
+               'en': 'Codex I (Jung): Prayer of the Apostle Paul, Apocryphon of James, Gospel '
+                     'of Truth, Treatise on the Resurrection, Tripartite Tractate. Codex II: '
+                     'Apocryphon of John, Gospel of Thomas, Gospel of Philip, Hypostasis of '
+                     'the Archons, On the Origin of the World, Exegesis on the Soul, Book of '
+                     'Thomas the Contender. Codex III: Apocryphon of John, Gospel of the '
+                     'Egyptians, Eugnostos, Sophia of Jesus Christ, Dialogue of the Savior. '
+                     'Codex IV: Apocryphon of John, Gospel of the Egyptians. Codex V: '
+                     'Eugnostos, Apocalypse of Paul, First and Second Apocalypse of James, '
+                     'Apocalypse of Adam. Codex VI: Acts of Peter and the Twelve Apostles, '
+                     'Thunder Perfect Mind, Authoritative Teaching, Concept of Our Great '
+                     'Power, Plato Republic 588-589, Discourse on the Eighth and Ninth, Prayer '
+                     'of Thanksgiving, Asclepius 21-29. Codex VII: Paraphrase of Shem, Second '
+                     'Treatise of the Great Seth, Apocalypse of Peter, Teachings of Silvanus, '
+                     'Three Steles of Seth. Codex VIII: Zostrianos, Letter of Peter to Philip. '
+                     'Codex IX: Melchizedek, Thought of Norea, Testimony of Truth. Codex X: '
+                     'Marsanes. Codex XI: Interpretation of Knowledge, A Valentinian '
+                     'Exposition, Allogenes, Hypsiphrone. Codex XII: Sentences of Sextus, '
+                     'Gospel of Truth fragments. Codex XIII: Trimorphic Protennoia, On the '
+                     'Origin of the World fragments.',
+               'note': 'A map, not a scripture. Pick a tractate, paste a page you have rights '
+                       'to, count that.'},
+              {'ref': 'Thomas incipit',
+               'title': 'Oxyrhynchus 654 — the heading',
+               'en': 'These are the [secret] words which Jesus the living one spake and '
+                     'Didymus Judas Thomas wrote.',
+               'note': 'Grenfell and Hunt, New Sayings of Jesus, 1904. Public domain. The '
+                       'Coptic book in NHC II,2 opens the same way.'},
+              {'ref': 'Thomas 1',
+               'title': 'Oxyrhynchus 654 — saying 1',
+               'en': 'And he said: Whosoever finds the interpretation of these words shall not '
+                     'taste of death.',
+               'note': 'The book tells you what the book is for. Interpretation is the '
+                       'sacrament.'},
+              {'ref': 'Thomas 2',
+               'title': 'Oxyrhynchus 654 — saying 2',
+               'en': 'Jesus saith: Let not him who seeketh cease until he findeth, and when he '
+                     'findeth he shall wonder; wondering he shall reign, and reigning shall '
+                     'rest.',
+               'note': 'Seek, find, wonder, reign, rest. A five-beat ladder.'},
+              {'ref': 'Thomas 3',
+               'title': 'Oxyrhynchus 654 — saying 3',
+               'en': 'Jesus saith: If those who lead you say unto you, Behold, the Kingdom is '
+                     'in heaven, then the birds of the heaven will precede you. If they say '
+                     'unto you, It is in the sea, then the fish will precede you. But the '
+                     'Kingdom is within you and it is without you. When you know yourselves, '
+                     'then shall you be known, and you shall know that you are the sons of the '
+                     'living Father. But if ye do not know yourselves, then ye are in poverty '
+                     'and ye are poverty.',
+               'note': 'Inside and outside. Self-knowledge as the census of the living '
+                       'Father.'},
+              {'ref': 'Thomas 5',
+               'title': 'Oxyrhynchus 654 — saying 5',
+               'en': 'Jesus saith: Recognize what is before thy face, and that which is hidden '
+                     'from thee shall be revealed unto thee. For there is nothing hidden which '
+                     'shall not be made manifest, nor buried which shall not be raised.',
+               'note': 'The hidden is not a second world. It is the face you have not looked '
+                       'at.'},
+              {'ref': 'Thomas 27',
+               'title': 'Oxyrhynchus 1 — saying 27',
+               'en': 'Jesus saith: Except ye fast to the world, ye shall in no wise find the '
+                     'Kingdom of God; and except ye sabbatize the Sabbath, ye shall not see '
+                     'the Father.',
+               'note': 'Grenfell and Hunt, 1897. Fasting the world, not a diet.'},
+              {'ref': 'Thomas 28',
+               'title': 'Oxyrhynchus 1 — saying 28',
+               'en': 'Jesus saith: I stood in the midst of the world, and in flesh was I seen '
+                     'of them, and I found all drunken, and none found I athirst among them.',
+               'note': '1897 fragment. Drunken vs athirst — the same split as Sophia looking '
+                       'up.'},
+              {'ref': 'Thomas 32',
+               'title': 'Oxyrhynchus 1 — saying 32',
+               'en': 'Jesus saith: A city built on the top of a high hill and stablished can '
+                     'neither fall nor be hid.',
+               'note': 'Pair with Matthew 5:14 on the Bible board.'},
+              {'ref': 'II,2',
+               'title': 'Gospel of Thomas — socket',
+               'en': '',
+               'note': 'NHC II,2. 114 sayings. Paste a saying you have the right to use. The '
+                       'Oxyrhynchus lines above are the PD starter.'},
+              {'ref': 'II,1',
+               'title': 'Apocryphon of John — socket',
+               'en': '',
+               'note': 'The long Sethian origin story. Barbelo, Autogenes, the arrogant '
+                       'craftsman. Paste a page to count it.'},
+              {'ref': 'II,3',
+               'title': 'Gospel of Philip — socket',
+               'en': '',
+               'note': 'Bridal chamber, names, and the sentence about Mary Magdalene that '
+                       'everyone quotes. Paste the page.'},
+              {'ref': 'VI,2',
+               'title': 'Thunder, Perfect Mind — socket',
+               'en': '',
+               'note': 'I am the first and the last. Paste a stanza. The voice is the text.'},
+              {'ref': 'I,3',
+               'title': 'Gospel of Truth — socket',
+               'en': '',
+               'note': 'Valentinian sermon on Error and the Name. Paste a page.'}]}
+
+SEED_BOOKS = [PISTIS_SOPHIA, NAG_HAMMADI]
+
+CORPUS_DIR = Path(__file__).resolve().parent / "corpus"
+
+REQUIRED = ("id", "title", "passages")
+
+
+def _clean_passage(raw: dict, book_id: str) -> dict:
+    return {
+        "book": book_id,
+        "ref": str(raw.get("ref") or "").strip(),
+        "title": str(raw.get("title") or "").strip(),
+        "en": str(raw.get("en") or raw.get("text") or "").strip(),
+        "src": str(raw.get("src") or raw.get("el") or raw.get("he") or raw.get("coptic") or "").strip(),
+        "note": str(raw.get("note") or "").strip(),
+    }
+
+
+def normalize_book(data: dict) -> dict:
+    if not isinstance(data, dict):
+        raise ValueError("Book file must be a JSON object.")
+    missing = [k for k in REQUIRED if k not in data]
+    if missing:
+        raise ValueError(f"Book missing fields: {', '.join(missing)}")
+    book_id = str(data["id"]).strip()
+    passages = [_clean_passage(p, book_id) for p in (data.get("passages") or [])]
+    names = []
+    for n in data.get("names") or []:
+        if not isinstance(n, dict):
+            continue
+        names.append({
+            "label": str(n.get("label") or n.get("text") or "").strip(),
+            "text": str(n.get("text") or n.get("label") or "").strip(),
+            "note": str(n.get("note") or "").strip(),
+        })
+    numbers = {}
+    for k, v in (data.get("numbers") or {}).items():
+        numbers[str(k)] = str(v)
+    return {
+        "id": book_id,
+        "title": str(data.get("title") or book_id),
+        "short": str(data.get("short") or book_id[:4]).upper(),
+        "tradition": str(data.get("tradition") or ""),
+        "edition": str(data.get("edition") or ""),
+        "source_language": str(data.get("source_language") or ""),
+        "note": str(data.get("note") or ""),
+        "numbers": numbers,
+        "names": names,
+        "passages": passages,
+        "origin": data.get("origin") or "corpus",
+    }
+
+
+def load_file(path: Path) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    book = normalize_book(data)
+    book["origin"] = str(path.name)
+    return book
+
+
+def load_corpus(extra: list[dict] | None = None) -> list[dict]:
+    books: list[dict] = []
+    if CORPUS_DIR.is_dir():
+        for path in sorted(CORPUS_DIR.glob("*.json")):
+            if path.name.startswith("_"):
+                continue
+            try:
+                books.append(load_file(path))
+            except Exception as exc:
+                books.append({
+                    "id": path.stem,
+                    "title": path.stem,
+                    "short": "ERR",
+                    "tradition": "",
+                    "edition": "",
+                    "source_language": "",
+                    "note": f"Could not load {path.name}: {exc}",
+                    "numbers": {},
+                    "names": [],
+                    "passages": [],
+                    "origin": path.name,
+                })
+    have = {b.get("id") for b in books}
+    for item in SEED_BOOKS:
+        try:
+            book = normalize_book(item)
+            if book["id"] in have:
+                continue
+            book["origin"] = book.get("origin") or "built-in"
+            books.append(book)
+            have.add(book["id"])
+        except Exception:
+            continue
+    if extra:
+        for item in extra:
+            try:
+                book = normalize_book(item)
+                book["origin"] = book.get("origin") or "upload"
+                books.append(book)
+            except Exception:
+                continue
+    return books
+
+
+def bible_as_book() -> dict:
+    passages = []
+    for ref, body in VAULT.items():
+        passages.append({
+            "book": "bible",
+            "ref": ref,
+            "title": ref,
+            "en": body.get("en") or "",
+            "src": body.get("el") or body.get("he") or "",
+            "note": body.get("note") or "",
+        })
+    return {
+        "id": "bible",
+        "title": "Bible (vault + live fetch on the Gospels tab)",
+        "short": "BIB",
+        "tradition": "Hebrew Bible / New Testament",
+        "edition": "Vault lines are KJV-shaped English with some Greek and unpointed Hebrew.",
+        "source_language": "Hebrew, Aramaic, Greek",
+        "note": "The full canon still fetches live on the Gospels tab. This card is the vault so the Books shelf can see it.",
+        "numbers": {},
+        "names": [],
+        "passages": passages,
+        "origin": "bible_board.VAULT",
+    }
+
+
+def library(extra: list[dict] | None = None) -> list[dict]:
+    found = load_corpus(extra)
+    ids = {b["id"] for b in found}
+    if "bible" not in ids:
+        found.insert(0, bible_as_book())
+    return found
+
+parse_bible_ref = parse_ref
+load_library = library
+
+
+def get_book(books: list[dict], key: str) -> dict | None:
+    needle = (key or "").strip().lower()
+    for b in books:
+        if b["id"].lower() == needle or b["title"].lower() == needle or b["short"].lower() == needle:
+            return b
+    return None
+
+
+def find_passage(book: dict, ref: str) -> dict | None:
+    needle = (ref or "").strip().lower()
+    if not needle:
+        return None
+    for p in book.get("passages") or []:
+        if p["ref"].lower() == needle:
+            return p
+    for p in book.get("passages") or []:
+        if needle in p["ref"].lower() or needle in p["title"].lower():
+            return p
+    return None
+
+
+def search_library(books: list[dict], query: str) -> list[dict]:
+    q = (query or "").strip().lower()
+    if not q:
+        return []
+    hits = []
+    for book in books:
+        blob_book = " ".join([book["id"], book["title"], book["short"], book.get("note") or ""]).lower()
+        for p in book.get("passages") or []:
+            blob = " ".join([p["ref"], p["title"], p["en"], p["src"], p["note"], blob_book]).lower()
+            if q in blob:
+                hits.append({"book": book, "passage": p})
+    return hits
+
+
+def decode_page(text: str) -> dict:
+    pack = count_text(text)
+    return {
+        "folded": fold_marks(text),
+        "pack": pack,
+        "title": meaning((pack.get("pythagorean") or {}).get("reduced") or 0)["title"]
+        if pack.get("pythagorean") else "",
+    }
+
+
+def book_number_note(book: dict, n: int) -> str | None:
+    numbers = book.get("numbers") or {}
+    if str(n) in numbers:
+        return numbers[str(n)]
+    red, _ = reduce_trace(n)
+    if str(red) in numbers and red != n:
+        return f"(via {n} → {red}) " + numbers[str(red)]
+    return None
+
+
+def passage_from_paste(title: str, body: str, note: str = "") -> dict:
+    return normalize_book({
+        "id": "pasted",
+        "title": title or "Pasted page",
+        "short": "PASTE",
+        "tradition": "session",
+        "edition": "Typed or uploaded in this session. Not saved to disk.",
+        "note": note,
+        "passages": [{"ref": "paste", "title": title or "paste", "en": body, "note": note}],
+        "origin": "session",
+    })
+
+
+def parse_uploaded_json(raw: str | bytes) -> dict:
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8")
+    data = json.loads(raw)
+    if isinstance(data, list):
+        raise ValueError("Upload one book object, not a list.")
+    return normalize_book(data)
+
+MASTERS = {11, 22, 33}
+STOP = {
+    "the", "and", "that", "unto", "from", "with", "this", "they", "them", "then",
+    "shall", "said", "saith", "into", "upon", "have", "were", "which", "when",
+    "there", "their", "his", "her", "she", "him", "who", "you", "your", "for",
+    "not", "but", "are", "was", "had", "has", "been", "will", "would", "could",
+    "should", "may", "can", "all", "any", "one", "two", "out", "our", "also",
+    "than", "its", "it's", "yet", "nor", "let", "did", "does", "done", "over",
+    "after", "before", "because", "about", "among", "under", "through", "only",
+    "very", "more", "most", "some", "such", "these", "those", "what", "whom",
+    "come", "came", "went", "going", "being", "made", "make", "know", "knew",
+    "lord", "god", "jesus", "said", "say", "saying",
+}
+
+
+def _tokens(text: str) -> set[str]:
+    words = re.findall(r"[A-Za-zΑ-Ωα-ωא-ת]{4,}", text or "")
+    return {w.lower() for w in words if w.lower() not in STOP}
+
+
+def _index_passage(book: dict, passage: dict) -> dict | None:
+    body = (passage.get("en") or "").strip()
+    src = (passage.get("src") or "").strip()
+    if not body and not src:
+        return None
+    pack = count_text(body) if body else {"latin": {}, "scripts": [], "pythagorean": None, "digits": None}
+    pack_src = count_text(src) if src else {"scripts": []}
+    pyth = pack.get("pythagorean")
+    digits = pack.get("digits")
+    stated = []
+    if digits and digits.get("digits"):
+        raw_digits = digits["digits"]
+        # pull useful chunks: whole string plus runs of 2+ digits
+        stated.append(int(raw_digits))
+        for m in re.finditer(r"\d{2,}", body):
+            stated.append(int(m.group(0)))
+    lore_hits = []
+    numbers = book.get("numbers") or {}
+    reduced = pyth["reduced"] if pyth else None
+    raw = pyth["raw"] if pyth else None
+    if reduced is not None and str(reduced) in numbers:
+        lore_hits.append({"n": reduced, "note": numbers[str(reduced)]})
+    if raw is not None and str(raw) in numbers:
+        lore_hits.append({"n": raw, "note": numbers[str(raw)]})
+    double = []
+    if reduced is not None:
+        for n in stated:
+            if n == reduced or n == raw:
+                double.append(n)
+            red_n, _ = reduce_trace(n)
+            if red_n == reduced and n != reduced:
+                double.append(n)
+    return {
+        "book_id": book["id"],
+        "book": book["title"],
+        "short": book.get("short") or book["id"],
+        "ref": passage.get("ref") or "",
+        "title": passage.get("title") or "",
+        "en": body,
+        "src": src,
+        "raw": raw,
+        "reduced": reduced,
+        "steps": (pyth or {}).get("steps") or [],
+        "scripts": pack_src.get("scripts") or pack.get("scripts") or [],
+        "stated": sorted(set(stated)),
+        "lore_hits": lore_hits,
+        "double": sorted(set(double)),
+        "tokens": _tokens(body),
+        "master": reduced in MASTERS if reduced is not None else False,
+    }
+
+
+def scan_shelf(books: list[dict]) -> dict:
+    rows = []
+    for book in books:
+        if book.get("id") == "example_book":
+            continue
+        for p in book.get("passages") or []:
+            ref = (p.get("ref") or "").lower()
+            title = (p.get("title") or "").lower()
+            if ref == "catalog" or title.endswith("socket"):
+                continue
+            if not (p.get("en") or "").strip():
+                continue
+            row = _index_passage(book, p)
+            if row:
+                rows.append(row)
+
+    by_reduced = defaultdict(list)
+    by_raw = defaultdict(list)
+    by_script_raw = defaultdict(list)
+    masters = []
+    doubles = []
+    lore = []
+    for row in rows:
+        if row["reduced"] is not None:
+            by_reduced[row["reduced"]].append(row)
+        if row["raw"] is not None:
+            by_raw[row["raw"]].append(row)
+        for s in row["scripts"]:
+            by_script_raw[(s["name"], s["raw"])].append(row)
+        if row["master"]:
+            masters.append(row)
+        if row["double"]:
+            doubles.append(row)
+        if row["lore_hits"]:
+            lore.append(row)
+
+    clusters = []
+    for n, group in sorted(by_reduced.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+        books_hit = {r["book_id"] for r in group}
+        if len(group) < 2:
+            continue
+        clusters.append({
+            "reduced": n,
+            "title": meaning(n)["title"],
+            "count": len(group),
+            "books": len(books_hit),
+            "cross": len(books_hit) > 1,
+            "rows": group,
+        })
+
+    raw_twins = []
+    for n, group in by_raw.items():
+        books_hit = {r["book_id"] for r in group}
+        if len(group) >= 2 and n and n > 9:
+            raw_twins.append({
+                "raw": n,
+                "count": len(group),
+                "cross": len(books_hit) > 1,
+                "rows": group,
+            })
+    raw_twins.sort(key=lambda x: (-x["count"], -x["raw"]))
+
+    echoes = []
+    for i, a in enumerate(rows):
+        if len(a["tokens"]) < 3:
+            continue
+        for b in rows[i + 1:]:
+            if a["book_id"] == b["book_id"]:
+                continue
+            shared = a["tokens"] & b["tokens"]
+            if len(shared) >= 3:
+                echoes.append({
+                    "shared": sorted(shared),
+                    "a": a,
+                    "b": b,
+                    "same_reduced": a["reduced"] == b["reduced"] and a["reduced"] is not None,
+                })
+    echoes.sort(key=lambda e: (-len(e["shared"]), -int(e["same_reduced"])))
+
+    n_rows = len(rows)
+    master_rate = (len(masters) / n_rows) if n_rows else 0.0
+    return {
+        "rows": rows,
+        "clusters": clusters,
+        "raw_twins": raw_twins,
+        "masters": masters,
+        "master_rate": master_rate,
+        "doubles": doubles,
+        "lore": lore,
+        "echoes": echoes[:40],
+        "n": n_rows,
+    }
+
+
+def label_row(row: dict) -> str:
+    return f"{row['short']} {row['ref']}"
+
+
 # Python date floor is year 1. BC lives in Moon of Eden as a count, not a date.
 DATE_FLOOR = date(1, 1, 1)
 DATE_CEILING = date(9999, 12, 31)
@@ -720,24 +1949,6 @@ def fetch_number_fact(n: int) -> str | None:
     return None
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def fetch_bible(ref: str) -> dict | None:
-    try:
-        r = requests.get(
-            f"https://bible-api.com/{quote(ref)}",
-            timeout=5,
-            headers={"User-Agent": "NumerologyLab/2.0"},
-        )
-        if r.ok:
-            data = r.json()
-            return {
-                "ref": data.get("reference", ref),
-                "text": (data.get("text") or "").strip(),
-                "translation": data.get("translation_name", ""),
-            }
-    except Exception:
-        return None
-    return None
 
 
 def letter_chips(rows: list[dict]) -> None:
@@ -1291,8 +2502,8 @@ with save_r:
     )
 st.image(save_png, caption="Phone: tap and hold this picture → Add to Photos / Save Image", use_container_width=True)
 
-tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_cal = st.tabs(
-    ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups", "Calibration"]
+tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_gospel, tab_books, tab_pat, tab_cal = st.tabs(
+    ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups", "Gospels", "Books", "Patterns", "Calibration"]
 )
 
 with tab_decode:
@@ -1671,6 +2882,334 @@ with tab_look:
         "Traditional Western meanings are short-form, not a priesthood. "
         "The click you feel is the reading."
     )
+
+with tab_gospel:
+    st.subheader("Gospels & Bible")
+    st.caption(
+        "Count the reference, the English body, and vault Greek / Hebrew. "
+        "Type `John 1:1`, `John 1:1-18`, or `John 1` for a whole chapter. "
+        "English Pythagorean is an overlay. Greek and Hebrew letter-numbers are the old systems."
+    )
+    g1, g2, g3 = st.columns([2, 1, 1])
+    with g1:
+        gospel_ref = st.text_input(
+            "Reference",
+            value=(bible_ref or "John 1:1"),
+            placeholder="John 1:1  ·  John 1  ·  Matt 5:3-12",
+            key="gospel_ref",
+        )
+    with g2:
+        gospel_tr = st.selectbox(
+            "Translation",
+            list(TRANSLATIONS.keys()),
+            format_func=lambda k: TRANSLATIONS[k],
+            key="gospel_tr",
+        )
+    with g3:
+        gospel_live = st.toggle("Fetch live", value=bool(live), key="gospel_live")
+    vault_choice = st.selectbox("Vault verse", ["—"] + list(VAULT.keys()), key="gospel_vault")
+    peri_choice = st.selectbox("Compare a scene", ["—"] + list(PERICOPES.keys()), key="gospel_peri")
+    target = gospel_ref.strip()
+    if vault_choice != "—":
+        target = vault_choice
+
+    parsed_g = parse_bible_ref(target) if target else None
+    if not parsed_g:
+        st.info("Try `John 3:16`, `Genesis 1:1`, or `Revelation 13:18`.")
+    else:
+        passage = collect_passage(parsed_g, gospel_tr, gospel_live)
+        st.markdown(f"##### {parsed_g['label']}")
+        st.caption(
+            {"verse": "Verse", "range": "Range", "chapter": "Chapter dump"}[parsed_g["kind"]]
+            + " · "
+            + (" · ".join(passage["sources"]) or "reference only")
+        )
+        if passage["english"]:
+            st.write(passage["english"])
+        if passage["note"]:
+            st.caption(passage["note"])
+        if passage["greek"]:
+            st.markdown("**Greek**")
+            st.write(passage["greek"])
+        if passage["hebrew"]:
+            st.markdown("**Hebrew**")
+            st.write(passage["hebrew"])
+
+        counts = passage["counts"]
+        items = list(counts["parts"].items())
+        for chunk in [items[i:i + 4] for i in range(0, len(items), 4)]:
+            cols = st.columns(len(chunk))
+            for col, (name, val) in zip(cols, chunk):
+                red = counts["reduced"][name]
+                col.metric(name.replace("_", " "), f"{val} → {red}")
+                note = bible_note(val) or bible_note(red)
+                if note:
+                    col.caption(note[:80] + ("…" if len(note) > 80 else ""))
+
+        def _dump_body(label: str, body: str, key: str) -> None:
+            pack = count_text(body)
+            core = pack.get("pythagorean")
+            scripts = pack.get("scripts") or []
+            st.markdown(f"**{label}**")
+            if core:
+                st.caption(
+                    f"Pythagorean {core['raw']} → {core['reduced']} · "
+                    + meaning(core["reduced"])["title"]
+                    + " · "
+                    + " → ".join(map(str, core["steps"]))
+                )
+                render_depth(core["reduced"], key)
+            for r in scripts:
+                st.caption(f"{r['name']} {r['raw']} → {r['reduced']} · " + " → ".join(map(str, r["steps"])))
+
+        if passage["english"]:
+            _dump_body("English body", passage["english"], f"g_en_{parsed_g['label']}")
+        if passage["greek"]:
+            _dump_body("Greek body", passage["greek"], f"g_el_{parsed_g['label']}")
+        if passage["hebrew"]:
+            _dump_body("Hebrew body", passage["hebrew"], f"g_he_{parsed_g['label']}")
+
+        if parsed_g["kind"] in {"chapter", "range"} and passage["verses"]:
+            st.markdown("###### Verse-by-verse dump")
+            for row in chapter_table(passage["verses"]):
+                st.caption(
+                    f"{row['ref']} · v{row['verse']}→{row['verse_reduced']} · "
+                    f"{row['raw']}→{row['reduced']} {row['title']}"
+                )
+                st.write(row["text"])
+
+    st.markdown("---")
+    st.markdown("###### Names of power")
+    name_pick = st.selectbox("Name", [n["label"] for n in NAMES_OF_POWER], key="gospel_name")
+    item = next(n for n in NAMES_OF_POWER if n["label"] == name_pick)
+    st.caption(f"{item['text']} — {item['note']}")
+    pack_n = count_text(item["text"])
+    if pack_n["scripts"]:
+        r = pack_n["scripts"][0]
+        st.metric(r["name"], f"{r['raw']} → {r['reduced']}")
+    elif pack_n["pythagorean"]:
+        r = pack_n["pythagorean"]
+        st.metric("Pythagorean", f"{r['raw']} → {r['reduced']}")
+
+    if peri_choice != "—":
+        st.markdown(f"###### Scene · {peri_choice}")
+        for ref in PERICOPES[peri_choice]:
+            packed = collect_passage(parse_bible_ref(ref), gospel_tr, gospel_live)
+            core = count_text(packed["english"]).get("pythagorean") if packed["english"] else None
+            line = f"**{ref}**"
+            if core:
+                line += f" · {core['raw']}→{core['reduced']} {meaning(core['reduced'])['title']}"
+            st.markdown(line)
+            if packed["english"]:
+                st.caption(packed["english"][:220] + ("…" if len(packed["english"]) > 220 else ""))
+
+with tab_books:
+    st.subheader("Books of knowledge")
+    st.caption(
+        "Any book can plug in. Drop a JSON file in `corpus/` or upload one here. "
+        "Started with Bible, Nag Hammadi, and Pistis Sophia. "
+        "Nag Hammadi English translations are mostly still under copyright — "
+        "the shelf ships the library map plus public-domain Oxyrhynchus Thomas fragments. "
+        "Paste a page you have the right to count."
+    )
+    if "extra_books" not in st.session_state:
+        st.session_state.extra_books = []
+
+    up = st.file_uploader("Upload a book JSON", type=["json"], key="book_upload")
+    if up is not None and st.button("Add uploaded book", key="book_add_up"):
+        try:
+            book = parse_uploaded_json(up.read())
+            book["origin"] = up.name
+            st.session_state.extra_books.append(book)
+            st.success(f"Shelved {book['title']} ({len(book['passages'])} passages).")
+        except Exception as exc:
+            st.error(str(exc))
+
+    shelf = load_library(st.session_state.extra_books)
+    titles = [f"{b['short']} · {b['title']}" for b in shelf]
+    pick = st.selectbox("Shelf", titles, key="book_shelf")
+    book = shelf[titles.index(pick)] if titles else None
+
+    paste_title = st.text_input("Or paste a page — title", key="book_paste_title", placeholder="Thunder, stanza 1")
+    paste_body = st.text_area("Page body", key="book_paste_body", height=120, placeholder="Any script. Greek and Hebrew count as themselves.")
+    if st.button("Count pasted page", key="book_paste_go") and paste_body.strip():
+        st.session_state.extra_books.append(passage_from_paste(paste_title, paste_body))
+        st.rerun()
+
+    q = st.text_input("Search the shelf", key="book_q", placeholder="Sophia  ·  Thomas 3  ·  thirteenth")
+    if q.strip():
+        hits = search_library(shelf, q.strip())
+        st.caption(f"{len(hits)} hit(s)")
+        for hit in hits[:20]:
+            p = hit["passage"]
+            st.markdown(f"**{hit['book']['short']} {p['ref']}** · {p['title']}")
+            if p["en"]:
+                st.caption(p["en"][:240] + ("…" if len(p["en"]) > 240 else ""))
+
+    if book:
+        st.markdown(f"##### {book['title']}")
+        st.caption(
+            " · ".join(
+                x for x in [book.get("tradition"), book.get("edition"), book.get("source_language"), book.get("origin")]
+                if x
+            )
+        )
+        if book.get("note"):
+            st.write(book["note"])
+        refs = [p["ref"] + ((" — " + p["title"]) if p["title"] else "") for p in book.get("passages") or []]
+        if refs:
+            chosen = st.selectbox("Passage", refs, key=f"book_pass_{book['id']}")
+            raw_ref = chosen.split(" — ", 1)[0]
+            passage = find_passage(book, raw_ref)
+        else:
+            passage = None
+            st.info("This book has no passages yet. Paste a page or add them to the JSON.")
+
+        if book.get("numbers"):
+            with st.expander("This book's number lore"):
+                for k, v in book["numbers"].items():
+                    st.markdown(f"**{k}** — {v}")
+        if book.get("names"):
+            with st.expander("Names this book cares about"):
+                for n in book["names"]:
+                    pack = count_text(n["text"])
+                    core = pack.get("scripts") or []
+                    pyth = pack.get("pythagorean")
+                    tally = ""
+                    if core:
+                        tally = f"{core[0]['name']} {core[0]['raw']}→{core[0]['reduced']}"
+                    elif pyth:
+                        tally = f"Pythagorean {pyth['raw']}→{pyth['reduced']}"
+                    st.markdown(f"**{n['label']}** · `{n['text']}` · {tally}")
+                    if n.get("note"):
+                        st.caption(n["note"])
+
+        if passage:
+            st.markdown(f"**{book['short']} {passage['ref']}** · {passage['title']}")
+            if passage["note"]:
+                st.caption(passage["note"])
+            if passage["en"]:
+                st.write(passage["en"])
+                pack = count_text(passage["en"])
+                if pack.get("pythagorean"):
+                    core = pack["pythagorean"]
+                    st.metric("English / Latin", f"{core['raw']} → {core['reduced']}")
+                    st.caption(meaning(core["reduced"])["title"] + " · " + " → ".join(map(str, core["steps"])))
+                    render_depth(core["reduced"], f"bk_{book['id']}_{passage['ref']}")
+                    note = book_number_note(book, core["raw"]) or book_number_note(book, core["reduced"])
+                    if note:
+                        st.caption("Book board: " + note)
+            else:
+                st.info("Socket only — paste the page in the box above.")
+            if passage["src"]:
+                st.markdown("**Source-language line**")
+                st.write(passage["src"])
+                pack_s = count_text(passage["src"])
+                for r in pack_s.get("scripts") or []:
+                    st.caption(f"{r['name']} {r['raw']} → {r['reduced']} · " + " → ".join(map(str, r["steps"])))
+
+with tab_pat:
+    st.subheader("Pattern finder")
+    st.caption(
+        "Scans every passage on the shelf. "
+        "A cluster is two or more passages that fold to the same number. "
+        "A double layer is a number the text itself writes that also lands in the count. "
+        "Cross-book clusters are the only ones worth a second look. "
+        "Master-number rate is measured against the Calibration noise floor (~17% on random integers)."
+    )
+    if "extra_books" not in st.session_state:
+        st.session_state.extra_books = []
+    shelf = load_library(st.session_state.extra_books)
+    report = scan_shelf(shelf)
+    a, b, c, d = st.columns(4)
+    a.metric("Passages counted", report["n"])
+    b.metric("Clusters", len(report["clusters"]))
+    c.metric("Cross-book echoes", sum(1 for e in report["echoes"] if e["shared"]))
+    d.metric("Master landings", f"{len(report['masters'])} · {report['master_rate']*100:.0f}%")
+    if report["master_rate"] <= 0.20:
+        st.caption("Master rate is inside the random-integer noise band. Do not treat 11/22/33 as a find by itself.")
+    else:
+        st.caption("Master rate is above the ~17% noise floor. Still check that a second layer agrees.")
+
+    want_cross = st.toggle("Only show patterns that jump books", value=True, key="pat_cross")
+    focus = st.selectbox(
+        "Lens",
+        ["Clusters", "Double layer", "Book lore hits", "Word echoes", "Raw twins", "Masters"],
+        key="pat_lens",
+    )
+
+    def _show(row, extra=""):
+        bits = [f"**{label_row(row)}**"]
+        if row["reduced"] is not None:
+            bits.append(f"{row['raw']}→{row['reduced']}")
+            bits.append(meaning(row["reduced"])["title"])
+        if extra:
+            bits.append(extra)
+        st.markdown(" · ".join(bits))
+        if row["en"]:
+            st.caption(row["en"][:220] + ("…" if len(row["en"]) > 220 else ""))
+
+    if focus == "Clusters":
+        shown = 0
+        for cl in report["clusters"]:
+            if want_cross and not cl["cross"]:
+                continue
+            shown += 1
+            tag = "cross-book" if cl["cross"] else "same book"
+            st.markdown(
+                f"#### {cl['reduced']} · {cl['title']} · {cl['count']} passages · {cl['books']} book(s) · {tag}"
+            )
+            for row in cl["rows"]:
+                _show(row)
+        if not shown:
+            st.info("No cluster survives that filter yet. Add books or turn the filter off.")
+
+    elif focus == "Double layer":
+        if not report["doubles"]:
+            st.info("No passage yet has a written number that also lands in its own count.")
+        for row in report["doubles"]:
+            _show(row, extra="stated " + ", ".join(map(str, row["double"])))
+
+    elif focus == "Book lore hits":
+        if not report["lore"]:
+            st.info("No passage reduction matches that book's own number lore.")
+        for row in report["lore"]:
+            notes = " · ".join(f"{h['n']}: {h['note']}" for h in row["lore_hits"])
+            _show(row, extra=notes)
+
+    elif focus == "Word echoes":
+        shown = 0
+        for echo in report["echoes"]:
+            if want_cross and echo["a"]["book_id"] == echo["b"]["book_id"]:
+                continue
+            shown += 1
+            same = " · same reduction" if echo["same_reduced"] else ""
+            st.markdown(
+                f"**{label_row(echo['a'])}** ↔ **{label_row(echo['b'])}** · "
+                f"shared {', '.join(echo['shared'][:12])}{same}"
+            )
+            st.caption((echo["a"]["en"] or "")[:160])
+            st.caption((echo["b"]["en"] or "")[:160])
+        if not shown:
+            st.info("No cross-book word echo of three+ content words yet.")
+
+    elif focus == "Raw twins":
+        shown = 0
+        for twin in report["raw_twins"]:
+            if want_cross and not twin["cross"]:
+                continue
+            shown += 1
+            st.markdown(f"#### raw {twin['raw']} · {twin['count']} passages")
+            for row in twin["rows"]:
+                _show(row)
+        if not shown:
+            st.info("No shared raw totals across books. That is the rare one — keep the filter on.")
+
+    else:
+        if not report["masters"]:
+            st.info("No 11/22/33 landings in the current shelf.")
+        for row in report["masters"]:
+            _show(row)
 
 with tab_cal:
     st.subheader("Calibration — master-number base rate")
