@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import io
 import re
@@ -1174,21 +1175,62 @@ if lang not in ("Auto", "English (Latin)") and script_text != text:
     st.markdown(f"**{lang}:** `{script_text}`")
     st.caption("Latin letters moved into this script so the cipher can actually count.")
 
+slug = _slug(text)
+file_name_md = f"numberin_{slug}.md"
+file_name_png = f"numberin_{slug}.png"
+save_token = hashlib.sha256(
+    f"{text}|{lang}|{stamp['iso']}|{place_label}|{lat}|{lon}".encode("utf-8")
+).hexdigest()[:20]
+if st.session_state.get("_save_token") != save_token:
+    st.session_state._save_token = save_token
+    st.session_state._save_md = build_report(
+        text, latin, scripts, dates, digits, birth_time, earth, stamp
+    )
+    st.session_state._save_png = build_photo(
+        text, latin, scripts, dates, digits, birth_time, earth, stamp
+    )
+save_md = st.session_state._save_md
+save_png = st.session_state._save_png
 save_l, save_r = st.columns(2)
 with save_l:
     st.download_button(
         "Save reading as file",
-        data=build_report(text, latin, scripts, dates, digits, birth_time, earth, stamp),
-        file_name=f"numberin_{_slug(text)}.md",
+        data=save_md,
+        file_name=file_name_md,
         mime="text/markdown",
+        key="save_md_btn",
+        use_container_width=True,
+    )
+    md_b64 = base64.b64encode(save_md.encode("utf-8") if isinstance(save_md, str) else save_md).decode("ascii")
+    st.markdown(
+        f'<a href="data:text/markdown;charset=utf-8;base64,{md_b64}" '
+        f'download="{file_name_md}" target="_blank" rel="noopener" '
+        f'style="display:block;margin-top:.4rem;padding:.7rem;text-align:center;'
+        f'background:#071018;color:#7ef6ff;border:1.5px solid #00e5ff;'
+        f'font-weight:800;text-decoration:none;border-radius:8px;">'
+        f"Open / save file</a>",
+        unsafe_allow_html=True,
     )
 with save_r:
     st.download_button(
         "Save reading as photo",
-        data=build_photo(text, latin, scripts, dates, digits, birth_time, earth, stamp),
-        file_name=f"numberin_{_slug(text)}.png",
+        data=save_png,
+        file_name=file_name_png,
         mime="image/png",
+        key="save_png_btn",
+        use_container_width=True,
     )
+    png_b64 = base64.b64encode(save_png).decode("ascii")
+    st.markdown(
+        f'<a href="data:image/png;base64,{png_b64}" '
+        f'download="{file_name_png}" target="_blank" rel="noopener" '
+        f'style="display:block;margin-top:.4rem;padding:.7rem;text-align:center;'
+        f'background:#071018;color:#7ef6ff;border:1.5px solid #00e5ff;'
+        f'font-weight:800;text-decoration:none;border-radius:8px;">'
+        f"Open photo</a>",
+        unsafe_allow_html=True,
+    )
+st.image(save_png, caption="Phone: tap and hold this picture → Add to Photos / Save Image", use_container_width=True)
 
 tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look = st.tabs(
     ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups"]
