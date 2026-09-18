@@ -439,7 +439,7 @@ def fold_marks(text: str) -> str:
     )
 
 
-def normalize_book(name: str) -> str:
+def normalize_book_name(name: str) -> str:
     return re.sub(r"\s+", " ", (name or "").strip())
 
 
@@ -456,7 +456,7 @@ def parse_ref(raw: str) -> dict | None:
     m = REF_RE.match(raw or "")
     if not m:
         return None
-    book = normalize_book(m.group("book"))
+    book = normalize_book_name(m.group("book"))
     ch = int(m.group("ch"))
     vs = int(m.group("vs")) if m.group("vs") else None
     end = int(m.group("end")) if m.group("end") else vs
