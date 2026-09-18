@@ -5,10 +5,13 @@ from __future__ import annotations
 import base64
 import hashlib
 import io
+import math
 import os
 import random
 import re
+import struct
 import textwrap
+import wave
 from calendar import monthrange
 from datetime import date, datetime, time, timezone
 from urllib.parse import quote
@@ -2076,13 +2079,226 @@ def letter_chips(rows: list[dict]) -> None:
     st.caption("Gold = vowel (Soul Urge). Cyan = consonant (Personality). Y is a vowel only when the token has no A/E/I/O/U.")
 
 
-def render_depth(n: int, key: str) -> None:
+# Base rates from a 5,000-draw keep-masters calibration (1–999,999).
+# Unusual ≠ true. This is frequency, not proof.
+BASE_RATE = {
+    1: 11.0, 2: 3.4, 3: 10.0, 4: 6.7, 5: 11.2, 6: 7.1,
+    7: 11.9, 8: 10.8, 9: 11.2, 11: 7.7, 22: 4.7, 33: 4.3,
+}
+
+LENS = {
+    1: {
+        "personal": "A start in the body. The first yes after a long no.",
+        "bible": "Beginning. The Word already is. One is not lonely here — it is prior.",
+        "cipher": "Terminal 1. The funnel closed on unity. Check the raw — 1 is common.",
+    },
+    2: {
+        "personal": "A pairing. Two currents that have not locked yet.",
+        "bible": "Witness. Two tablets, two natures, two who can testify.",
+        "cipher": "Terminal 2. Rare when masters are kept — 11 ate a lot of the 2s.",
+    },
+    3: {
+        "personal": "The mouth-gate. Say it or it turns to static.",
+        "bible": "Testimony complete. Three days. Father, Son, Spirit as a count, not a slogan.",
+        "cipher": "Terminal 3. Expression in the arithmetic. Common landing.",
+    },
+    4: {
+        "personal": "Pour the floor. Vision without walls is a poem you cannot live in.",
+        "bible": "The world-shape. Four winds, four Gospels, four corners of the map.",
+        "cipher": "Terminal 4. Structure. 22 collapses here when the master is not kept.",
+    },
+    5: {
+        "personal": "Motion is the assignment. Stale is the enemy.",
+        "bible": "Grace-count and the five books. Loaves. Wounds in later counting.",
+        "cipher": "Terminal 5. Change in the digits. Common.",
+    },
+    6: {
+        "personal": "Make a place someone can come home to. Care without a cage.",
+        "bible": "The human day. Sixth of making. Incomplete seven.",
+        "cipher": "Terminal 6. Harmony in the sum. 888 folds here.",
+    },
+    7: {
+        "personal": "The well. Draw from it. Do not live at the bottom.",
+        "bible": "Sabbath fullness. Seals, trumpets, bowls. The week God rests inside.",
+        "cipher": "Terminal 7. The most common single-digit landing in the 5k draw.",
+    },
+    8: {
+        "personal": "Octave. Same note, more voltage. Steward what arrived.",
+        "bible": "New creation. Eighth day. The week starts again.",
+        "cipher": "Terminal 8. Power-count. YHWH 26 lands here.",
+    },
+    9: {
+        "personal": "Close the chapter. Carrying it past the last page turns compassion into a ghost.",
+        "bible": "Fruit and finality. Nine fruits. The last single digit before the fold repeats.",
+        "cipher": "Terminal 9. Completion in the arithmetic. 153 folds here.",
+    },
+    11: {
+        "personal": "More current than the body was trained for. Ground or it shorts.",
+        "bible": "Eleven remain when the twelfth leaves. Disorder next to twelve.",
+        "cipher": "Master 11. About 7.7% of random integers stop here. Unusual, not a warrant.",
+    },
+    22: {
+        "personal": "The vision needs a floor. Unpoured 22 collapses into anxious 4.",
+        "bible": "Master builder count. Architecture language. Still just a stop in the funnel.",
+        "cipher": "Master 22. About 4.7% of random integers. Rarer than 11.",
+    },
+    33: {
+        "personal": "Love practiced until someone else can learn from it. Stay a person.",
+        "bible": "Traditional age of the crucifixion. Teacher-count. Tradition, not proof.",
+        "cipher": "Master 33. About 4.3% of random integers. The rarest master.",
+    },
+}
+
+WORD_NUMBERS = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+    "thirty": 30, "forty": 40, "fifty": 50, "seventy": 70,
+    "hundred": 100, "thousand": 1000,
+}
+
+
+def _tone_wav(freqs: list[float], seconds: float = 0.22, volume: float = 0.18) -> bytes:
+    rate = 22050
+    n = int(rate * seconds)
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        for i in range(n):
+            t = i / rate
+            fade = min(1.0, i / 180, (n - i) / 280)
+            sample = 0.0
+            for f in freqs:
+                sample += math.sin(2 * math.pi * f * t)
+            sample = sample / max(1, len(freqs))
+            val = int(max(-1, min(1, sample * volume * fade)) * 32767)
+            w.writeframes(struct.pack("<h", val))
+    return buf.getvalue()
+
+
+CHIME_WAV = {
+    11: _tone_wav([523.25, 784.0], 0.28),
+    22: _tone_wav([392.0, 587.33], 0.32),
+    33: _tone_wav([329.63, 659.25, 987.77], 0.36),
+}
+
+
+def maybe_chime(n: int, tag: str = "") -> None:
+    """Soft chime the first time a master lands for this input. Not on every rerun."""
+    if n not in CHIME_WAV:
+        return
+    sig = (int(n), tag)
+    if st.session_state.get("chime_sig") == sig:
+        return
+    st.session_state["chime_sig"] = sig
+    st.caption({11: "✦ 11", 22: "✦ 22", 33: "✦ 33"}[int(n)] + " — master landing")
+    st.audio(CHIME_WAV[int(n)], format="audio/wav", autoplay=True)
+
+
+def lens_line(n: int, source: str = "personal") -> str:
     info = meaning(n)
+    block = LENS.get(n) or LENS.get(reduce_number(n, False), {})
+    line = block.get(source) or block.get("personal") or info.get("current") or info["light"]
+    return line
+
+
+def confidence_line(n: int) -> str:
+    rate = BASE_RATE.get(n)
+    if rate is None:
+        folded = reduce_number(n, True)
+        rate = BASE_RATE.get(folded)
+        if rate is None:
+            return "No base-rate for this value yet."
+        return f"{n} is unusual as a raw stop. Folded {folded} lands in ~{rate:.1f}% of random draws. Unusual ≠ true."
+    band = "common" if rate >= 9 else ("uncommon" if rate >= 5 else "rare in the funnel")
+    return f"Funnel frequency ~{rate:.1f}% ({band}). Frequency is not meaning."
+
+
+def remember_reading(kind: str, n: int, label: str) -> None:
+    hist = st.session_state.setdefault("reading_hist", [])
+    hist.append({"kind": kind, "n": int(n), "label": label})
+    st.session_state["reading_hist"] = hist[-12:]
+
+
+def show_thread(n: int) -> None:
+    hist = st.session_state.get("reading_hist") or []
+    hits = [h for h in hist if h["n"] == n]
+    if len(hits) >= 2:
+        labels = ", ".join(h["kind"] for h in hits[-4:])
+        st.caption(f"Thread: {n} already showed up {len(hits)}× this session ({labels}).")
+
+
+def render_depth(n: int, key: str, source: str = "personal") -> None:
+    info = meaning(n)
+    maybe_chime(n, key)
     with st.expander(f"{n} · {info['title']} — full current", expanded=False, key=key):
         st.caption(info["keywords"])
+        st.markdown(f"**{source} lens.** {lens_line(n, source)}")
+        st.caption(confidence_line(n))
+        show_thread(n)
         for label, line in depth_lines(n):
             if line:
                 st.markdown(f"**{label}.** {line}")
+
+
+def shelf_passages(extra=None):
+    books = load_library(extra if extra is not None else st.session_state.get("extra_books") or [])
+    rows = []
+    for book in books:
+        if book.get("id") == "example_book":
+            continue
+        for p in book.get("passages") or []:
+            body = (p.get("en") or "").strip()
+            if not body:
+                continue
+            rows.append({
+                "book": book.get("title") or book.get("id"),
+                "short": book.get("short") or book.get("id"),
+                "ref": p.get("ref") or "",
+                "title": p.get("title") or "",
+                "en": body,
+                "src": p.get("src") or "",
+            })
+    return rows
+
+
+def raw_number_hits(needle: int, extra=None) -> list[dict]:
+    token = str(int(needle))
+    word_hits = {w for w, v in WORD_NUMBERS.items() if v == needle or str(v) == token}
+    hits = []
+    for row in shelf_passages(extra):
+        blob = f"{row['en']} {row['src']} {row['title']}"
+        digits = extract_digits(blob)
+        words = set(re.findall(r"[A-Za-z]+", blob.lower()))
+        if token in digits or token in blob or (word_hits & words):
+            hits.append(row)
+    return hits
+
+
+def name_to_verses(name: str, extra=None) -> dict:
+    prof = name_profile(name)
+    target = prof["destiny"][1]
+    matches = []
+    for row in shelf_passages(extra):
+        core = count_text(row["en"]).get("pythagorean")
+        if core and core["reduced"] == target:
+            matches.append({**row, "raw": core["raw"], "reduced": core["reduced"]})
+    return {"n": target, "profile": prof, "matches": matches}
+
+
+def eden_jump_points(center: int, span: int = 400) -> list[tuple[int, int, int]]:
+    lo = max(0, int(center) - span)
+    hi = int(center) + span
+    prev = None
+    jumps = []
+    for y in range(lo, hi + 1):
+        red = reduce_number(y, True)
+        if prev is not None and red != prev:
+            jumps.append((y, prev, red))
+        prev = red
+    return jumps
 
 
 def _slug(text: str) -> str:
@@ -2456,22 +2672,22 @@ with st.sidebar:
             lunar_years = int(float(_eden_override.strip().replace(",", "")))
         except ValueError:
             st.warning("That isn't a number — using the slider value.")
-            lunar_years = st.number_input(
+            lunar_years = st.slider(
                 "Lunar years from Creation",
                 min_value=0,
-                max_value=10_000_000,
+                max_value=40_000,
                 value=int(EDEN_LUNAR_YEARS),
                 step=1,
-                key="eden_lunar_years",
+                key="eden_lunar_slider",
             )
     else:
-        lunar_years = st.number_input(
+        lunar_years = st.slider(
             "Lunar years from Creation",
             min_value=0,
-            max_value=10_000_000,
+            max_value=40_000,
             value=int(EDEN_LUNAR_YEARS),
             step=1,
-            key="eden_lunar_years",
+            key="eden_lunar_slider",
         )
     eden = eden_span(lunar_years)
     e1, e2 = st.columns(2)
@@ -2482,6 +2698,11 @@ with st.sidebar:
         f"({' → '.join(map(str, eden['lunar_number'][2]))}). "
         f"Solar count {eden['solar_number'][0]} → {eden['solar_number'][1]}."
     )
+    st.caption(f"**eden lens.** {lens_line(eden['lunar_number'][1], 'bible')}  ·  {confidence_line(eden['lunar_number'][1])}")
+    jumps = eden_jump_points(int(lunar_years), span=250)
+    if jumps:
+        st.caption("Seams in this window (reduced digit flips):")
+        st.caption(" · ".join(f"{y:,}: {a}→{b}" for y, a, b in jumps[:12]))
     if st.button("Read the lunar era", use_container_width=True):
         st.session_state["lunar_read"] = eden
     st.markdown("---")
@@ -3242,7 +3463,17 @@ with tab_pat:
     want_cross = st.toggle("Only show patterns that jump books", value=True, key="pat_cross")
     focus = st.selectbox(
         "Lens",
-        ["Clusters", "Double layer", "Book lore hits", "Word echoes", "Raw twins", "Masters"],
+        [
+            "Clusters",
+            "Raw digit",
+            "Name to verse",
+            "Blind challenge",
+            "Double layer",
+            "Book lore hits",
+            "Word echoes",
+            "Raw twins",
+            "Masters",
+        ],
         key="pat_lens",
     )
 
@@ -3257,7 +3488,101 @@ with tab_pat:
         if row["en"]:
             st.caption(row["en"][:220] + ("…" if len(row["en"]) > 220 else ""))
 
-    if focus == "Clusters":
+    if focus == "Raw digit":
+        needle = st.number_input("Digit or number as written", min_value=1, max_value=1_000_000, value=7, step=1, key="raw_needle")
+        hits = raw_number_hits(int(needle))
+        st.caption(f"{len(hits)} passage(s) where {int(needle)} appears unreduced — in digits or a number-word.")
+        if not hits:
+            st.info("Nothing on the current shelf writes that number out loud.")
+        for row in hits:
+            st.markdown(f"**{row['short']} {row['ref']}** · {row['title']}")
+            st.caption(row["en"][:280] + ("…" if len(row["en"]) > 280 else ""))
+
+    elif focus == "Name to verse":
+        who = st.text_input("Name", value="", key="name_verse_who", placeholder="Erin")
+        if who.strip():
+            pack = name_to_verses(who.strip())
+            n = pack["n"]
+            remember_reading("name", n, who.strip())
+            st.metric("Destiny of that name", n)
+            maybe_chime(n, "name_verse")
+            st.caption(f"**personal lens.** {lens_line(n, 'personal')}")
+            st.caption(confidence_line(n))
+            show_thread(n)
+            if not pack["matches"]:
+                st.info("No shelf passage reduces to that Destiny yet. Add pages or try another name.")
+            for row in pack["matches"]:
+                st.markdown(f"**{row['short']} {row['ref']}** · {row['raw']}→{row['reduced']} · {row['title']}")
+                st.caption(row["en"][:280] + ("…" if len(row["en"]) > 280 else ""))
+
+    elif focus == "Blind challenge":
+        st.caption(
+            "Two passages. One contains the raw digit. One does not. "
+            "Guess. The score is the only number in this app that can go down."
+        )
+        if "chal_score" not in st.session_state:
+            st.session_state.chal_score = {"hit": 0, "n": 0}
+        if st.button("New round", key="chal_new") or "chal_round" not in st.session_state:
+            rows = shelf_passages()
+            pool = []
+            for probe in (7, 12, 3, 40, 1, 8, 4, 153, 11, 6, 9, 5):
+                hs = raw_number_hits(probe)
+                if hs:
+                    pool.append((probe, hs))
+            if pool and rows:
+                needle, goods = random.choice(pool)
+                good = random.choice(goods)
+                bads = [r for r in rows if r["ref"] != good["ref"] or r["short"] != good["short"]]
+                bads = [r for r in bads if str(needle) not in extract_digits(r["en"] + r["title"]) and str(needle) not in r["en"]]
+                if bads:
+                    bad = random.choice(bads)
+                    cards = [good, bad]
+                    random.shuffle(cards)
+                    st.session_state.chal_round = {
+                        "needle": needle,
+                        "left": cards[0],
+                        "right": cards[1],
+                        "answer": "left" if cards[0] is good else "right",
+                        "resolved": False,
+                    }
+        rnd = st.session_state.get("chal_round")
+        if not rnd:
+            st.warning("Need at least two passages on the shelf to run a round.")
+        else:
+            st.metric("Raw number in play", rnd["needle"])
+            st.caption(confidence_line(int(rnd["needle"])) if int(rnd["needle"]) in BASE_RATE else confidence_line(reduce_number(int(rnd["needle"]), True)))
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"**Card A** · {rnd['left']['short']} {rnd['left']['ref']}")
+                st.write(rnd["left"]["en"][:400])
+            with c2:
+                st.markdown(f"**Card B** · {rnd['right']['short']} {rnd['right']['ref']}")
+                st.write(rnd["right"]["en"][:400])
+            if not rnd["resolved"]:
+                g1, g2 = st.columns(2)
+                if g1.button("A is the real one", key="chal_a"):
+                    ok = rnd["answer"] == "left"
+                    st.session_state.chal_score["n"] += 1
+                    st.session_state.chal_score["hit"] += int(ok)
+                    rnd["resolved"] = True
+                    rnd["ok"] = ok
+                    st.session_state.chal_round = rnd
+                    st.rerun()
+                if g2.button("B is the real one", key="chal_b"):
+                    ok = rnd["answer"] == "right"
+                    st.session_state.chal_score["n"] += 1
+                    st.session_state.chal_score["hit"] += int(ok)
+                    rnd["resolved"] = True
+                    rnd["ok"] = ok
+                    st.session_state.chal_round = rnd
+                    st.rerun()
+            else:
+                st.success("Correct." if rnd.get("ok") else "Miss. The other card held the raw digit.")
+                sc = st.session_state.chal_score
+                rate = (100.0 * sc["hit"] / sc["n"]) if sc["n"] else 0
+                st.caption(f"Score {sc['hit']} / {sc['n']} · {rate:.0f}% vs 50% chance.")
+
+    elif focus == "Clusters":
         shown = 0
         for cl in report["clusters"]:
             if want_cross and not cl["cross"]:
