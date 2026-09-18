@@ -112,6 +112,64 @@ div.stDownloadButton > button:focus {
   outline: 2px solid #00e5ff !important;
   outline-offset: 2px;
 }
+
+/* Sidebar copy: kill Streamlit's gray-on-black */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] small,
+[data-testid="stSidebar"] li,
+[data-testid="stSidebar"] .stMarkdown,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+  color: #ead9a4 !important;
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] h4,
+[data-testid="stSidebar"] h5 {
+  color: #f5d76e !important;
+}
+[data-testid="stSidebar"] [data-testid="stMetricLabel"] {
+  color: #c9dbe3 !important;
+}
+[data-testid="stSidebar"] [data-testid="stMetricValue"] {
+  color: #7ef6ff !important;
+}
+.stCaption, [data-testid="stCaptionContainer"] {
+  color: #d7c48a !important;
+}
+
+/* The little arrow that opens / closes the sidebar */
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stExpandSidebarButton"],
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stBaseButton-header"],
+[data-testid="stBaseButton-headerNoPadding"],
+[data-testid="baseButton-header"],
+[data-testid="baseButton-headerNoPadding"],
+button[kind="header"],
+button[kind="headerNoPadding"] {
+  background: #071018 !important;
+  color: #7ef6ff !important;
+  border: 1.5px solid #00e5ff !important;
+  box-shadow: 0 0 12px rgba(0,229,255,.35) !important;
+}
+[data-testid="collapsedControl"] svg,
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stExpandSidebarButton"] svg,
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="stBaseButton-header"] svg,
+[data-testid="stBaseButton-headerNoPadding"] svg,
+button[kind="header"] svg,
+button[kind="headerNoPadding"] svg {
+  fill: #00e5ff !important;
+  color: #00e5ff !important;
+  stroke: #00e5ff !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
