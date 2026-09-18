@@ -6,6 +6,7 @@ import base64
 import hashlib
 import io
 import os
+import random
 import re
 import textwrap
 from calendar import monthrange
@@ -1290,8 +1291,8 @@ with save_r:
     )
 st.image(save_png, caption="Phone: tap and hold this picture → Add to Photos / Save Image", use_container_width=True)
 
-tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look = st.tabs(
-    ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups"]
+tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_cal = st.tabs(
+    ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups", "Calibration"]
 )
 
 with tab_decode:
@@ -1670,3 +1671,146 @@ with tab_look:
         "Traditional Western meanings are short-form, not a priesthood. "
         "The click you feel is the reading."
     )
+
+with tab_cal:
+    st.subheader("Calibration — master-number base rate")
+    st.caption(
+        "Control group. Draw random integers, run each through `reduce_trace`, "
+        "and count how often the funnel stops on 11, 22, or 33. "
+        "That rate is the noise floor — not a reading."
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        cal_n = st.number_input(
+            "Samples",
+            min_value=100,
+            max_value=100_000,
+            value=5_000,
+            step=100,
+            key="cal_n",
+        )
+    with c2:
+        cal_lo = st.number_input(
+            "Min value",
+            min_value=1,
+            max_value=1_000_000_000,
+            value=1,
+            step=1,
+            key="cal_lo",
+        )
+    with c3:
+        cal_hi = st.number_input(
+            "Max value",
+            min_value=1,
+            max_value=1_000_000_000,
+            value=999_999,
+            step=1,
+            key="cal_hi",
+        )
+
+    cal_keep = st.checkbox(
+        "Keep masters (engine default — stop on 11 / 22 / 33)",
+        value=True,
+        key="cal_keep",
+    )
+    cal_seed = st.number_input(
+        "Random seed (0 = fresh each run)",
+        min_value=0,
+        max_value=2_147_483_647,
+        value=0,
+        step=1,
+        key="cal_seed",
+    )
+
+    if int(cal_hi) < int(cal_lo):
+        st.error("Max value must be ≥ min value.")
+    elif st.button("Run calibration", use_container_width=True, key="cal_run"):
+        lo = int(cal_lo)
+        hi = int(cal_hi)
+        n = int(cal_n)
+        if int(cal_seed):
+            rng = random.Random(int(cal_seed))
+        else:
+            rng = random.Random()
+
+        finals: dict[int, int] = {}
+        master_final = 0
+        master_anywhere = 0
+        by_master = {11: 0, 22: 0, 33: 0}
+        samples_preview = []
+
+        for i in range(n):
+            raw = rng.randint(lo, hi)
+            reduced, steps = reduce_trace(raw, keep_masters=bool(cal_keep))
+            finals[reduced] = finals.get(reduced, 0) + 1
+            hit_final = reduced in (11, 22, 33)
+            hit_any = any(s in (11, 22, 33) for s in steps)
+            if hit_final:
+                master_final += 1
+                by_master[reduced] = by_master.get(reduced, 0) + 1
+            if hit_any:
+                master_anywhere += 1
+            if i < 12:
+                samples_preview.append((raw, steps, reduced))
+
+        rate_final = 100.0 * master_final / n
+        rate_any = 100.0 * master_anywhere / n
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Samples", f"{n:,}")
+        m2.metric("Final 11/22/33", f"{master_final:,}")
+        m3.metric("Hit rate (final)", f"{rate_final:.2f}%")
+        m4.metric("Hit rate (anywhere in trace)", f"{rate_any:.2f}%")
+
+        st.markdown("##### Split by master")
+        s1, s2, s3 = st.columns(3)
+        s1.metric("11", f"{by_master[11]:,}  ({100.0 * by_master[11] / n:.2f}%)")
+        s2.metric("22", f"{by_master[22]:,}  ({100.0 * by_master[22] / n:.2f}%)")
+        s3.metric("33", f"{by_master[33]:,}  ({100.0 * by_master[33] / n:.2f}%)")
+
+        st.markdown("##### Final-value distribution")
+        order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33]
+        rows = []
+        for k in order:
+            count = finals.get(k, 0)
+            rows.append(
+                {
+                    "value": k,
+                    "count": count,
+                    "percent": round(100.0 * count / n, 3),
+                }
+            )
+        extras = sorted(set(finals) - set(order))
+        for k in extras:
+            rows.append(
+                {
+                    "value": k,
+                    "count": finals[k],
+                    "percent": round(100.0 * finals[k] / n, 3),
+                }
+            )
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+
+        st.markdown("##### First 12 draws")
+        for raw, steps, reduced in samples_preview:
+            trail = " → ".join(str(s) for s in steps)
+            mark = "  ← master" if reduced in (11, 22, 33) else ""
+            st.caption(f"`{raw}` → {trail}  ⇒ **{reduced}**{mark}")
+
+        st.info(
+            f"Range `{lo:,}`–`{hi:,}`, keep_masters={bool(cal_keep)}. "
+            "If a number you care about lands near this rate, treat it as base-rate noise "
+            "until a second independent funnel agrees."
+        )
+        st.session_state["cal_last"] = {
+            "n": n,
+            "lo": lo,
+            "hi": hi,
+            "keep": bool(cal_keep),
+            "seed": int(cal_seed),
+            "master_final": master_final,
+            "rate_final": rate_final,
+            "rate_any": rate_any,
+            "by_master": by_master,
+        }
