@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import io
+import os
 import re
 import textwrap
 from calendar import monthrange
@@ -874,18 +875,51 @@ def build_report(text: str, latin: list, scripts: list, dates: list, digits: str
     return "\n".join(lines)
 
 
-def _font(size: int, bold: bool = False):
-    names = (
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        if bold
-        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+_FONT_PATH = {"file": None}
+
+
+def _font_file() -> str | None:
+    if _FONT_PATH["file"] and os.path.exists(_FONT_PATH["file"]):
+        return _FONT_PATH["file"]
+    local = (
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
     )
-    for path in names:
+    for path in local:
+        if os.path.exists(path):
+            _FONT_PATH["file"] = path
+            return path
+    dest = "/tmp/NumberinSans.ttf"
+    if os.path.exists(dest) and os.path.getsize(dest) > 10_000:
+        _FONT_PATH["file"] = dest
+        return dest
+    urls = (
+        "https://github.com/dejavu-fonts/dejavu-fonts/raw/version_2_37/ttf/DejaVuSans.ttf",
+        "https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@version_2_37/ttf/DejaVuSans.ttf",
+    )
+    for url in urls:
+        try:
+            resp = requests.get(url, timeout=20)
+            if resp.ok and len(resp.content) > 10_000:
+                with open(dest, "wb") as handle:
+                    handle.write(resp.content)
+                _FONT_PATH["file"] = dest
+                return dest
+        except Exception:
+            continue
+    return None
+
+
+def _font(size: int, bold: bool = False):
+    path = _font_file()
+    if path:
         try:
             return ImageFont.truetype(path, size)
         except OSError:
-            continue
+            pass
     return ImageFont.load_default()
 
 
@@ -894,28 +928,31 @@ def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str,
     img = Image.new("RGB", (W, H), "#050506")
     draw = ImageDraw.Draw(img)
     gold = "#f5d76e"
-    cyan = "#00e5ff"
-    cream = "#f3e6c4"
-    mute = "#c9a227"
+    cyan = "#7ef6ff"
+    cream = "#fff6d8"
+    body_c = "#f0e2b0"
 
-    title_f = _font(54, True)
-    big_f = _font(42, True)
-    body_f = _font(28)
-    small_f = _font(22)
+    brand_f = _font(86)
+    name_f = _font(58)
+    label_f = _font(36)
+    num_f = _font(150)
+    title_f = _font(48)
+    body_f = _font(40)
+    foot_f = _font(30)
 
-    y = 70
-    draw.text((W // 2, y), "NUMBERIN", font=title_f, fill=gold, anchor="mt")
-    y += 80
-    draw.text((W // 2, y), seed_sigil(text), font=big_f, fill=cyan, anchor="mt")
+    y = 56
+    draw.text((W // 2, y), "NUMBERIN", font=brand_f, fill=gold, anchor="mt")
+    y += 100
+    draw.text((W // 2, y), seed_sigil(text), font=title_f, fill=cyan, anchor="mt")
     y += 70
-    draw.line((80, y, W - 80, y), fill=mute, width=1)
+    draw.line((64, y, W - 64, y), fill=gold, width=3)
     y += 36
 
-    first = (text.splitlines() or [""])[0][:48]
-    for wrapped in textwrap.wrap(first, 34)[:2]:
-        draw.text((80, y), wrapped, font=big_f, fill=cream)
-        y += 48
-    y += 20
+    first = (text.splitlines() or [""])[0][:42]
+    for wrapped in textwrap.wrap(first, 22)[:2]:
+        draw.text((64, y), wrapped, font=name_f, fill=cream)
+        y += 68
+    y += 18
 
     blocks = []
     if latin:
@@ -925,7 +962,7 @@ def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str,
             ("SOUL URGE", prof["soul"]),
             ("PERSONALITY", prof["personality"]),
         ):
-            raw, red, steps = pack
+            _raw, red, _steps = pack
             info = meaning(red)
             blocks.append((label, str(red), info["title"], info.get("current", info["light"])))
     if dates:
@@ -959,35 +996,35 @@ def build_photo(text: str, latin: list, scripts: list, dates: list, digits: str,
         info = meaning(earth["earth_num"][0])
         blocks.append(
             (
-                earth["place"].upper()[:22],
+                earth["place"].upper()[:18],
                 str(earth["earth_num"][0]),
                 info["title"],
                 f"{abs(earth['lat']):.4f}°{earth['lat_hemi']}  {abs(earth['lon']):.4f}°{earth['lon_hemi']}",
             )
         )
-    for r in scripts[:3]:
+    for r in scripts[:2]:
         info = meaning(r["reduced"])
-        blocks.append((r["name"].upper()[:22], str(r["reduced"]), info["title"], info.get("current", info["light"])))
+        blocks.append((r["name"].upper()[:18], str(r["reduced"]), info["title"], info.get("current", info["light"])))
 
-    for label, num, title, current in blocks[:6]:
-        draw.text((80, y), label, font=small_f, fill=cyan)
-        y += 34
-        draw.text((80, y), num, font=title_f, fill=gold)
-        draw.text((220, y + 14), title, font=body_f, fill=cream)
-        y += 60
-        for wrapped in textwrap.wrap(current, 46)[:3]:
-            draw.text((80, y), wrapped, font=small_f, fill=mute)
-            y += 32
-        y += 28
-        if y > H - 160:
+    for label, num, title, current in blocks[:4]:
+        if y > H - 280:
             break
+        draw.text((64, y), label, font=label_f, fill=cyan)
+        y += 50
+        draw.text((64, y), num, font=num_f, fill=gold)
+        draw.text((300, y + 48), title, font=title_f, fill=cream)
+        y += 160
+        for wrapped in textwrap.wrap(current, 28)[:4]:
+            draw.text((64, y), wrapped, font=body_f, fill=body_c)
+            y += 48
+        y += 28
 
     stamp_line = (stamp or reading_stamp())["iso"]
     if earth:
         stamp_line += f"  {abs(earth['lat']):.2f}{earth['lat_hemi']} {abs(earth['lon']):.2f}{earth['lon_hemi']}"
-    draw.line((80, H - 110, W - 80, H - 110), fill=mute, width=1)
-    draw.text((W // 2, H - 78), stamp_line, font=small_f, fill=mute, anchor="mt")
-    draw.text((W // 2, H - 44), "the click you feel is the reading", font=small_f, fill=cyan, anchor="mt")
+    draw.line((64, H - 120, W - 64, H - 120), fill=gold, width=2)
+    draw.text((W // 2, H - 84), stamp_line, font=foot_f, fill=body_c, anchor="mt")
+    draw.text((W // 2, H - 44), "the click you feel is the reading", font=foot_f, fill=cyan, anchor="mt")
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
