@@ -1620,13 +1620,29 @@ html, body, [data-testid="stAppViewContainer"] {
   background: radial-gradient(circle at 18% 0%, #1a1408 0%, #050506 42%, #000 100%);
   color: #f3e6c4;
 }
-.block-container {padding-top: 5rem !important; max-width: 1180px;}
+.block-container {padding-top: 5rem !important; max-width: 1120px;}
 h1 {
   font-weight: 900;
   letter-spacing: .22em;
   color: #f5d76e;
   text-shadow: 0 0 6px #f5d76e, 0 0 22px #c9a227, 0 0 40px #00e5ff55;
 }
+div[data-baseweb="tab-list"] button {
+  font-weight: 700 !important;
+  letter-spacing: .04em;
+  color: #ead9a4 !important;
+}
+div[data-baseweb="tab-list"] button[aria-selected="true"] {
+  color: #7ef6ff !important;
+  text-shadow: 0 0 8px #00e5ff88;
+}
+[data-testid="stMetric"] {
+  background: #0b1216;
+  border: 1px solid #c9a22744;
+  border-radius: 12px;
+  padding: .4rem .6rem;
+}
+.stAlert {border-radius: 12px;}
 .seal {
   font-size: 1.25rem;
   letter-spacing: .32rem;
@@ -2460,6 +2476,46 @@ def shelf_passages(extra=None):
     return rows
 
 
+def _row_key(row: dict) -> str:
+    return f"{row.get('short')}|{row.get('ref')}|{row.get('title')}"
+
+
+def counted_number_hits(needle: int, extra=None) -> list[dict]:
+    """Passages whose Pythagorean count folds to needle, or whose raw sum is needle."""
+    target = int(needle)
+    hits = []
+    for row in shelf_passages(extra):
+        core = count_text(row["en"]).get("pythagorean")
+        if not core:
+            src = row.get("src") or ""
+            if src:
+                scripts = script_readings(src)
+                for s in scripts or []:
+                    if s.get("reduced") == target or s.get("raw") == target:
+                        hits.append({**row, "raw": s.get("raw"), "reduced": s.get("reduced"), "via": s.get("name")})
+                        break
+            continue
+        if core.get("reduced") == target or core.get("raw") == target:
+            hits.append({**row, "raw": core["raw"], "reduced": core["reduced"], "via": "Pythagorean"})
+    return hits
+
+
+def plain_sight(needle: int, extra=None) -> dict:
+    """Written in the text vs produced by the count. Both = the only double confession."""
+    written = raw_number_hits(needle, extra)
+    counted = counted_number_hits(needle, extra)
+    wkeys = {_row_key(r) for r in written}
+    ckeys = {_row_key(r) for r in counted}
+    both_keys = wkeys & ckeys
+    both = [r for r in written if _row_key(r) in both_keys]
+    return {
+        "needle": int(needle),
+        "written": written,
+        "counted": counted,
+        "both": both,
+    }
+
+
 def raw_number_hits(needle: int, extra=None) -> list[dict]:
     token = str(int(needle))
     word_hits = {w for w, v in WORD_NUMBERS.items() if v == needle or str(v) == token}
@@ -2785,11 +2841,7 @@ moon = moon_phase()
 h1, h2, h3 = st.columns([3.2, 1.1, 1])
 with h1:
     st.title("NUMBERIN")
-    st.caption(
-        "Type a letter, a name, a date, a verse, Hebrew, Greek, Coptic, Sanskrit, "
-        "Arabic, Aramaic, Russian, Ukrainian, Georgian, Armenian, a phone number, or junk from your notes. "
-        "Local math. Optional live lookups."
-    )
+    st.caption("Drop a name. Or pick a number the books already wrote. The app only marks what the page admits twice.")
 with h2:
     st.write("")
     if st.button("New reading", type="primary", use_container_width=True):
@@ -2935,10 +2987,23 @@ place_label = place_in.strip() if place_in.strip() else None
 lat = lon = None
 
 if not text:
-    st.info(
-        "Waiting for a letter, a name, a date, or anything else. "
-        "Tabs below still work — Patterns, Books, Gospels, and Calibration do not need this box."
-    )
+    st.markdown("##### Plain sight")
+    st.caption("Written = the book says the number. Counted = the letters fold to it. Both = the page confesses twice.")
+    chips = [7, 12, 22, 40, 72, 153, 888]
+    picked = st.radio("Number on the page", chips, index=5, horizontal=True, key="home_plain")
+    sight = plain_sight(int(picked))
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Written", len(sight["written"]))
+    k2.metric("Counted", len(sight["counted"]))
+    k3.metric("Both", len(sight["both"]))
+    if sight["both"]:
+        st.success(f"{picked} is written and counted in {len(sight['both'])} passage(s).")
+        for row in sight["both"][:6]:
+            st.markdown(f"**{row['short']} {row['ref']}** · {row.get('title') or ''}")
+            st.caption((row.get("en") or "")[:220])
+    else:
+        st.info(f"No passage on this shelf both writes {picked} and folds to {picked}. That absence is the finding.")
+    st.caption("More of this lives under Patterns → Plain sight. I Ching and Books do not need the box either.")
 else:
     st.markdown(f'<div class="seal">{seed_sigil(text)}</div>', unsafe_allow_html=True)
     st.caption("Seal of this input — same text, same seal.")
@@ -3758,6 +3823,7 @@ with tab_pat:
     focus = st.selectbox(
         "Lens",
         [
+            "Plain sight",
             "Clusters",
             "Raw digit",
             "Name to verse",
@@ -3782,7 +3848,38 @@ with tab_pat:
         if row["en"]:
             st.caption(row["en"][:220] + ("…" if len(row["en"]) > 220 else ""))
 
-    if focus == "Raw digit":
+    if focus == "Plain sight":
+        st.caption("Three columns. No poem. Both is the only row that matters.")
+        needle = st.number_input("Number the page might confess", min_value=1, max_value=1_000_000, value=153, step=1, key="plain_needle")
+        sight = plain_sight(int(needle))
+        w, c, b = st.columns(3)
+        w.metric("Written out loud", len(sight["written"]))
+        c.metric("Produced by the count", len(sight["counted"]))
+        b.metric("Both", len(sight["both"]))
+        col_w, col_c, col_b = st.columns(3)
+        with col_w:
+            st.markdown("**Written**")
+            if not sight["written"]:
+                st.caption("Silence.")
+            for row in sight["written"][:8]:
+                st.markdown(f"{row['short']} {row['ref']}")
+                st.caption((row.get("en") or "")[:160])
+        with col_c:
+            st.markdown("**Counted**")
+            if not sight["counted"]:
+                st.caption("Silence.")
+            for row in sight["counted"][:8]:
+                st.markdown(f"{row['short']} {row['ref']} · {row.get('raw')}→{row.get('reduced')}")
+                st.caption((row.get("en") or "")[:160])
+        with col_b:
+            st.markdown("**Both**")
+            if not sight["both"]:
+                st.caption("No double confession on this shelf.")
+            for row in sight["both"][:8]:
+                st.markdown(f"**{row['short']} {row['ref']}**")
+                st.caption((row.get("en") or "")[:160])
+
+    elif focus == "Raw digit":
         needle = st.number_input("Digit or number as written", min_value=1, max_value=1_000_000, value=7, step=1, key="raw_needle")
         hits = raw_number_hits(int(needle))
         st.caption(f"{len(hits)} passage(s) where {int(needle)} appears unreduced — in digits or a number-word.")
