@@ -3541,50 +3541,71 @@ with tab_pat:
 
     elif focus == "Blind challenge":
         st.caption(
-            "Two passages. One contains the raw digit. One does not. "
-            "Guess. The score is the only number in this app that can go down."
+            "Two anonymous passages. One contains the raw digit in the body text. "
+            "One does not. Pick A or B. Citations stay hidden until you guess."
         )
         if "chal_score" not in st.session_state:
             st.session_state.chal_score = {"hit": 0, "n": 0}
+
+        def _holds_needle(row, needle) -> bool:
+            token = str(int(needle))
+            blob = " ".join([
+                str(row.get("en") or ""),
+                str(row.get("title") or ""),
+                str(row.get("ref") or ""),
+                str(row.get("src") or ""),
+            ])
+            if token in extract_digits(blob) or token in blob:
+                return True
+            words = set(re.findall(r"[A-Za-z]+", blob.lower()))
+            named = {w for w, v in WORD_NUMBERS.items() if v == int(needle) or str(v) == token}
+            return bool(named & words)
+
         if st.button("New round", key="chal_new") or "chal_round" not in st.session_state:
-            rows = shelf_passages()
+            rows = [r for r in shelf_passages() if (r.get("en") or "").strip()]
             pool = []
-            for probe in (7, 12, 3, 40, 1, 8, 4, 153, 11, 6, 9, 5):
-                hs = raw_number_hits(probe)
-                if hs:
-                    pool.append((probe, hs))
-            if pool and rows:
-                needle, goods = random.choice(pool)
+            for probe in (7, 12, 3, 40, 1, 8, 4, 11, 6, 9, 5):
+                goods = [r for r in rows if _holds_needle(r, probe)]
+                bads = [r for r in rows if not _holds_needle(r, probe)]
+                if goods and bads:
+                    pool.append((probe, goods, bads))
+            if pool:
+                needle, goods, bads = random.choice(pool)
                 good = random.choice(goods)
-                bads = [r for r in rows if r["ref"] != good["ref"] or r["short"] != good["short"]]
-                bads = [r for r in bads if str(needle) not in extract_digits(r["en"] + r["title"]) and str(needle) not in r["en"]]
-                if bads:
-                    bad = random.choice(bads)
-                    cards = [good, bad]
-                    random.shuffle(cards)
-                    st.session_state.chal_round = {
-                        "needle": needle,
-                        "left": cards[0],
-                        "right": cards[1],
-                        "answer": "left" if cards[0] is good else "right",
-                        "resolved": False,
-                    }
+                bad = random.choice(bads)
+                cards = [good, bad]
+                random.shuffle(cards)
+                st.session_state.chal_round = {
+                    "needle": needle,
+                    "left": cards[0],
+                    "right": cards[1],
+                    "answer": "left" if cards[0] is good else "right",
+                    "resolved": False,
+                }
         rnd = st.session_state.get("chal_round")
         if not rnd:
             st.warning("Need at least two passages on the shelf to run a round.")
         else:
             st.metric("Raw number in play", rnd["needle"])
-            st.caption(confidence_line(int(rnd["needle"])) if int(rnd["needle"]) in BASE_RATE else confidence_line(reduce_number(int(rnd["needle"]), True)))
+            st.caption(
+                confidence_line(int(rnd["needle"]))
+                if int(rnd["needle"]) in BASE_RATE
+                else confidence_line(reduce_number(int(rnd["needle"]), True))
+            )
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown(f"**Card A** · {rnd['left']['short']} {rnd['left']['ref']}")
+                st.markdown("**Card A**")
                 st.write(rnd["left"]["en"][:400])
+                if rnd.get("resolved"):
+                    st.caption(f"{rnd['left']['short']} {rnd['left']['ref']}")
             with c2:
-                st.markdown(f"**Card B** · {rnd['right']['short']} {rnd['right']['ref']}")
+                st.markdown("**Card B**")
                 st.write(rnd["right"]["en"][:400])
+                if rnd.get("resolved"):
+                    st.caption(f"{rnd['right']['short']} {rnd['right']['ref']}")
             if not rnd["resolved"]:
                 g1, g2 = st.columns(2)
-                if g1.button("A is the real one", key="chal_a"):
+                if g1.button("I pick A", key="chal_a"):
                     ok = rnd["answer"] == "left"
                     st.session_state.chal_score["n"] += 1
                     st.session_state.chal_score["hit"] += int(ok)
@@ -3592,7 +3613,7 @@ with tab_pat:
                     rnd["ok"] = ok
                     st.session_state.chal_round = rnd
                     st.rerun()
-                if g2.button("B is the real one", key="chal_b"):
+                if g2.button("I pick B", key="chal_b"):
                     ok = rnd["answer"] == "right"
                     st.session_state.chal_score["n"] += 1
                     st.session_state.chal_score["hit"] += int(ok)
@@ -3601,7 +3622,11 @@ with tab_pat:
                     st.session_state.chal_round = rnd
                     st.rerun()
             else:
-                st.success("Correct." if rnd.get("ok") else "Miss. The other card held the raw digit.")
+                winner = "A" if rnd["answer"] == "left" else "B"
+                if rnd.get("ok"):
+                    st.success(f"Correct. Card {winner} held {rnd['needle']}.")
+                else:
+                    st.error(f"Miss. Card {winner} held {rnd['needle']}. The other card did not.")
                 sc = st.session_state.chal_score
                 rate = (100.0 * sc["hit"] / sc["n"]) if sc["n"] else 0
                 st.caption(f"Score {sc['hit']} / {sc['n']} · {rate:.0f}% vs 50% chance.")
