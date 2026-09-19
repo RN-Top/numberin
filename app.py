@@ -1428,7 +1428,7 @@ html, body, [data-testid="stAppViewContainer"] {
   background: radial-gradient(circle at 18% 0%, #1a1408 0%, #050506 42%, #000 100%);
   color: #f3e6c4;
 }
-.block-container {padding-top: 1rem; max-width: 1180px;}
+.block-container {padding-top: 5rem !important; max-width: 1180px;}
 h1 {
   font-weight: 900;
   letter-spacing: .22em;
@@ -2194,7 +2194,10 @@ def maybe_chime(n: int, tag: str = "") -> None:
         return
     st.session_state["chime_sig"] = sig
     st.caption({11: "✦ 11", 22: "✦ 22", 33: "✦ 33"}[int(n)] + " — master landing")
-    st.audio(CHIME_WAV[int(n)], format="audio/wav", autoplay=True)
+    try:
+        st.audio(CHIME_WAV[int(n)], format="audio/wav")
+    except Exception:
+        pass
 
 
 def lens_line(n: int, source: str = "personal") -> str:
@@ -2233,7 +2236,8 @@ def show_thread(n: int) -> None:
 def render_depth(n: int, key: str, source: str = "personal") -> None:
     info = meaning(n)
     maybe_chime(n, key)
-    with st.expander(f"{n} · {info['title']} — full current", expanded=False, key=key):
+    exp_key = f"depth_{key}_{n}"
+    with st.expander(f"{n} · {info['title']} — full current", expanded=False, key=exp_key):
         st.caption(info["keywords"])
         st.markdown(f"**{source} lens.** {lens_line(n, source)}")
         st.caption(confidence_line(n))
@@ -2724,110 +2728,124 @@ payload = st.text_area(
     key="payload",
 )
 
-if not payload.strip():
-    st.info("Waiting for a letter, a name, a date, or anything else.")
-    st.stop()
-
-text = payload.strip()
-st.markdown(f'<div class="seal">{seed_sigil(text)}</div>', unsafe_allow_html=True)
-st.caption("Seal of this input — same text, same seal.")
-
-dates = detect_dates(text)
-times = detect_times(text)
-digits = extract_digits(text)
-birth_time = birth_time_in if know_time else (times[0] if times else None)
-
-place_guess = detect_place(text) or (place_in.strip() if place_in.strip() else None)
-coords_guess = detect_coords(text)
-lat = lon = None
-place_label = place_guess
-if coords_guess:
-    lat, lon = coords_guess
-geo = geocode_place(place_guess) if place_guess else None
-if geo:
-    place_label = geo["label"]
-    if lat is None or lon is None:
-        lat, lon = geo["lat"], geo["lon"]
-earth = earth_profile(place_label, lat, lon) if (place_label and lat is not None and lon is not None) else None
+text = (payload or "").strip()
+dates: list = []
+times: list = []
+digits = ""
+birth_time = birth_time_in if know_time else None
+earth = None
 stamp = reading_stamp()
-stamp_bits = [f"Stamped {stamp['iso']}"]
-if earth:
-    stamp_bits.append(
-        f"{earth['place']} · {abs(earth['lat']):.4f}°{earth['lat_hemi']}, "
-        f"{abs(earth['lon']):.4f}°{earth['lon_hemi']}"
-    )
-st.caption(" · ".join(stamp_bits))
-
-bible_m = BIBLE_RE.search(text)
-bible_ref = f"{bible_m.group('book')} {bible_m.group('ch')}:{bible_m.group('vs')}" if bible_m else None
+latin: list = []
+scripts: list = []
 script_text = text
-if lang not in ("Auto", "English (Latin)"):
-    script_text = transliterate(text, lang)
-latin = letters_latin(text) if lang in ("Auto", "English (Latin)") else []
-native = script_readings(text)
-converted = script_readings(script_text) if script_text != text else []
-scripts = filter_scripts(converted or native, lang)
-if lang == "Auto":
-    scripts = filter_scripts(native, lang)
-if lang not in ("Auto", "English (Latin)") and script_text != text:
-    st.markdown(f"**{lang}:** `{script_text}`")
-    st.caption("Latin letters moved into this script so the cipher can actually count.")
+bible_ref = None
+place_label = place_in.strip() if place_in.strip() else None
+lat = lon = None
 
-slug = _slug(text)
-file_name_md = f"numberin_{slug}.md"
-file_name_png = f"numberin_{slug}.png"
-save_token = hashlib.sha256(
-    f"{text}|{lang}|{stamp['iso']}|{place_label}|{lat}|{lon}".encode("utf-8")
-).hexdigest()[:20]
-if st.session_state.get("_save_token") != save_token:
-    st.session_state._save_token = save_token
-    st.session_state._save_md = build_report(
-        text, latin, scripts, dates, digits, birth_time, earth, stamp
+if not text:
+    st.info(
+        "Waiting for a letter, a name, a date, or anything else. "
+        "Tabs below still work — Patterns, Books, Gospels, and Calibration do not need this box."
     )
-    st.session_state._save_png = build_photo(
-        text, latin, scripts, dates, digits, birth_time, earth, stamp
-    )
-save_md = st.session_state._save_md
-save_png = st.session_state._save_png
-save_l, save_r = st.columns(2)
-with save_l:
-    st.download_button(
-        "Save reading as file",
-        data=save_md,
-        file_name=file_name_md,
-        mime="text/markdown",
-        key="save_md_btn",
-        use_container_width=True,
-    )
-    md_b64 = base64.b64encode(save_md.encode("utf-8") if isinstance(save_md, str) else save_md).decode("ascii")
-    st.markdown(
-        f'<a href="data:text/markdown;charset=utf-8;base64,{md_b64}" '
-        f'download="{file_name_md}" target="_blank" rel="noopener" '
-        f'style="display:block;margin-top:.4rem;padding:.7rem;text-align:center;'
-        f'background:#071018;color:#7ef6ff;border:1.5px solid #00e5ff;'
-        f'font-weight:800;text-decoration:none;border-radius:8px;">'
-        f"Open / save file</a>",
-        unsafe_allow_html=True,
-    )
-with save_r:
-    st.download_button(
-        "Save reading as photo",
-        data=save_png,
-        file_name=file_name_png,
-        mime="image/png",
-        key="save_png_btn",
-        use_container_width=True,
-    )
-    png_b64 = base64.b64encode(save_png).decode("ascii")
-    st.markdown(
-        f'<a href="data:image/png;base64,{png_b64}" '
-        f'download="{file_name_png}" target="_blank" rel="noopener" '
-        f'style="display:block;margin-top:.4rem;padding:.7rem;text-align:center;'
-        f'background:#071018;color:#7ef6ff;border:1.5px solid #00e5ff;'
-        f'font-weight:800;text-decoration:none;border-radius:8px;">'
-        f"Open photo</a>",
-        unsafe_allow_html=True,
-    )
+else:
+    st.markdown(f'<div class="seal">{seed_sigil(text)}</div>', unsafe_allow_html=True)
+    st.caption("Seal of this input — same text, same seal.")
+
+    dates = detect_dates(text)
+    times = detect_times(text)
+    digits = extract_digits(text)
+    birth_time = birth_time_in if know_time else (times[0] if times else None)
+
+    place_guess = detect_place(text) or (place_in.strip() if place_in.strip() else None)
+    coords_guess = detect_coords(text)
+    place_label = place_guess
+    if coords_guess:
+        lat, lon = coords_guess
+    geo = geocode_place(place_guess) if place_guess else None
+    if geo:
+        place_label = geo["label"]
+        if lat is None or lon is None:
+            lat, lon = geo["lat"], geo["lon"]
+    earth = earth_profile(place_label, lat, lon) if (place_label and lat is not None and lon is not None) else None
+    stamp_bits = [f"Stamped {stamp['iso']}"]
+    if earth:
+        stamp_bits.append(
+            f"{earth['place']} · {abs(earth['lat']):.4f}°{earth['lat_hemi']}, "
+            f"{abs(earth['lon']):.4f}°{earth['lon_hemi']}"
+        )
+    st.caption(" · ".join(stamp_bits))
+
+    bible_m = BIBLE_RE.search(text)
+    bible_ref = f"{bible_m.group('book')} {bible_m.group('ch')}:{bible_m.group('vs')}" if bible_m else None
+    script_text = text
+    if lang not in ("Auto", "English (Latin)"):
+        script_text = transliterate(text, lang)
+    latin = letters_latin(text) if lang in ("Auto", "English (Latin)") else []
+    native = script_readings(text)
+    converted = script_readings(script_text) if script_text != text else []
+    scripts = filter_scripts(converted or native, lang)
+    if lang == "Auto":
+        scripts = filter_scripts(native, lang)
+    if lang not in ("Auto", "English (Latin)") and script_text != text:
+        st.markdown(f"**{lang}:** `{script_text}`")
+        st.caption("Latin letters moved into this script so the cipher can actually count.")
+
+if text:
+    slug = _slug(text)
+    file_name_md = f"numberin_{slug}.md"
+    file_name_png = f"numberin_{slug}.png"
+    save_token = hashlib.sha256(
+        f"{text}|{lang}|{stamp['iso']}|{place_label}|{lat}|{lon}".encode("utf-8")
+    ).hexdigest()[:20]
+    if st.session_state.get("_save_token") != save_token:
+        st.session_state._save_token = save_token
+        st.session_state._save_md = build_report(
+            text, latin, scripts, dates, digits, birth_time, earth, stamp
+        )
+        st.session_state._save_png = build_photo(
+            text, latin, scripts, dates, digits, birth_time, earth, stamp
+        )
+    save_md = st.session_state._save_md
+    save_png = st.session_state._save_png
+    save_l, save_r = st.columns(2)
+    with save_l:
+        st.download_button(
+            "Save reading as file",
+            data=save_md,
+            file_name=file_name_md,
+            mime="text/markdown",
+            key="save_md_btn",
+            use_container_width=True,
+        )
+        md_b64 = base64.b64encode(save_md.encode("utf-8") if isinstance(save_md, str) else save_md).decode("ascii")
+        st.markdown(
+            f'<a href="data:text/markdown;charset=utf-8;base64,{md_b64}" '
+            f'download="{file_name_md}" target="_blank" rel="noopener" '
+            f'style="display:block;margin-top:.4rem;padding:.7rem;text-align:center;'
+            f'background:#071018;color:#7ef6ff;border:1.5px solid #00e5ff;'
+            f'font-weight:800;text-decoration:none;border-radius:8px;">'
+            f"Open / save file</a>",
+            unsafe_allow_html=True,
+        )
+    with save_r:
+        st.download_button(
+            "Save reading as photo",
+            data=save_png,
+            file_name=file_name_png,
+            mime="image/png",
+            key="save_png_btn",
+            use_container_width=True,
+        )
+        png_b64 = base64.b64encode(save_png).decode("ascii")
+        st.markdown(
+            f'<a href="data:image/png;base64,{png_b64}" '
+            f'download="{file_name_png}" target="_blank" rel="noopener" '
+            f'style="display:block;margin-top:.4rem;padding:.7rem;text-align:center;'
+            f'background:#071018;color:#7ef6ff;border:1.5px solid #00e5ff;'
+            f'font-weight:800;text-decoration:none;border-radius:8px;">'
+            f"Open photo</a>",
+            unsafe_allow_html=True,
+        )
 st.image(save_png, caption="Phone: tap and hold this picture → Add to Photos / Save Image", use_container_width=True)
 
 tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_gospel, tab_books, tab_pat, tab_cal = st.tabs(
@@ -2998,6 +3016,7 @@ with tab_chart:
         render_depth(nm["soul"][1], "ch_soul")
         render_depth(nm["personality"][1], "ch_pers")
 
+    use_date = _as_date(use_date)
     lp = life_path(use_date)
     st.markdown("##### Date cycles (3-cycle method — month, day, year reduced separately)")
     d1, d2, d3 = st.columns(3)
