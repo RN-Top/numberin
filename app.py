@@ -2846,7 +2846,12 @@ if text:
             f"Open photo</a>",
             unsafe_allow_html=True,
         )
-st.image(save_png, caption="Phone: tap and hold this picture → Add to Photos / Save Image", use_container_width=True)
+if text and isinstance(st.session_state.get("_save_png"), (bytes, bytearray)) and len(st.session_state._save_png) > 100:
+    st.image(
+        st.session_state._save_png,
+        caption="Phone: tap and hold this picture → Add to Photos / Save Image",
+        use_container_width=True,
+    )
 
 tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_gospel, tab_books, tab_pat, tab_cal = st.tabs(
     ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups", "Gospels", "Books", "Patterns", "Calibration"]
