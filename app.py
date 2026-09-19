@@ -957,7 +957,199 @@ VOYNICH = {
     ],
 }
 
-SEED_BOOKS = [PISTIS_SOPHIA, NAG_HAMMADI, VOYNICH]
+BOOK_OF_ENOCH = {
+    "id": "enoch",
+    "title": "1 Enoch (Ethiopic)",
+    "short": "1EN",
+    "tradition": "Second Temple Jewish / Ethiopian canon",
+    "edition": "R.H. Charles, The Book of Enoch, 1912 (public domain).",
+    "source_language": "Ge'ez (from Aramaic / Greek)",
+    "note": (
+        "Watchers, calendar, animals, and the throne. Charles 1912 is public domain. "
+        "These are short pages from that edition so the shelf can count them."
+    ),
+    "numbers": {
+        "7": "Seven archangels. Seven mountains. Seven days.",
+        "70": "Seventy shepherds in the Animal Apocalypse.",
+        "364": "The year Uriel shows Enoch: 364 days.",
+        "200": "Watchers who descend on Mount Hermon.",
+        "10": "Ten weeks of the Apocalypse of Weeks.",
+    },
+    "names": [
+        {"label": "Enoch", "text": "Enoch", "note": "Seventh from Adam. The scribe who walks with God."},
+        {"label": "Azazel", "text": "Azazel", "note": "Teacher of weapons and adornment. Bound in Dudael."},
+        {"label": "Semjaza", "text": "Semjaza", "note": "Chief of the two hundred who swear on Hermon."},
+        {"label": "Uriel", "text": "Uriel", "note": "Guide of the luminaries."},
+    ],
+    "passages": [
+        {"ref": "1:1-2", "title": "The blessing of Enoch",
+         "en": "The words of the blessing of Enoch, wherewith he blessed the elect and righteous, who will be living in the day of tribulation, when all the wicked and godless are to be removed. And he took up his parable and said — Enoch a righteous man, whose eyes were opened by God, saw the vision of the Holy One in the heavens, which the angels showed me, and from them I heard everything, and from them I understood as I saw, but not for this generation, but for a remote one which is for to come.",
+         "note": "The book opens as a blessing aimed past its own century."},
+        {"ref": "6:1-2", "title": "The Watchers descend",
+         "en": "And it came to pass when the children of men had multiplied that in those days were born unto them beautiful and comely daughters. And the angels, the children of the heaven, saw and lusted after them, and said to one another: Come, let us choose us wives from among the children of men and beget us children.",
+         "note": "Genesis 6 retold as a decision."},
+        {"ref": "6:6", "title": "The oath on Hermon",
+         "en": "And they were in all two hundred; who descended in the days of Jared on the summit of Mount Hermon, and they called it Mount Hermon, because they had sworn and bound themselves by mutual imprecations upon it.",
+         "note": "200 on the mountain. The name is the oath."},
+        {"ref": "7:1-2", "title": "Giants",
+         "en": "And all the others together with them took unto themselves wives, and each chose for himself one, and they began to go in unto them and to defile themselves with them, and they taught them charms and enchantments, and the cutting of roots, and made them acquainted with plants. And they became pregnant, and they bare great giants, whose height was three thousand ells.",
+         "note": "Teaching and begetting arrive together."},
+        {"ref": "8:1", "title": "Azazel teaches",
+         "en": "And Azazel taught men to make swords, and knives, and shields, and breastplates, and made known to them the metals of the earth and the art of working them, and bracelets, and ornaments, and the use of antimony, and the beautifying of the eyelids, and all kinds of costly stones, and all colouring tinctures.",
+         "note": "War and adornment from one teacher."},
+        {"ref": "10:4-6", "title": "Azazel bound",
+         "en": "And again the Lord said to Raphael: Bind Azazel hand and foot, and cast him into the darkness: and make an opening in the desert, which is in Dudael, and cast him therein. And place upon him rough and jagged rocks, and cover him with darkness, and let him abide there for ever, and cover his face that he may not see light. And on the day of the great judgement he shall be cast into the fire.",
+         "note": "The binding is geography. Dudael is a hole with a name."},
+        {"ref": "14:8-10", "title": "The throne vision",
+         "en": "And the vision was shown to me thus: Behold, in the vision clouds invited me and a mist invited me, and the course of the stars and the lightnings sped and hastened me, and the winds in the vision caused me to fly and lifted me upward, and bore me into heaven. And I went in till I drew nigh to a wall which is built of crystals and surrounded by tongues of fire: and it began to affright me.",
+         "note": "Enoch is carried. The house is ice and fire."},
+        {"ref": "14:18-20", "title": "The Great Glory",
+         "en": "And I looked and saw therein a lofty throne: its appearance was as crystal, and the wheels thereof as the shining sun, and there was the vision of cherubim. And from underneath the throne came streams of flaming fire so that I could not look thereon. And the Great Glory sat thereon, and His raiment shone more brightly than the sun and was whiter than any snow.",
+         "note": "Daniel's wheels, earlier."},
+        {"ref": "72:1-2", "title": "The book of the luminaries",
+         "en": "The book of the courses of the luminaries of the heaven, the relations of each, according to their classes, their dominion and their seasons, according to their names and places of origin, and according to their months, which Uriel, the holy angel, who was with me, who is their guide, showed me. And this is the first law of the luminaries: the luminary the Sun has its rising in the eastern portals of the heaven, and its setting in the western portals of the heaven.",
+         "note": "Uriel is the guide. The year that follows is 364 days."},
+        {"ref": "82:4-6", "title": "The four intercalary days",
+         "en": "Blessed are all the righteous, blessed are all those who walk in the way of righteousness and sin not as the sinners, in the reckoning of all their days in which the sun traverses the heaven, entering into and departing from the portals for thirty days with the heads of thousands of the order of the stars, together with the four which are intercalated which divide the four portions of the year. And owing to them men shall be at fault and not reckon them in the whole reckoning of the year.",
+         "note": "Twelve thirties plus four days. Missing the four is the error."},
+        {"ref": "85:3-4", "title": "Animal Apocalypse begins",
+         "en": "And I saw how a white bull came forth from the earth, and that white bull was followed by two heifers, and one of them was black and the other red. And that black heifer calved a black wild-boar and that red heifer brought forth a white sheep.",
+         "note": "Adam as a white bull. Cain black, Abel red."},
+        {"ref": "90:37-38", "title": "The white bull at the end",
+         "en": "And I saw that a white bull was born, with large horns, and all the beasts of the field and all the birds of the air feared him and made petition to him all the time. And I saw till all their generations were transformed, and they all became white bulls.",
+         "note": "The last image of the dream. The species is undone."},
+        {"ref": "91:12-13", "title": "The eighth week",
+         "en": "And after that there shall be another, the eighth week, that of righteousness, and a sword shall be given to it that a righteous judgement may be executed on the oppressors, and sinners shall be delivered into the hands of the righteous. And at its close they shall acquire houses through their righteousness, and a house shall be built for the Great King in glory for evermore.",
+         "note": "Apocalypse of Weeks. House after sword."},
+        {"ref": "108:1", "title": "Another book Enoch wrote",
+         "en": "Another book which Enoch wrote for his son Methuselah and for those who will come after him and keep the law in the last days.",
+         "note": "The last page names the reader."},
+    ],
+}
+
+# King Wen sequence. bits are bottom-to-top, 1=yang, 0=yin.
+ICHING_HEX = [
+    {"n": 1, "name": "The Creative", "pinyin": "Qián", "bits": "111111", "judgment": "The Creative works sublime success, furthering through perseverance."},
+    {"n": 2, "name": "The Receptive", "pinyin": "Kūn", "bits": "000000", "judgment": "The Receptive brings sublime success, furthering through the perseverance of a mare. If the superior person takes the lead, he goes astray; if he follows, he finds guidance."},
+    {"n": 3, "name": "Difficulty at the Beginning", "pinyin": "Zhūn", "bits": "100010", "judgment": "Difficulty at the beginning works supreme success. Furthering through perseverance. Nothing should be undertaken. It furthers one to appoint helpers."},
+    {"n": 4, "name": "Youthful Folly", "pinyin": "Méng", "bits": "010001", "judgment": "Youthful folly has success. It is not I who seek the young fool; the young fool seeks me. At the first oracle I inform him. If he asks two or three times, it is importunity."},
+    {"n": 5, "name": "Waiting", "pinyin": "Xū", "bits": "111010", "judgment": "Waiting. If you are sincere, you have light and success. Perseverance brings good fortune. It furthers one to cross the great water."},
+    {"n": 6, "name": "Conflict", "pinyin": "Sòng", "bits": "010111", "judgment": "Conflict. You are sincere and are being obstructed. A cautious halt halfway brings good fortune. Going through to the end brings misfortune. It furthers one to see the great person."},
+    {"n": 7, "name": "The Army", "pinyin": "Shī", "bits": "010000", "judgment": "The Army needs perseverance and a strong person. Good fortune without blame."},
+    {"n": 8, "name": "Holding Together", "pinyin": "Bǐ", "bits": "000010", "judgment": "Holding together brings good fortune. Inquire of the oracle once again whether you possess sublimity, constancy, and perseverance; then there is no blame."},
+    {"n": 9, "name": "The Taming Power of the Small", "pinyin": "Xiǎo Xù", "bits": "111011", "judgment": "The taming power of the small has success. Dense clouds, no rain from our western region."},
+    {"n": 10, "name": "Treading", "pinyin": "Lǚ", "bits": "110111", "judgment": "Treading upon the tail of the tiger. It does not bite the person. Success."},
+    {"n": 11, "name": "Peace", "pinyin": "Tài", "bits": "111000", "judgment": "Peace. The small departs, the great approaches. Good fortune. Success."},
+    {"n": 12, "name": "Standstill", "pinyin": "Pǐ", "bits": "000111", "judgment": "Standstill. The small approaches, the great departs."},
+    {"n": 13, "name": "Fellowship with Men", "pinyin": "Tóng Rén", "bits": "101111", "judgment": "Fellowship with men in the open. Success. It furthers one to cross the great water. The perseverance of the superior person furthers."},
+    {"n": 14, "name": "Possession in Great Measure", "pinyin": "Dà Yǒu", "bits": "111101", "judgment": "Possession in great measure. Supreme success."},
+    {"n": 15, "name": "Modesty", "pinyin": "Qiān", "bits": "001000", "judgment": "Modesty creates success. The superior person carries things through."},
+    {"n": 16, "name": "Enthusiasm", "pinyin": "Yù", "bits": "000100", "judgment": "Enthusiasm. It furthers one to install helpers and to set armies marching."},
+    {"n": 17, "name": "Following", "pinyin": "Suí", "bits": "011001", "judgment": "Following has supreme success. Perseverance furthers. No blame."},
+    {"n": 18, "name": "Work on What Has Been Spoiled", "pinyin": "Gǔ", "bits": "100110", "judgment": "Work on what has been spoiled has supreme success. It furthers one to cross the great water. Before the starting point, three days. After the starting point, three days."},
+    {"n": 19, "name": "Approach", "pinyin": "Lín", "bits": "110000", "judgment": "Approach has supreme success. Perseverance furthers. When the eighth month comes, there will be misfortune."},
+    {"n": 20, "name": "Contemplation", "pinyin": "Guān", "bits": "000011", "judgment": "Contemplation. The ablution has been made, but not yet the offering. Full of trust they look up to him."},
+    {"n": 21, "name": "Biting Through", "pinyin": "Shì Kè", "bits": "100101", "judgment": "Biting through has success. It is favorable to let justice be administered."},
+    {"n": 22, "name": "Grace", "pinyin": "Bì", "bits": "101001", "judgment": "Grace has success. In small matters it is favorable to undertake something."},
+    {"n": 23, "name": "Splitting Apart", "pinyin": "Bō", "bits": "000001", "judgment": "Splitting apart. It does not further one to go anywhere."},
+    {"n": 24, "name": "Return", "pinyin": "Fù", "bits": "100000", "judgment": "Return. Success. Going out and coming in without error. Friends come without blame. The seventh day brings return. It furthers one to have somewhere to go."},
+    {"n": 25, "name": "Innocence", "pinyin": "Wú Wàng", "bits": "100111", "judgment": "Innocence. Supreme success. Perseverance furthers. If someone is not as he should be, he has misfortune, and it does not further him to undertake anything."},
+    {"n": 26, "name": "The Taming Power of the Great", "pinyin": "Dà Chù", "bits": "111001", "judgment": "The taming power of the great. Perseverance furthers. Not eating at home brings good fortune. It furthers one to cross the great water."},
+    {"n": 27, "name": "The Corners of the Mouth", "pinyin": "Yí", "bits": "100001", "judgment": "The corners of the mouth. Perseverance brings good fortune. Pay heed to the providing of nourishment and to what a person seeks to fill their own mouth with."},
+    {"n": 28, "name": "Preponderance of the Great", "pinyin": "Dà Guò", "bits": "011110", "judgment": "Preponderance of the great. The ridgepole sags to the breaking point. It furthers one to have somewhere to go. Success."},
+    {"n": 29, "name": "The Abysmal", "pinyin": "Kǎn", "bits": "010010", "judgment": "The Abysmal repeated. If you are sincere, you have success in your heart, and whatever you do succeeds."},
+    {"n": 30, "name": "The Clinging", "pinyin": "Lí", "bits": "101101", "judgment": "The Clinging. Perseverance furthers. It brings success. Care of the cow brings good fortune."},
+    {"n": 31, "name": "Influence", "pinyin": "Xián", "bits": "001110", "judgment": "Influence. Success. Perseverance furthers. To take a maiden to wife brings good fortune."},
+    {"n": 32, "name": "Duration", "pinyin": "Héng", "bits": "011100", "judgment": "Duration. Success. No blame. Perseverance furthers. It furthers one to have somewhere to go."},
+    {"n": 33, "name": "Retreat", "pinyin": "Dùn", "bits": "001111", "judgment": "Retreat. Success. In what is small, perseverance furthers."},
+    {"n": 34, "name": "The Power of the Great", "pinyin": "Dà Zhuàng", "bits": "111100", "judgment": "The power of the great. Perseverance furthers."},
+    {"n": 35, "name": "Progress", "pinyin": "Jìn", "bits": "000101", "judgment": "Progress. The powerful prince is honored with horses in large numbers. In a single day he is granted audience three times."},
+    {"n": 36, "name": "Darkening of the Light", "pinyin": "Míng Yí", "bits": "101000", "judgment": "Darkening of the light. In adversity it furthers one to be persevering."},
+    {"n": 37, "name": "The Family", "pinyin": "Jiā Rén", "bits": "101011", "judgment": "The family. The perseverance of the woman furthers."},
+    {"n": 38, "name": "Opposition", "pinyin": "Kuí", "bits": "110101", "judgment": "Opposition. In small matters, good fortune."},
+    {"n": 39, "name": "Obstruction", "pinyin": "Jiǎn", "bits": "001010", "judgment": "Obstruction. The southwest furthers. The northeast does not further. It furthers one to see the great person. Perseverance brings good fortune."},
+    {"n": 40, "name": "Deliverance", "pinyin": "Xiè", "bits": "010100", "judgment": "Deliverance. The southwest furthers. If there is no longer anything where one has to go, return brings good fortune. If there is still something where one has to go, hastening brings good fortune."},
+    {"n": 41, "name": "Decrease", "pinyin": "Sǔn", "bits": "110001", "judgment": "Decrease combined with sincerity brings about supreme good fortune without blame. One may be persevering in this. It furthers one to undertake something."},
+    {"n": 42, "name": "Increase", "pinyin": "Yì", "bits": "100011", "judgment": "Increase. It furthers one to undertake something. It furthers one to cross the great water."},
+    {"n": 43, "name": "Break-through", "pinyin": "Guài", "bits": "111110", "judgment": "Break-through. One must resolutely make the matter known at the court of the king. It must be announced truthfully. Danger. It is necessary to notify one's own city. It does not further to resort to arms."},
+    {"n": 44, "name": "Coming to Meet", "pinyin": "Gòu", "bits": "011111", "judgment": "Coming to meet. The maiden is powerful. One should not marry such a maiden."},
+    {"n": 45, "name": "Gathering Together", "pinyin": "Cuì", "bits": "000110", "judgment": "Gathering together. Success. The king approaches his temple. It furthers one to see the great person. This brings success. Perseverance furthers."},
+    {"n": 46, "name": "Pushing Upward", "pinyin": "Shēng", "bits": "011000", "judgment": "Pushing upward has supreme success. One must see the great person. Fear not. Departure toward the south brings good fortune."},
+    {"n": 47, "name": "Oppression", "pinyin": "Kùn", "bits": "010110", "judgment": "Oppression. Success. Perseverance. The great person brings about good fortune. No blame. When one has something to say, it is not believed."},
+    {"n": 48, "name": "The Well", "pinyin": "Jǐng", "bits": "011010", "judgment": "The Well. The town may be changed, but the well cannot be changed. It neither decreases nor increases. They come and go and draw from the well. If one gets down almost to the water and the rope does not go all the way, or the jug breaks, it brings misfortune."},
+    {"n": 49, "name": "Revolution", "pinyin": "Gé", "bits": "101110", "judgment": "Revolution. On your own day you are believed. Supreme success, furthering through perseverance. Remorse disappears."},
+    {"n": 50, "name": "The Cauldron", "pinyin": "Dǐng", "bits": "011101", "judgment": "The Cauldron. Supreme good fortune. Success."},
+    {"n": 51, "name": "The Arousing", "pinyin": "Zhèn", "bits": "100100", "judgment": "The Arousing. Success. Shock comes — oh, oh! Laughing words — ha, ha! The shock terrifies for a hundred miles, and he does not let fall the sacrificial spoon and chalice."},
+    {"n": 52, "name": "Keeping Still", "pinyin": "Gèn", "bits": "001001", "judgment": "Keeping still. Keeping his back still so that he no longer feels his body. He goes into his courtyard and does not see his people. No blame."},
+    {"n": 53, "name": "Development", "pinyin": "Jiàn", "bits": "001011", "judgment": "Development. The maiden is given in marriage. Good fortune. Perseverance furthers."},
+    {"n": 54, "name": "The Marrying Maiden", "pinyin": "Guī Mèi", "bits": "110100", "judgment": "The marrying maiden. Undertakings bring misfortune. Nothing that would further."},
+    {"n": 55, "name": "Abundance", "pinyin": "Fēng", "bits": "101100", "judgment": "Abundance has success. The king attains abundance. Be not sad. Be like the sun at midday."},
+    {"n": 56, "name": "The Wanderer", "pinyin": "Lǚ", "bits": "001101", "judgment": "The Wanderer. Success through smallness. Perseverance brings good fortune to the wanderer."},
+    {"n": 57, "name": "The Gentle", "pinyin": "Xùn", "bits": "011011", "judgment": "The Gentle. Success through what is small. It furthers one to have somewhere to go. It furthers one to see the great person."},
+    {"n": 58, "name": "The Joyous", "pinyin": "Duì", "bits": "110110", "judgment": "The Joyous. Success. Perseverance is favorable."},
+    {"n": 59, "name": "Dispersion", "pinyin": "Huàn", "bits": "010011", "judgment": "Dispersion. Success. The king approaches his temple. It furthers one to cross the great water. Perseverance furthers."},
+    {"n": 60, "name": "Limitation", "pinyin": "Jié", "bits": "110010", "judgment": "Limitation. Success. Galling limitation must not be persevered in."},
+    {"n": 61, "name": "Inner Truth", "pinyin": "Zhōng Fú", "bits": "110011", "judgment": "Inner truth. Pigs and fishes. Good fortune. It furthers one to cross the great water. Perseverance furthers."},
+    {"n": 62, "name": "Preponderance of the Small", "pinyin": "Xiǎo Guò", "bits": "001100", "judgment": "Preponderance of the small. Success. Perseverance furthers. Small things may be done; great things should not be done. The flying bird brings the message: it is not well to strive upward, it is well to remain below. Great good fortune."},
+    {"n": 63, "name": "After Completion", "pinyin": "Jì Jì", "bits": "101010", "judgment": "After completion. Success in small matters. Perseverance furthers. At the beginning good fortune, at the end disorder."},
+    {"n": 64, "name": "Before Completion", "pinyin": "Wèi Jì", "bits": "010101", "judgment": "Before completion. Success. But if the little fox, after nearly completing the crossing, gets his tail in the water, there is nothing that would further."},
+]
+
+TRIGRAM = {
+    "111": ("Heaven", "Qián", "☰", "the Creative"),
+    "000": ("Earth", "Kūn", "☷", "the Receptive"),
+    "100": ("Thunder", "Zhèn", "☳", "the Arousing"),
+    "010": ("Water", "Kǎn", "☵", "the Abysmal"),
+    "001": ("Mountain", "Gèn", "☶", "Keeping Still"),
+    "011": ("Wind", "Xùn", "☴", "the Gentle"),
+    "101": ("Flame", "Lí", "☲", "the Clinging"),
+    "110": ("Lake", "Duì", "☱", "the Joyous"),
+}
+
+ICHING_BY_BITS = {h["bits"]: h for h in ICHING_HEX}
+ICHING_BY_N = {h["n"]: h for h in ICHING_HEX}
+
+
+def iching_draw(bits: str) -> str:
+    rows = []
+    for i, b in enumerate(reversed(bits), 1):
+        rows.append("━━━━━━" if b == "1" else "━━  ━━")
+    return "\n".join(rows)
+
+
+def iching_lookup(bits: str) -> dict:
+    return ICHING_BY_BITS.get(bits) or {"n": 0, "name": "Unknown", "pinyin": "", "bits": bits, "judgment": ""}
+
+
+def iching_cast() -> dict:
+    """Three-coin method. 6 old yin, 7 young yang, 8 young yin, 9 old yang."""
+    values = []
+    for _ in range(6):
+        coins = [random.choice((2, 3)) for _ in range(3)]
+        values.append(sum(coins))
+    present = "".join("1" if v in (7, 9) else "0" for v in values)
+    future = "".join(
+        ("0" if v == 9 else "1" if v == 6 else ("1" if v in (7, 9) else "0"))
+        for v in values
+    )
+    changing = [i + 1 for i, v in enumerate(values) if v in (6, 9)]
+    return {
+        "values": values,
+        "present": iching_lookup(present),
+        "future": iching_lookup(future),
+        "changing": changing,
+    }
+
+
+def iching_from_number(n: int) -> dict:
+    n = abs(int(n))
+    if n == 0:
+        n = 64
+    idx = ((n - 1) % 64) + 1
+    return ICHING_BY_N[idx]
+
+SEED_BOOKS = [PISTIS_SOPHIA, NAG_HAMMADI, VOYNICH, BOOK_OF_ENOCH]
+
 
 CORPUS_DIR = Path(__file__).resolve().parent / "corpus"
 
@@ -2853,8 +3045,8 @@ if text and isinstance(st.session_state.get("_save_png"), (bytes, bytearray)) an
         use_container_width=True,
     )
 
-tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_gospel, tab_books, tab_pat, tab_cal = st.tabs(
-    ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups", "Gospels", "Books", "Patterns", "Calibration"]
+tab_decode, tab_chart, tab_ciphers, tab_moon, tab_pair, tab_look, tab_gospel, tab_books, tab_iching, tab_pat, tab_cal = st.tabs(
+    ["Decode", "Body chart", "All ciphers", "Moon", "Compare", "Lookups", "Gospels", "Books", "I Ching", "Patterns", "Calibration"]
 )
 
 with tab_decode:
@@ -3360,7 +3552,7 @@ with tab_books:
     st.subheader("Books of knowledge")
     st.caption(
         "Any book can plug in. Drop a JSON file in `corpus/` or upload one here. "
-        "Started with Bible, Nag Hammadi, and Pistis Sophia. "
+        "Started with Bible, Nag Hammadi, Pistis Sophia, Enoch, and Voynich. I Ching has its own tab. "
         "Nag Hammadi English translations are mostly still under copyright — "
         "the shelf ships the library map plus public-domain Oxyrhynchus Thomas fragments. "
         "Paste a page you have the right to count."
@@ -3460,6 +3652,84 @@ with tab_books:
                 pack_s = count_text(passage["src"])
                 for r in pack_s.get("scripts") or []:
                     st.caption(f"{r['name']} {r['raw']} → {r['reduced']} · " + " → ".join(map(str, r["steps"])))
+
+
+with tab_iching:
+    st.subheader("I Ching")
+    st.caption(
+        "Sixty-four hexagrams. The number is the book. "
+        "Cast with three coins, or look a figure up by number. "
+        "Judgments follow Legge's public-domain English (1899), shortened."
+    )
+    q = st.text_input("Question (optional)", key="iching_q", placeholder="What wants to move?")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Cast three coins", key="iching_cast_btn", use_container_width=True):
+            st.session_state["iching_cast"] = iching_cast()
+            st.session_state["iching_q_saved"] = q.strip()
+    with c2:
+        look = st.number_input("Look up hexagram", min_value=1, max_value=64, value=1, step=1, key="iching_look")
+        if st.button("Open that figure", key="iching_open", use_container_width=True):
+            h = iching_from_number(int(look))
+            st.session_state["iching_cast"] = {
+                "values": [7 if b == "1" else 8 for b in h["bits"]],
+                "present": h,
+                "future": h,
+                "changing": [],
+            }
+            st.session_state["iching_q_saved"] = q.strip()
+
+    if text:
+        dest = name_profile(text)["destiny"][1] if letters_latin(text) else None
+        if dest:
+            mapped = iching_from_number(dest)
+            st.caption(f"This specimen's Destiny {dest} maps to hexagram {mapped['n']} · {mapped['name']}.")
+            if st.button(f"Open hexagram {mapped['n']}", key="iching_from_name"):
+                st.session_state["iching_cast"] = {
+                    "values": [7 if b == "1" else 8 for b in mapped["bits"]],
+                    "present": mapped,
+                    "future": mapped,
+                    "changing": [],
+                }
+
+    pack = st.session_state.get("iching_cast")
+    if pack:
+        present = pack["present"]
+        future = pack["future"]
+        asked = st.session_state.get("iching_q_saved") or ""
+        if asked:
+            st.markdown(f"**Asked:** {asked}")
+        a, b = st.columns(2)
+        with a:
+            st.markdown(f"##### {present['n']} · {present['name']}")
+            st.caption(f"{present['pinyin']} · present")
+            st.code(iching_draw(present["bits"]), language=None)
+            lower = TRIGRAM[present["bits"][:3]]
+            upper = TRIGRAM[present["bits"][3:]]
+            st.caption(f"Below {lower[2]} {lower[0]} · above {upper[2]} {upper[0]}")
+            st.write(present["judgment"])
+            raw, steps = present["n"], None
+            red, steps = reduce_trace(present["n"])
+            st.caption(f"Figure {present['n']} → {red} ({' → '.join(map(str, steps))}). {meaning(red)['title']}.")
+            render_depth(red, f"iching_{present['n']}", "cipher")
+        with b:
+            if pack["changing"]:
+                st.markdown(f"##### {future['n']} · {future['name']}")
+                st.caption(f"{future['pinyin']} · after the changing lines")
+                st.code(iching_draw(future["bits"]), language=None)
+                st.write(future["judgment"])
+                st.caption("Changing lines: " + ", ".join(str(x) for x in pack["changing"]) + " (bottom = 1).")
+            else:
+                st.caption("No changing lines. The present figure stands.")
+        remember_reading("iching", present["n"], present["name"])
+    else:
+        st.info("Ask something, then cast. Or open a figure by number 1–64.")
+
+    with st.expander("All sixty-four", expanded=False):
+        for h in ICHING_HEX:
+            st.markdown(f"**{h['n']} · {h['name']}** ({h['pinyin']})")
+            st.caption(h["judgment"])
+
 
 with tab_pat:
     st.subheader("Pattern finder")
