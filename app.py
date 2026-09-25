@@ -287,8 +287,8 @@ with st.sidebar:
         st.caption("Carrier active: Miraculous repair frequency (528 Hz)")
 
     st.markdown("---")
-    anchor_name = st.text_input("Anchor Name", value="Erin")
-    anchor_date = st.date_input("Anchor Date", value=datetime.date(1983, 11, 19))
+    anchor_name = st.text_input("Anchor Name", value="Seeker")
+    anchor_date = st.date_input("Anchor Date", value=datetime.date.today())
     
     lp_anchor = life_path(anchor_date)
     sun_anchor = get_approx_sun_sign(anchor_date)
@@ -564,7 +564,7 @@ with tabs[4]:
         lp1 = life_path(p1_date)
         st.markdown(f"Primary Life Path: `{lp1}`")
     with col_c2:
-        p2_date = st.date_input("Second Anchor Date", value=datetime.date(1985, 5, 15), key="comp_d2")
+        p2_date = st.date_input("Second Anchor Date", value=datetime.date(2000, 1, 1), key="comp_d2")
         lp2 = life_path(p2_date)
         st.markdown(f"Secondary Life Path: `{lp2}`")
 
