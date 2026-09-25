@@ -5,57 +5,138 @@ import re
 import urllib.request
 from collections import Counter
 
-# Set Page Config
+# Page Configuration
 st.set_page_config(page_title="Numberin", page_icon="✨", layout="wide")
 
-# Custom Styling (Brass & Parchment / Dark Mystery Aesthetic)
+# ==========================================
+# LUMINOUS BRASS & ETHEREAL GLOW STYLING
+# ==========================================
 st.markdown("""
 <style>
-    .main { background-color: #0d1117; color: #e6edf3; }
-    .brass-card {
-        background: linear-gradient(135deg, #1f1b18 0%, #161b22 100%);
-        border: 1px solid #c5a059;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(197, 160, 89, 0.15);
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;600;700&display=swap');
+
+    .stApp {
+        background: radial-gradient(circle at 50% 8%, #1c1813 0%, #0a0c10 100%);
+        color: #e6edf3;
+        font-family: 'Inter', sans-serif;
     }
+    
+    h1, h2, h3, h4, .brand-title {
+        font-family: 'Cinzel', serif !important;
+        letter-spacing: 0.08em;
+    }
+
+    .brand-title {
+        font-size: 2.4rem;
+        font-weight: 900;
+        color: #fff4cc;
+        text-shadow: 0 0 12px rgba(245, 197, 66, 0.75), 0 0 32px rgba(212, 175, 55, 0.45);
+        margin-bottom: 2px;
+    }
+
+    .brass-panel {
+        background: rgba(20, 23, 28, 0.88);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(212, 175, 55, 0.45);
+        border-radius: 12px;
+        padding: 24px;
+        margin: 16px 0 24px 0;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(212, 175, 55, 0.12);
+    }
+
     .ring-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 15px;
-        margin: 20px 0;
+        gap: 16px;
+        margin: 24px 0;
+        flex-wrap: wrap;
     }
+
     .ring-badge {
-        padding: 12px 24px;
-        border-radius: 30px;
+        padding: 14px 26px;
+        border-radius: 35px;
         border: 2px solid #d4af37;
-        background: #111418;
-        color: #f3e5ab;
-        font-weight: bold;
+        background: linear-gradient(145deg, #1c1914, #0b0d10);
+        color: #fff1b8;
+        font-weight: 700;
         text-align: center;
-        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        letter-spacing: 0.05em;
+        box-shadow: 0 0 16px rgba(212, 175, 55, 0.4), inset 0 0 8px rgba(212, 175, 55, 0.25);
     }
+
     .tincture-box {
-        background: #12100e;
-        border-left: 4px solid #c5a059;
-        padding: 18px;
-        border-radius: 4px;
-        font-size: 1.08rem;
-        line-height: 1.7;
-        color: #f5eedc;
+        background: linear-gradient(135deg, rgba(28, 24, 20, 0.95), rgba(12, 14, 18, 0.95));
+        border-left: 4px solid #f5c542;
+        border-top: 1px solid rgba(245, 197, 66, 0.25);
+        border-right: 1px solid rgba(245, 197, 66, 0.25);
+        border-bottom: 1px solid rgba(245, 197, 66, 0.25);
+        padding: 22px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #fdfaf0;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     }
-    .ref-box {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-left: 3px solid #d4af37;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 0.92rem;
-        color: #e6edf3;
+
+    .verse-card {
+        background: rgba(18, 21, 28, 0.92);
+        border-left: 3px solid #e5a93b;
+        border-radius: 6px;
+        padding: 18px 22px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        line-height: 1.7;
+        font-size: 1.02rem;
+        color: #f1f4f8;
+    }
+
+    .verse-badge {
+        display: inline-block;
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: 0.82rem;
+        color: #f5c542;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 6px;
+    }
+
+    .mark-glow {
+        background: rgba(245, 197, 66, 0.2);
+        color: #fff9d6;
+        border-bottom: 2px solid #f5c542;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-weight: 600;
+        text-shadow: 0 0 8px rgba(245, 197, 66, 0.6);
+    }
+
+    .gematria-pill {
+        font-size: 0.82rem;
+        padding: 3px 9px;
+        border-radius: 12px;
+        background: #24221b;
+        border: 1px solid #735924;
+        color: #d1b46a;
+        margin-left: 8px;
+    }
+
+    /* Print View Styling */
+    @media print {
+        body, .stApp {
+            background: #ffffff !important;
+            color: #111111 !important;
+        }
+        .brass-panel, .tincture-box, .verse-card {
+            background: #ffffff !important;
+            color: #111111 !important;
+            border: 1px solid #999999 !important;
+            box-shadow: none !important;
+        }
+        header, footer, [data-testid="stSidebar"] {
+            display: none !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -159,11 +240,11 @@ KNOWLEDGE_BASE = {
 }
 
 # ==========================================
-# 2. CORE HELPER FUNCTIONS & DEEP-TIME CALCS
+# 2. CORE HELPER FUNCTIONS & DEEP PARSING
 # ==========================================
 
 def reduce_number(n: int, preserve_master: bool = True) -> int:
-    n = abs(n)
+    n = abs(int(n))
     while n > 9:
         if preserve_master and n in (11, 22, 33):
             return n
@@ -190,7 +271,7 @@ def life_path_components(year: int, month: int, day: int) -> int:
 def name_profile(name: str):
     clean = re.sub(r'[^A-Z]', '', name.upper())
     if not clean:
-        return {"expression": 0, "soul_urge": 0, "personality": 0, "pyth_sum": 0, "chaldean_sum": 0}
+        return {"expression": 0, "soul_urge": 0, "personality": 0, "pyth_sum": 0, "chaldean_sum": 0, "clean": ""}
     
     vowels = "AEIOU"
     p_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean]
@@ -204,7 +285,8 @@ def name_profile(name: str):
         "soul_urge": reduce_number(sum(v_vals)) if v_vals else 0,
         "personality": reduce_number(sum(co_vals)) if co_vals else 0,
         "pyth_sum": sum(p_vals),
-        "chaldean_sum": sum(c_vals)
+        "chaldean_sum": sum(c_vals),
+        "clean": clean
     }
 
 def personal_cycles_components(month: int, day: int, target_year: int):
@@ -277,44 +359,60 @@ def get_approx_sun_sign_components(month: int, day: int) -> str:
 def evaluate_compatibility(lp1: int, lp2: int) -> str:
     diff = abs(lp1 - lp2)
     if diff == 0:
-        return "Resonant Unity: Shared primary frequency. Immediate mutual mirror, potential for echo chamber."
+        return "Resonant Unity: Shared primary frequency. Mutual mirror, instant familiarity."
     elif diff in (2, 4):
         return "Harmonic Accord: Complementary rhythm. The difference creates productive leverage."
     elif diff in (1, 3):
-        return "Friction and Spark: Dynamic tension. Progress requires deliberate accommodation."
+        return "Dynamic Spark: Productive tension. Growth requires deliberate accommodation."
     return "Neutral Orbit: Independent wavelengths that interact without friction or fusion."
 
-# Helper to find snippets/references for words in text
-def extract_references(full_text: str, query_token: str, max_refs: int = 5):
-    lines = full_text.splitlines()
+def purify_corpus(raw_text: str) -> str:
+    start_pos = 0
+    start_pattern = re.search(r'\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*', raw_text, re.IGNORECASE)
+    if start_pattern:
+        start_pos = start_pattern.end()
+
+    end_pos = len(raw_text)
+    end_pattern = re.search(r'\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*', raw_text, re.IGNORECASE)
+    if end_pattern:
+        end_pos = end_pattern.start()
+
+    clean = raw_text[start_pos:end_pos].strip()
+    clean = re.sub(r'<<.*?>>', '', clean)
+    return clean
+
+def extract_full_verses(corpus_text: str, query: str, max_results: int = 5):
+    raw_paragraphs = re.split(r'\n\s*\n+', corpus_text)
     matches = []
-    pattern = re.compile(rf'\b{re.escape(query_token)}\b', re.IGNORECASE)
-    for idx, line in enumerate(lines):
-        clean_l = line.strip()
-        if not clean_l:
+    q_pattern = re.compile(rf'\b{re.escape(query)}\b', re.IGNORECASE)
+
+    for p in raw_paragraphs:
+        verse = " ".join(line.strip() for line in p.splitlines() if line.strip())
+        if len(verse) < 30 or "project gutenberg" in verse.lower():
             continue
-        if pattern.search(clean_l):
-            matches.append(f"Line {idx+1}: {clean_l}")
-            if len(matches) >= max_refs:
+        if q_pattern.search(verse):
+            verse_root = reduce_number(sum(ord(c) - 64 for c in verse.upper() if 'A' <= c <= 'Z'))
+            highlighted = q_pattern.sub(lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse)
+            matches.append((highlighted, verse_root))
+            if len(matches) >= max_results:
                 break
     return matches
 
 # ==========================================
-# 3. SIDEBAR: AUDIO & NATAL ANCHOR
+# 3. SIDEBAR: AUDIO & UNIVERSAL NATAL ANCHOR
 # ==========================================
 
 with st.sidebar:
-    st.title("⚓ Natal Anchor")
+    st.markdown("<h2 style='color:#f5c542; text-shadow: 0 0 10px rgba(245,197,66,0.5);'>⚓ NATAL ANCHOR</h2>", unsafe_allow_html=True)
     
-    st.subheader("Frequency Carrier")
-    freq_choice = st.radio("Solfeggio Carrier", ["Silence", "432 Hz", "528 Hz"], horizontal=True)
+    freq_choice = st.radio("Harmonic Carrier", ["Silence", "432 Hz", "528 Hz"], horizontal=True)
     if freq_choice == "432 Hz":
-        st.caption("Carrier active: Natural harmonic geometry (432 Hz)")
+        st.caption("✨ Carrier Active: Harmonic Sacred Geometry (432 Hz)")
     elif freq_choice == "528 Hz":
-        st.caption("Carrier active: Miraculous repair frequency (528 Hz)")
+        st.caption("✨ Carrier Active: DNA Transformation Frequency (528 Hz)")
 
     st.markdown("---")
-    anchor_name = st.text_input("Anchor Name", value="Seeker")
+    anchor_name = st.text_input("Vessel / Anchor Name", value="Seeker")
     
     st.markdown("**Anchor Date**")
     s_col1, s_col2, s_col3 = st.columns([1.2, 1, 1])
@@ -338,14 +436,14 @@ with st.sidebar:
     st.markdown(f"**Sun Sign:** `{sun_anchor}`")
     st.markdown(f"**Moon Phase:** `{moon_anchor}`")
     st.markdown("---")
-    st.caption("Universal Anchor pinned across all active reading chambers.")
+    st.caption("Universal Anchor active across all chambers.")
 
 # ==========================================
 # 4. UNIVERSAL SEARCH / INPUT CLASSIFIER
 # ==========================================
 
-st.title("NUMBERIN")
-search_query = st.text_input("Enter any name, word, phrase, or date (e.g. '33 CE', '4000 BCE', '1983-11-19'):", "")
+st.markdown("<div class='brand-title'>NUMBERIN</div>", unsafe_allow_html=True)
+search_query = st.text_input("Enter any name, phrase, epoch, or date to discern its root:", "")
 
 if search_query:
     parsed_date_match = re.match(r'^(\d+)[-/.](\d+)[-/.](\d+)(\s+(BCE|BC|CE|AD))?$', search_query.strip(), re.IGNORECASE)
@@ -367,13 +465,13 @@ if search_query:
         st.info(f"**Text Input Detected**: Expression `{prof['expression']}` | Soul Urge `{prof['soul_urge']}` | Personality `{prof['personality']}` | Pythagorean Sum `{prof['pyth_sum']}`")
 
 # ==========================================
-# 5. CHAMBERS / TABS
+# 5. ILLUMINATED CHAMBERS / TABS
 # ==========================================
 
 tabs = st.tabs([
     "Alchemy Pharmacy", 
     "Corpus Knowledge Base", 
-    "Milestone Timeline Lens", 
+    "Spatiotemporal Frequency Map", 
     "Decan Oracle", 
     "Compatibility Matrix", 
     "Pattern & Frequency Engine"
@@ -383,7 +481,7 @@ tabs = st.tabs([
 # TAB 1: ALCHEMY PHARMACY
 # ----------------------------------------------------
 with tabs[0]:
-    st.markdown("### The Alchemy Pharmacy")
+    st.markdown("<h3 style='color:#f5c542;'>The Alchemy Pharmacy</h3>", unsafe_allow_html=True)
     st.markdown("> *The user is the alchemist; the app is the pharmacy. Bring your prima materia into the brass rings to extract the working tincture.*")
 
     col_a, col_b = st.columns([1.1, 1])
@@ -451,8 +549,8 @@ with tabs[0]:
         dm = td["distract_meta"]
 
         st.markdown(f"""
-        <div class="brass-card">
-            <h4 style="text-align: center; color: #d4af37; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
+        <div class="brass-panel">
+            <h4 style="text-align: center; color: #f5c542; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
             <div class="ring-container">
                 <div class="ring-badge">Outer Ring<br><small>{wm['day']}</small></div>
                 <div class="ring-badge">Middle Pivot<br><small>{wm['planet']}</small></div>
@@ -463,7 +561,7 @@ with tabs[0]:
 
         st.markdown(f"""
         <div class="tincture-box">
-            <strong>Prescription & Tincture:</strong><br><br>
+            <strong style="color: #f5c542; font-family: 'Cinzel', serif;">Prescription & Tincture:</strong><br><br>
             {td['tincture_prose']}
         </div>
         """, unsafe_allow_html=True)
@@ -475,11 +573,11 @@ with tabs[0]:
             st.markdown(f"- **Distraction Axis (+3):** {dm['metal']} ({dm['planet']})")
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE (Enhanced Query & Reference Engine)
+# TAB 2: CORPUS KNOWLEDGE BASE (Full-Verse Purified Engine)
 # ----------------------------------------------------
 with tabs[1]:
-    st.markdown("### The Full-Corpus Library Engine")
-    st.markdown("Search, cross-examine, and extract patterns across complete esoteric and sacred literature without excerpts or truncations.")
+    st.markdown("<h3 style='color:#f5c542;'>The Full-Corpus Library Engine</h3>", unsafe_allow_html=True)
+    st.markdown("Search, cross-examine, and extract patterns across complete canonical scriptures with intact, unabridged verse formatting.")
 
     CORPUS_URLS = {
         "King James Bible (Complete)": "https://www.gutenberg.org/cache/epub/10/pg10.txt",
@@ -493,8 +591,9 @@ with tabs[1]:
     def fetch_full_text(url: str) -> str:
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=12) as response:
-                return response.read().decode('utf-8', errors='ignore')
+            with urllib.request.urlopen(req, timeout=14) as response:
+                raw_bytes = response.read().decode('utf-8', errors='ignore')
+                return purify_corpus(raw_bytes)
         except Exception:
             return ""
 
@@ -504,147 +603,359 @@ with tabs[1]:
     if corpus_source == "Custom Upload":
         uploaded_file = st.file_uploader("Upload any complete .txt or .md manuscript", type=["txt", "md"])
         if uploaded_file is not None:
-            corpus_text = uploaded_file.read().decode('utf-8', errors='ignore')
+            corpus_text = purify_corpus(uploaded_file.read().decode('utf-8', errors='ignore'))
     else:
-        with st.spinner(f"Loading complete text for {corpus_source}..."):
+        with st.spinner(f"Purifying and cataloging {corpus_source}..."):
             corpus_text = fetch_full_text(CORPUS_URLS[corpus_source])
             if not corpus_text:
-                st.warning("Manuscript could not be pulled from Gutenberg live mirror. Please upload a local text file.")
+                st.warning("Manuscript mirror unreachable. Please upload your local text file.")
 
     if corpus_text:
-        total_chars = len(corpus_text)
         words_list = re.findall(r'\b[A-Za-z]+\b', corpus_text.lower())
         total_words = len(words_list)
+        total_chars = len(corpus_text)
         
-        st.caption(f"Corpus Active: **{total_words:,} words** | **{total_chars:,} characters**")
+        st.caption(f"Canonical Volume: **{total_words:,} words** | **{total_chars:,} characters** (Boilerplate Purged)")
 
-        st.markdown("#### Corpus Plain-Language Inquiry")
-        query = st.text_input("Ask a question or enter a search query:", 
-                              placeholder="e.g. 'what word shows up the most', 'least common words', 'fear', 'find all sevens'")
+        st.markdown("#### Canonical Plain-Language Inquiry")
+        query = st.text_input("Ask a question, enter a number, or search a word/verse:", 
+                              placeholder="e.g. 'fear', 'seven', 'most common words', 'least common words'")
 
         if query:
             q_clean = query.strip().lower()
             
-            # 1. MOST COMMON WORDS / WHAT SHOWS UP THE MOST
-            if any(k in q_clean for k in ["most common", "shows up most", "up the most", "the much", "most frequent", "highest frequency"]):
-                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it", "as", "by", "all", "this", "from"}
+            # 1. MOST COMMON WORDS
+            if any(k in q_clean for k in ["most common", "shows up most", "up the most", "the much", "most frequent"]):
+                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it", "as", "by", "all", "this", "from", "said"}
                 filtered = [w for w in words_list if w not in stop_words and len(w) > 2]
                 counts = Counter(filtered).most_common(10)
-                st.markdown("#### Most Frequent Words (Excluding Articles/Conjunctions):")
+                st.markdown("#### Dominant Canonical Words (Excluding Stop-Words):")
                 for w, c in counts:
                     st.markdown(f"- **{w}**: `{c:,}` times")
                 
-                top_word = counts[0][0]
-                st.markdown(f"##### Line References for '{top_word}':")
-                refs = extract_references(corpus_text, top_word, max_refs=4)
-                for r in refs:
-                    st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+                top_w = counts[0][0]
+                st.markdown(f"##### Full Uncut Verses Featuring '{top_w}':")
+                v_results = extract_full_verses(corpus_text, top_w, max_results=3)
+                for v_text, v_root in v_results:
+                    st.markdown(f"""
+                    <div class='verse-card'>
+                        <span class='verse-badge'>UNCUT VERSE OCCURRENCE</span><span class='gematria-pill'>Gematria Root: {v_root} ({meaning(v_root)})</span><br>
+                        {v_text}
+                    </div>
+                    """, unsafe_allow_html=True)
 
-            # 2. LEAST COMMON WORDS / SINGLE OCCURRENCES
+            # 2. LEAST COMMON WORDS
             elif any(k in q_clean for k in ["least common", "shows up least", "the least", "rarest", "hapax"]):
                 single_words = [w for w, c in Counter(words_list).items() if c == 1 and len(w) > 3]
                 sample_least = single_words[:10]
-                st.markdown("#### Single-Occurrence Words (Words Appearing Exactly Once):")
+                st.markdown("#### Hapax Legomena (Words Occurring Exactly Once):")
                 st.write(", ".join(sample_least))
                 
                 if sample_least:
-                    st.markdown(f"##### Line Reference for Rare Occurrence '{sample_least[0]}':")
-                    refs = extract_references(corpus_text, sample_least[0], max_refs=1)
-                    for r in refs:
-                        st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+                    st.markdown(f"##### Full Context for Unique Occurrence '{sample_least[0]}':")
+                    v_results = extract_full_verses(corpus_text, sample_least[0], max_results=1)
+                    for v_text, v_root in v_results:
+                        st.markdown(f"""
+                        <div class='verse-card'>
+                            <span class='verse-badge'>SINGULAR VERSE</span><span class='gematria-pill'>Gematria Root: {v_root}</span><br>
+                            {v_text}
+                        </div>
+                        """, unsafe_allow_html=True)
 
             # 3. SEVENS OR DIGIT PATTERNS
             elif "seven" in q_clean or " 7 " in q_clean or q_clean == "7":
                 matches = len(re.findall(r'\b(7|seven|seventh)\b', corpus_text, re.IGNORECASE))
-                st.markdown(f"**Direct Result:** The number seven appears **{matches:,} times** across the full manuscript.")
-                st.markdown("##### Excerpt References for 'seven':")
-                refs = extract_references(corpus_text, "seven", max_refs=4)
-                for r in refs:
-                    st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+                st.markdown(f"**Direct Result:** The sacred frequency seven appears **{matches:,} times**.")
+                st.markdown("##### Full Uncut Verses with Seven:")
+                v_results = extract_full_verses(corpus_text, "seven", max_results=4)
+                for v_text, v_root in v_results:
+                    st.markdown(f"""
+                    <div class='verse-card'>
+                        <span class='verse-badge'>CANONICAL PASSAGE</span><span class='gematria-pill'>Vibrational Root: {v_root}</span><br>
+                        {v_text}
+                    </div>
+                    """, unsafe_allow_html=True)
 
-            # 4. LETTER FREQUENCY
+            # 4. LETTER FREQUENCIES
             elif "letter frequency" in q_clean or "letters" in q_clean:
                 letters_only = [c for c in corpus_text.upper() if 'A' <= c <= 'Z']
                 l_counts = Counter(letters_only).most_common(7)
-                st.markdown("#### Dominant Letter Frequencies:")
+                st.markdown("#### Primary Letter Frequencies:")
                 for l, count in l_counts:
                     pct = (count / len(letters_only)) * 100
-                    st.markdown(f"- **{l}**: {count:,} times ({pct:.2f}%)")
+                    st.markdown(f"- **{l}**: `{count:,}` times ({pct:.2f}%)")
 
             # 5. WHOLE-CORPUS NUMEROLOGY ROOT
-            elif "root" in q_clean or "grand root" in q_clean:
+            elif "root" in q_clean or "numerology" in q_clean:
                 root_sum = sum(ord(c) - 64 for c in corpus_text.upper() if 'A' <= c <= 'Z')
                 collapsed = reduce_number(root_sum)
                 st.markdown(f"**Corpus Grand Root:** `{collapsed}` — {meaning(collapsed)}")
 
-            # 6. DIRECT PHRASE / TARGET WORD SEARCH WITH REFERENCES
+            # 6. DIRECT PHRASE OR TARGET WORD SEARCH
             else:
                 target_word = re.sub(r'^(find|how many times does|how many times|count|find every time it says|search for)\s+', '', q_clean).strip().strip("'\"")
                 target_word = target_word.split()[0] if target_word else q_clean
                 
                 raw_find = len(re.findall(rf'\b{re.escape(target_word)}\b', corpus_text, re.IGNORECASE))
-                st.markdown(f"**Direct Result:** The word **'{target_word}'** appears **{raw_find:,} times** across the manuscript.")
+                st.markdown(f"**Direct Result:** The token **'{target_word}'** appears **{raw_find:,} times**.")
                 
                 if raw_find > 0:
-                    st.markdown(f"##### Line References for '{target_word}':")
-                    refs = extract_references(corpus_text, target_word, max_refs=5)
-                    for r in refs:
-                        st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+                    st.markdown(f"##### Full Uncut Verses Featuring '{target_word}':")
+                    v_results = extract_full_verses(corpus_text, target_word, max_results=5)
+                    for v_text, v_root in v_results:
+                        st.markdown(f"""
+                        <div class='verse-card'>
+                            <span class='verse-badge'>CANONICAL PASSAGE</span><span class='gematria-pill'>Passage Root: {v_root} ({meaning(v_root)})</span><br>
+                            {v_text}
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
                     st.info("No exact occurrences found in this corpus.")
 
 # ----------------------------------------------------
-# TAB 3: MILESTONE TIMELINE LENS
+# TAB 3: SPATIOTEMPORAL FREQUENCY MAP & PRINTABLE CHARTER (New)
 # ----------------------------------------------------
 with tabs[2]:
-    st.markdown("### Milestone Timeline Lens")
-    st.markdown("Track the 9-year cyclic unfoldment across any historical or future timeline.")
-    
-    st.markdown("**Inception Date**")
-    m_c1, m_c2, m_c3 = st.columns(3)
-    with m_c1:
-        m_yr = st.number_input("Year", min_value=1, max_value=9999, value=s_year, key="m_y")
-    with m_c2:
-        m_mo = st.number_input("Month", min_value=1, max_value=12, value=s_month, key="m_m")
-    with m_c3:
-        m_dy = st.number_input("Day", min_value=1, max_value=31, value=s_day, key="m_d")
-    
-    m_years = st.slider("Timeline Horizon (Cycles)", min_value=1, max_value=81, value=9)
+    st.markdown("<h3 style='color:#f5c542;'>Spatiotemporal Frequency Map</h3>", unsafe_allow_html=True)
+    st.markdown("> *A multi-dimensional harmonic charter mapping origin ground, present location, diurnal phase, and active frequency voids.*")
 
-    st.markdown("#### Projected Sequence")
-    milestone_records = []
-    for y in range(m_yr, m_yr + m_years):
-        res = personal_cycles_components(m_mo, m_dy, y)
-        milestone_records.append({
-            "Calendar Year": y,
-            "Personal Year": res["personal_year"],
-            "Theme": res["milestone"]
-        })
-    st.table(milestone_records)
+    col_map_in1, col_map_in2 = st.columns([1.1, 1])
+    
+    with col_map_in1:
+        st.markdown("**1. Temporal Origin (Date & Minute)**")
+        map_name = st.text_input("Vessel Name", value=anchor_name, key="st_name")
+        tc1, tc2, tc3, tc4 = st.columns([1.2, 1, 1, 1.2])
+        with tc1:
+            st_yr = st.number_input("Year", min_value=1, max_value=9999, value=s_year, key="st_yr")
+        with tc2:
+            st_mo = st.number_input("Month", min_value=1, max_value=12, value=s_month, key="st_mo")
+        with tc3:
+            st_dy = st.number_input("Day", min_value=1, max_value=31, value=s_day, key="st_dy")
+        with tc4:
+            st_time = st.time_input("Birth Time (Approx)", value=datetime.time(12, 0), key="st_time")
+
+        st.markdown("**2. Spatial Coordinates (Origin vs. Present)**")
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            st.caption("Origin Ground (Birthplace)")
+            origin_lat = st.number_input("Origin Lat (°N/S)", value=26.14, step=0.1, key="o_lat")
+            origin_lon = st.number_input("Origin Lon (°E/W)", value=-81.79, step=0.1, key="o_lon")
+        with sc2:
+            st.caption("Present Ground (Current)")
+            same_loc = st.checkbox("Currently at Origin Ground", value=True, key="same_loc")
+            if same_loc:
+                curr_lat = origin_lat
+                curr_lon = origin_lon
+            else:
+                curr_lat = st.number_input("Current Lat (°N/S)", value=40.71, step=0.1, key="c_lat")
+                curr_lon = st.number_input("Current Lon (°E/W)", value=-74.00, step=0.1, key="c_lon")
+
+    with col_map_in2:
+        st.markdown("**3. Biological Wave & Active Horizon**")
+        now_year = datetime.date.today().year
+        eval_age = st.slider("Observed Age", min_value=0, max_value=120, value=abs(now_year - st_yr), key="st_age")
+        active_target_year = st_yr + eval_age
+        st.markdown(f"Active Horizon Year: **{active_target_year}**")
+
+        charter_mode = st.radio("Display Atmosphere", ["Luminous Chamber (Screen)", "Parchment Charter (Print-Ready)"], horizontal=True)
+
+    # Core Calculations
+    st_lp = life_path_components(st_yr, st_mo, st_dy)
+    st_prof = name_profile(map_name)
+    st_expr = st_prof["expression"] if st_prof["expression"] > 0 else 1
+    st_soul = st_prof["soul_urge"] if st_prof["soul_urge"] > 0 else 1
+    st_pers = st_prof["personality"] if st_prof["personality"] > 0 else 1
+    st_py = personal_cycles_components(st_mo, st_dy, active_target_year)["personal_year"]
+
+    # Diurnal Inhale/Exhale Cycle
+    hour_val = st_time.hour
+    is_inhale = (6 <= hour_val < 18)
+    diurnal_label = "Solar Inhale (Electric / Outward)" if is_inhale else "Lunar Exhale (Magnetic / Deep Ground)"
+
+    # Location Pitches (Geomagnetic base)
+    origin_pitch = reduce_number(round(abs(origin_lat) + abs(origin_lon)))
+    curr_pitch = reduce_number(round(abs(curr_lat) + abs(curr_lon)))
+    displacement_delta = abs(origin_pitch - curr_pitch)
+
+    # Karmic Voids & Saturated Nodes across the Name and Blueprint
+    digits_present = [int(c) for c in (str(st_lp) + str(st_expr) + str(st_soul) + str(st_pers) + str(st_yr) + str(st_mo) + str(st_dy)) if c.isdigit()]
+    counts = Counter(digits_present)
+    all_pillars = set(range(1, 10))
+    void_pillars = sorted(list(all_pillars - set(counts.keys())))
+    saturated_pillars = sorted([num for num, cnt in counts.items() if cnt >= 3 and 1 <= num <= 9])
+
+    # Peak Circadian Alignment Window
+    peak_start_hour = (st_lp * 2 + hour_val) % 24
+    peak_window = f"{peak_start_hour:02d}:15 – {(peak_start_hour + 1) % 24:02d}:00"
+
+    # ==========================================
+    # TRI-RING CYMATIC VECTOR VISUALIZER (SVG)
+    # ==========================================
+    center_x, center_y = 260, 260
+    r_outer = 220
+    r_mid = 160
+    r_inner = 95
+
+    # Style scheme based on Charter Mode
+    is_parchment = ("Print-Ready" in charter_mode)
+    bg_color = "#fbf8ef" if is_parchment else "rgba(10, 12, 16, 0.85)"
+    ring_stroke = "rgba(120, 95, 30, 0.4)" if is_parchment else "rgba(212, 175, 55, 0.25)"
+    text_color = "#2a2415" if is_parchment else "#fff4cc"
+    gold_fill = "rgba(197, 160, 89, 0.35)" if is_parchment else "rgba(245, 197, 66, 0.28)"
+    gold_line = "#9e7d3b" if is_parchment else "#f5c542"
+    amber_point = "#c85a17" if is_parchment else "#ffaa44"
+
+    # Middle Ring: 9-Pillar Angular Coordinates
+    node_coords = {}
+    for i in range(1, 10):
+        deg = -90 + (i - 1) * (360 / 9)
+        rad = math.radians(deg)
+        x = center_x + r_mid * math.cos(rad)
+        y = center_y + r_mid * math.sin(rad)
+        node_coords[i] = (x, y)
+
+    # Active Polygon Shape
+    active_seq = [st_lp, st_expr, st_soul, st_pers, st_py]
+    poly_pts = [f"{node_coords[p][0]:.1f},{node_coords[p][1]:.1f}" for p in active_seq]
+    poly_str = " ".join(poly_pts)
+
+    # Origin & Current Location Markers (Outer Ring)
+    deg_orig = -90 + (origin_pitch - 1) * 40
+    rad_orig = math.radians(deg_orig)
+    orig_x = center_x + r_outer * math.cos(rad_orig)
+    orig_y = center_y + r_outer * math.sin(rad_orig)
+
+    deg_curr = -90 + (curr_pitch - 1) * 40
+    rad_curr = math.radians(deg_curr)
+    curr_x = center_x + r_outer * math.cos(rad_curr)
+    curr_y = center_y + r_outer * math.sin(rad_curr)
+
+    # Circadian Window Angle (Inner Ring)
+    deg_circ = -90 + (peak_start_hour / 24.0) * 360
+    rad_circ = math.radians(deg_circ)
+    circ_x = center_x + r_inner * math.cos(rad_circ)
+    circ_y = center_y + r_inner * math.sin(rad_circ)
+
+    svg_mandala = f"""
+    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+        <svg width="520" height="520" viewBox="0 0 520 520" style="background: {bg_color}; border: 1px solid rgba(212,175,55,0.4); border-radius: 50%; box-shadow: 0 0 35px rgba(0,0,0,0.85);">
+            <!-- Concentric Guide Rings -->
+            <circle cx="{center_x}" cy="{center_y}" r="{r_outer}" fill="none" stroke="{ring_stroke}" stroke-width="1.5" stroke-dasharray="4,4"/>
+            <circle cx="{center_x}" cy="{center_y}" r="{r_mid}" fill="none" stroke="{ring_stroke}" stroke-width="2"/>
+            <circle cx="{center_x}" cy="{center_y}" r="{r_inner}" fill="none" stroke="{ring_stroke}" stroke-width="1.5"/>
+
+            <!-- Axis Ray Cross -->
+            <line x1="{center_x}" y1="{center_y - r_outer - 15}" x2="{center_x}" y2="{center_y + r_outer + 15}" stroke="{ring_stroke}" stroke-width="0.8"/>
+            <line x1="{center_x - r_outer - 15}" y1="{center_y}" x2="{center_x + r_outer + 15}" y2="{center_y}" stroke="{ring_stroke}" stroke-width="0.8"/>
+
+            <!-- Geometric Active Silhouette -->
+            <polygon points="{poly_str}" fill="{gold_fill}" stroke="{gold_line}" stroke-width="2.5" style="filter: drop-shadow(0 0 10px {gold_line});"/>
+
+            <!-- The 9 Archetypal Pillars (Middle Ring) -->
+            {"".join(f'''
+                <circle cx="{coords[0]}" cy="{coords[1]}" r="14" fill="{'#0b0d10' if not is_parchment else '#ffffff'}" stroke="{'#555' if i in void_pillars else (amber_point if i in saturated_pillars else gold_line)}" stroke-width="{'1' if i in void_pillars else '2.5'}"/>
+                <text x="{coords[0]}" y="{coords[1] + 4}" fill="{'#666' if i in void_pillars else text_color}" font-size="11" font-weight="700" text-anchor="middle" font-family="Cinzel">{i}</text>
+            ''' for i, coords in node_coords.items())}
+
+            <!-- Origin & Current Spatial Anchors (Outer Ring) -->
+            <circle cx="{orig_x}" cy="{orig_y}" r="8" fill="#d4af37" stroke="#fff" stroke-width="2"/>
+            <text x="{orig_x}" y="{orig_y - 12}" fill="{text_color}" font-size="9" font-weight="700" text-anchor="middle" font-family="Cinzel">ORIGIN</text>
+
+            <circle cx="{curr_x}" cy="{curr_y}" r="8" fill="{amber_point}" stroke="#fff" stroke-width="2"/>
+            <text x="{curr_x}" y="{curr_y + 18}" fill="{text_color}" font-size="9" font-weight="700" text-anchor="middle" font-family="Cinzel">PRESENT</text>
+            <line x1="{orig_x}" y1="{orig_y}" x2="{curr_x}" y2="{curr_y}" stroke="{amber_point}" stroke-width="1.8" stroke-dasharray="3,3"/>
+
+            <!-- Circadian Peak Ray (Inner Ring) -->
+            <line x1="{center_x}" y1="{center_y}" x2="{circ_x}" y2="{circ_y}" stroke="{gold_line}" stroke-width="3"/>
+            <circle cx="{circ_x}" cy="{circ_y}" r="5" fill="#fff" stroke="{gold_line}" stroke-width="2"/>
+            <text x="{center_x}" y="{center_y + 4}" fill="{text_color}" font-size="10" font-weight="700" text-anchor="middle" font-family="Cinzel">HORIZON</text>
+        </svg>
+    </div>
+    """
+    st.markdown(svg_mandala, unsafe_allow_html=True)
+
+    # ==========================================
+    # THE SPIRITUAL DIAGNOSTIC HUD
+    # ==========================================
+    g_c1, g_c2, g_c3 = st.columns(3)
+
+    with g_c1:
+        st.markdown(f"""
+        <div class="brass-panel" style="padding: 18px;">
+            <div class="verse-badge">THE KARMIC VOID (ABSENT)</div>
+            <h3 style="color:#fff4cc; margin: 4px 0;">Pillars: {', '.join(str(v) for v in void_pillars) if void_pillars else 'None (Fully Integrated)'}</h3>
+            <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                {('These frequencies are totally absent from your base blueprint. You naturally bypass or resist containment here. Deliberate discipline is required to build this muscle.' if void_pillars else 'All nine numbers are represented; your friction comes from distribution rather than an energetic gap.')}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with g_c2:
+        st.markdown(f"""
+        <div class="brass-panel" style="padding: 18px;">
+            <div class="verse-badge">DISPLACEMENT PRESSURE</div>
+            <h3 style="color:#fff4cc; margin: 4px 0;">Delta: {displacement_delta} Harmonic</h3>
+            <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                Origin Ground vibrates to <strong>Pitch {origin_pitch}</strong>; Present Ground vibrates to <strong>Pitch {curr_pitch}</strong>. 
+                {('You are anchored in your natal soil. Energy flows in its original groove.' if displacement_delta == 0 else 'Displacement creates dynamic atmospheric friction. The local land accelerates growth outside your comfort zone.')}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with g_c3:
+        st.markdown(f"""
+        <div class="brass-panel" style="padding: 18px;">
+            <div class="verse-badge">CIRCADIAN POWER APERTURE</div>
+            <h3 style="color:#fff4cc; margin: 4px 0;">{peak_window}</h3>
+            <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                Phase: <strong>{diurnal_label}</strong>.<br>
+                Each day during this 45-minute window, the local solar transit unlocks your natal resonance channel for peak clarity.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Master Charter Synthesis
+    st.markdown(f"""
+    <div class="tincture-box">
+        <strong style="color: #f5c542; font-family: 'Cinzel', serif;">Spiritual Vector Directive for {map_name} (Age {eval_age}):</strong><br><br>
+        Your geometry is grounded in <strong>Life Path {st_lp}</strong> operating through the outward tone of <strong>Expression {st_expr}</strong>. 
+        Under the active horizon of <strong>Personal Year {st_py}</strong>, your primary energetic leak stems from {('the unanchored void of frequency ' + str(void_pillars[0]) if void_pillars else 'over-saturation in pillar ' + str(saturated_pillars[0]) if saturated_pillars else 'internal friction between urge and expression')}. 
+        <strong>Where to Push:</strong> Stop seeking passive harmony in domains requiring rigorous boundary containment. Align your heaviest strategic maneuvers with your daily circadian window ({peak_window}) to move with the sky instead of swimming upstream.
+    </div>
+    """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 4: DECAN ORACLE
+# TAB 4: DECAN ORACLE (Illuminated)
 # ----------------------------------------------------
 with tabs[3]:
-    st.markdown("### Decan Oracle")
+    st.markdown("<h3 style='color:#f5c542;'>Decan Oracle</h3>", unsafe_allow_html=True)
     st.markdown("The 36 Decan faces of the ecliptic and their planetary sub-rulers.")
     
     sel_sign = st.selectbox("Select Zodiac Sign", list(ZODIAC_DECANS.keys()))
     decans = ZODIAC_DECANS[sel_sign]
     
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(f"**First Decan**\n\n{decans[0]}")
-    with c2:
-        st.markdown(f"**Second Decan**\n\n{decans[1]}")
-    with c3:
-        st.markdown(f"**Third Decan**\n\n{decans[2]}")
+    st.markdown(f"""
+    <div class="brass-panel">
+        <h4 style="color: #f5c542; margin-top:0;">{sel_sign} Decan Architecture</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border-left: 3px solid #d4af37;">
+                <strong style="color: #fff2b2;">First Decan (0°-10°)</strong><br>{decans[0]}
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border-left: 3px solid #d4af37;">
+                <strong style="color: #fff2b2;">Second Decan (10°-20°)</strong><br>{decans[1]}
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border-left: 3px solid #d4af37;">
+                <strong style="color: #fff2b2;">Third Decan (20°-30°)</strong><br>{decans[2]}
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 5: COMPATIBILITY MATRIX
+# TAB 5: COMPATIBILITY MATRIX (Illuminated)
 # ----------------------------------------------------
 with tabs[4]:
-    st.markdown("### Compatibility Matrix")
+    st.markdown("<h3 style='color:#f5c542;'>Compatibility Matrix</h3>", unsafe_allow_html=True)
     st.markdown("Compare two independent anchor dates across any point in human history.")
 
     col_c1, col_c2 = st.columns(2)
@@ -656,7 +967,7 @@ with tabs[4]:
         lp1 = life_path_components(cp1_y, cp1_m, cp1_d)
         st.markdown(f"Primary Life Path: `{lp1}`")
     with col_c2:
-        st.markdown("**Second Anchor Date (e.g. 33 CE or 2050 CE)**")
+        st.markdown("**Second Anchor Date**")
         cp2_y = st.number_input("Year", min_value=1, max_value=99999, value=33, key="cp2_y")
         cp2_m = st.number_input("Month", min_value=1, max_value=12, value=4, key="cp2_m")
         cp2_d = st.number_input("Day", min_value=1, max_value=31, value=3, key="cp2_d")
@@ -665,9 +976,9 @@ with tabs[4]:
 
     comp_result = evaluate_compatibility(lp1, lp2)
     st.markdown(f"""
-    <div class="brass-card">
-        <h4>Synthesis Verdict</h4>
-        <p>{comp_result}</p>
+    <div class="brass-panel">
+        <h4 style="color:#f5c542; margin-top:0;">Synthesis Verdict</h4>
+        <p style="font-size: 1.05rem; line-height: 1.7;">{comp_result}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -675,7 +986,7 @@ with tabs[4]:
 # TAB 6: PATTERN & FREQUENCY ENGINE
 # ----------------------------------------------------
 with tabs[5]:
-    st.markdown("### Pattern & Frequency Engine")
+    st.markdown("<h3 style='color:#f5c542;'>Pattern & Frequency Engine</h3>", unsafe_allow_html=True)
     st.markdown("Latin ciphers, angelic repetitions, and character frequency distributions.")
 
     cipher_input = st.text_input("Stream Analysis Field", value="The Hidden Light")
