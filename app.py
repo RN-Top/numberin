@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# CIPHERS, ASTRONOMICAL & NUMEROLOGY ENGINES
+# MATHEMATICAL, ASTRONOMICAL & NUMEROLOGY ENGINES
 # ---------------------------------------------------------
 
 CHALDEAN_MAP = {
@@ -48,7 +48,7 @@ def calculate_name_vibration(name: str, cipher: str = "Pythagorean") -> int:
     return reduce_number(total)
 
 def get_julian_date(year: int, month: int, day: int, hour: float = 12.0) -> float:
-    """Calculates astronomical Julian Day Number for historical BCE/CE dates with fractional hours."""
+    """Calculates astronomical Julian Day Number across BCE and CE epochs."""
     if month <= 2:
         year -= 1
         month += 12
@@ -104,8 +104,8 @@ def get_approx_sun_sign(month: int, day: int) -> str:
     return "Capricorn"
 
 def calculate_vibrational_root(date_str: str) -> int:
-    digits = [int(c) for c in date_str if c.isdigit()]
-    return reduce_number(sum(digits))
+    digits = [int(c) for c in str(date_str) if c.isdigit()]
+    return reduce_number(sum(digits)) if digits else 1
 
 def evaluate_compatibility(root1: int, root2: int) -> dict:
     diff = abs(root1 - root2)
@@ -147,33 +147,39 @@ MILESTONES = {
         "date_str": "0033-04-03", "year": 33, "month": 4, "day": 3,
         "category": "Sacred History",
         "astronomy": "Partial/Total Blood Red Lunar Eclipse at moonrise over Jerusalem during Passover (14 Nisan).",
-        "details": "Concurs with scriptural records of darkening skies. Astronomical back-calculations verify the moon rising in eclipse in the constellation Virgo."
+        "details": "Concurs with scriptural records of darkening skies. Astronomical back-calculations verify the moon rising in eclipse in Virgo."
     },
-    "Annus Lucis / Traditional Creation Epoch": {
+    "Annus Lucis / Creation Epoch": {
         "date_str": "-4004-10-23", "year": -4004, "month": 10, "day": 23,
         "category": "Biblical & Hermetic",
         "astronomy": "Equinoctial conjunction matching Archbishop Ussher's canonical chronology.",
         "details": "Zero-point marker encoding foundational creation mathematics across classical traditions."
     },
+    "American Declaration of Independence": {
+        "date_str": "1776-07-04", "year": 1776, "month": 7, "day": 4,
+        "category": "Historical Foundation",
+        "astronomy": "Waning Gibbous Moon transiting Aquarius into Pisces, approaching Last Quarter.",
+        "details": "Foundational charter signed under Cancer Sun with high retrograde planetary dispersion."
+    },
     "WW1 Outbreak (1914 Epoch)": {
         "date_str": "1914-07-28", "year": 1914, "month": 7, "day": 28,
         "category": "Modern Eschatology",
-        "astronomy": "Waxing Crescent Moon transiting into Libra; major solar eclipse followed on August 21, 1914.",
-        "details": "Viewed in historic biblical scholarship as the close of the 'Times of the Gentiles' and the onset of global systemic warfare."
+        "astronomy": "Waxing Crescent Moon transiting into Libra; solar eclipse followed on August 21, 1914.",
+        "details": "Viewed in historic biblical scholarship as the close of the 'Times of the Gentiles' and the onset of global warfare."
     },
-    "Planetary Hexagon & Inauguration Alignment": {
+    "Planetary Hexagon Alignment": {
         "date_str": "2017-01-20", "year": 2017, "month": 1, "day": 20,
         "category": "Political Astrometry",
         "astronomy": "Last Quarter Moon in Scorpio with wide dispersion across Mercury, Venus, Mars, and Jupiter.",
         "details": "Marked by astrological study as an initiation of severe systemic disruption."
     },
-    "Great Reset Launch": {
+    "Great Reset Declaration": {
         "date_str": "2020-06-03", "year": 2020, "month": 6, "day": 3,
         "category": "Global Transition",
         "astronomy": "Waxing Gibbous Moon square Mars and Neptune; Venus inferior conjunction.",
         "details": "Public unveiling of global institutional resets during worldwide societal suspension."
     },
-    "The Great Year Solstice Precession": {
+    "The Great Year Precession": {
         "date_str": "2012-12-21", "year": 2012, "month": 12, "day": 21,
         "category": "Cosmic Precession",
         "astronomy": "Solstice Sun aligned with the Galactic Equator, closing the ~25,772-year Precession Cycle.",
@@ -244,7 +250,6 @@ with st.sidebar:
     st.caption("Cosmic Frequency & Resonance Suite")
     st.write("---")
 
-    # 1. Harmonic Audio Atmosphere
     st.subheader("🎵 Harmonic Atmosphere")
     audio_source = st.selectbox(
         "Ambient Frequency Track",
@@ -266,18 +271,31 @@ with st.sidebar:
 
     st.write("---")
 
-    # 2. General Observer Inputs (Blank / User Controlled)
     st.subheader("👤 Observer Natal Anchor")
-    user_name = st.text_input("Your Name / Handle", value="", placeholder="Enter your name...")
-    user_birth_date = st.date_input("Your Birth Date", value=datetime.date(2000, 1, 1))
-    user_birth_time = st.time_input("Your Birth Time", value=datetime.time(12, 0))
-    user_birth_place = st.text_input("Birthplace (City, State/Country)", value="", placeholder="e.g. Naples, FL")
+    user_name = st.text_input("Your Name / Handle", value="", placeholder="Enter name...")
 
-    decimal_hour = user_birth_time.hour + (user_birth_time.minute / 60.0)
-    user_lp = calculate_vibrational_root(user_birth_date.strftime("%Y%m%d"))
+    c_by, c_bm, c_bd = st.columns([1.2, 1, 1])
+    with c_by:
+        user_year = st.number_input("Year", min_value=-5000, max_value=2100, value=1983, step=1)
+    with c_bm:
+        user_month = st.number_input("Month", min_value=1, max_value=12, value=11, step=1)
+    with c_bd:
+        user_day = st.number_input("Day", min_value=1, max_value=31, value=19, step=1)
+
+    user_time_str = st.text_input("Birth Time (HH:MM 24hr)", value="12:00")
+    try:
+        th, tm = [int(p) for p in user_time_str.split(":")[:2]]
+    except Exception:
+        th, tm = 12, 0
+    decimal_hour = th + (tm / 60.0)
+
+    user_birth_place = st.text_input("Birthplace", value="", placeholder="e.g. Naples, FL")
+
+    user_date_str = f"{abs(user_year):04d}{user_month:02d}{user_day:02d}"
+    user_lp = calculate_vibrational_root(user_date_str)
     user_name_val = calculate_name_vibration(user_name) if user_name else 0
-    user_sun_sign = get_approx_sun_sign(user_birth_date.month, user_birth_date.day)
-    user_moon = get_lunar_phase_details(user_birth_date.year, user_birth_date.month, user_birth_date.day, decimal_hour)
+    user_sun_sign = get_approx_sun_sign(user_month, user_day)
+    user_moon = get_lunar_phase_details(user_year, user_month, user_day, decimal_hour)
 
     if user_name:
         st.markdown(f"**Observer:** `{user_name}`")
@@ -298,7 +316,7 @@ st.write("Instant numbers, archetypes, and readings for any name, word, or date.
 search_query = st.text_input(
     "🔍 Enter any name, word, or date:",
     value="",
-    placeholder="Type a name like 'Sarah' or a date like '1990-05-15'...",
+    placeholder="Type a name like 'Sarah' or a date like '1776-07-04'...",
     help="Type any word or date to immediately calculate its numbers and meaning."
 )
 
@@ -307,7 +325,7 @@ if search_query.strip():
     digits = [int(c) for c in query if c.isdigit()]
     letters = [c for c in query if c.isalpha()]
 
-    # Case A: Date Search
+    # Date Search
     if len(digits) >= 4 and len(letters) == 0:
         root_val = reduce_number(sum(digits))
         entry = KNOWLEDGE_BASE.get(str(root_val), KNOWLEDGE_BASE["1"])
@@ -334,7 +352,6 @@ if search_query.strip():
         st.info(f"**Reading Insight:**\n\n{entry['reading']}")
 
         card_text = f"NUMBERIN READING CARD\nDate: {query}\nRoot: {root_val}\nArchetype: {entry['archetype']}\nTraits: {entry['keyword']}\nReading: {entry['reading']}"
-        
         col_b1, col_b2 = st.columns([1, 1])
         with col_b1:
             st.download_button(
@@ -360,7 +377,7 @@ if search_query.strip():
                     unsafe_allow_html=True
                 )
 
-    # Case B: Name or Word Search
+    # Name or Word Search
     else:
         pyth_val = calculate_name_vibration(query, "Pythagorean")
         chald_val = calculate_name_vibration(query, "Chaldean")
@@ -377,7 +394,6 @@ if search_query.strip():
         st.info(f"**Personal Meaning:**\n\n{entry['reading']}")
 
         card_text = f"NUMBERIN READING CARD\nName/Word: {query}\nPrimary Number: {pyth_val}\nChaldean Number: {chald_val}\nArchetype: {entry['archetype']}\nTraits: {entry['keyword']}\nReading: {entry['reading']}"
-        
         col_b1, col_b2 = st.columns([1, 1])
         with col_b1:
             st.download_button(
@@ -417,7 +433,7 @@ tab_milestones, tab_oracle, tab_compat, tab_patterns, tab_knowledge = st.tabs([
     "📖 Book of Knowledge & Sacred Texts"
 ])
 
-# TAB 1: MILESTONE TIMELINE LENS & READINGS (CUSTOM & PRE-SET)
+# TAB 1: MILESTONE TIMELINE LENS
 with tab_milestones:
     st.header("Chronos & Cosmos: Milestone Timeline")
     st.caption("Cross-reference historical dates against celestial events, eclipses, and personal resonance.")
@@ -443,14 +459,19 @@ with tab_milestones:
         astro_display = m_info["astronomy"]
         details_display = m_info["details"]
     else:
-        custom_input_date = st.date_input("Pick or Type Any Milestone Date:", value=datetime.date.today())
-        target_year = custom_input_date.year
-        target_month = custom_input_date.month
-        target_day = custom_input_date.day
-        date_display = custom_input_date.strftime("%Y-%m-%d")
-        category_display = "Custom Inquired Timeline"
-        astro_display = "Dynamic calculated astronomical phase for selected date."
-        details_display = f"Custom timeline probe for {date_display}."
+        st.write("**Enter Custom Date (Supports BCE/CE):**")
+        col_cy, col_cm, col_cd = st.columns([1.5, 1, 1])
+        with col_cy:
+            target_year = st.number_input("Year (e.g. 1776, -4004)", min_value=-10000, max_value=10000, value=1776, step=1)
+        with col_cm:
+            target_month = st.number_input("Month (1-12)", min_value=1, max_value=12, value=7, step=1)
+        with col_cd:
+            target_day = st.number_input("Day (1-31)", min_value=1, max_value=31, value=4, step=1)
+
+        date_display = f"{target_year:04d}-{target_month:02d}-{target_day:02d}"
+        category_display = "Custom Timeline Probe"
+        astro_display = "Calculated synodic position and lunar phase for queried date."
+        details_display = f"Custom historical calculation for {date_display}."
 
     m_lunar = get_lunar_phase_details(target_year, target_month, target_day)
     m_root = calculate_vibrational_root(date_display)
@@ -513,15 +534,26 @@ with tab_compat:
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             p_name = st.text_input("Partner / Peer Name", value="", placeholder="Enter companion name...")
-            p_date = st.date_input("Partner Natal Date", value=datetime.date(1995, 1, 1))
+            col_py, col_pm, col_pd = st.columns(3)
+            with col_py:
+                p_year = st.number_input("Year ", min_value=1900, max_value=2100, value=1995, step=1)
+            with col_pm:
+                p_month = st.number_input("Month ", min_value=1, max_value=12, value=1, step=1)
+            with col_pd:
+                p_day = st.number_input("Day ", min_value=1, max_value=31, value=1, step=1)
         with col_p2:
-            p_time = st.time_input("Partner Birth Time", value=datetime.time(12, 0))
+            p_time_str = st.text_input("Partner Birth Time (HH:MM)", value="12:00")
+            try:
+                pth, ptm = [int(p) for p in p_time_str.split(":")[:2]]
+            except Exception:
+                pth, ptm = 12, 0
             p_place = st.text_input("Partner Birthplace", value="", placeholder="City, Country...")
 
-        p_dec_hour = p_time.hour + (p_time.minute / 60.0)
-        p_root = calculate_vibrational_root(p_date.strftime("%Y%m%d"))
-        p_moon = get_lunar_phase_details(p_date.year, p_date.month, p_date.day, p_dec_hour)
-        p_sun = get_approx_sun_sign(p_date.month, p_date.day)
+        p_dec_hour = pth + (ptm / 60.0)
+        p_date_str = f"{p_year:04d}{p_month:02d}{p_day:02d}"
+        p_root = calculate_vibrational_root(p_date_str)
+        p_moon = get_lunar_phase_details(p_year, p_month, p_day, p_dec_hour)
+        p_sun = get_approx_sun_sign(p_month, p_day)
         
         result = evaluate_compatibility(user_lp, p_root)
         
@@ -534,9 +566,17 @@ with tab_compat:
         st.write(f"* **Interaction Matrix:** Observer ({user_sun_sign} / {user_moon['phase']}) transiting with Companion ({p_sun} / {p_moon['phase']}).")
 
     else:
-        target_date = st.date_input("Target Date for Assessment", value=datetime.date.today())
-        t_root = calculate_vibrational_root(target_date.strftime("%Y%m%d"))
-        t_moon = get_lunar_phase_details(target_date.year, target_date.month, target_date.day)
+        col_ty, col_tm, col_td = st.columns(3)
+        with col_ty:
+            t_year = st.number_input("Target Year", min_value=-5000, max_value=5000, value=2026, step=1)
+        with col_tm:
+            t_month = st.number_input("Target Month", min_value=1, max_value=12, value=9, step=1)
+        with col_td:
+            t_day = st.number_input("Target Day", min_value=1, max_value=31, value=25, step=1)
+
+        t_date_str = f"{t_year:04d}{t_month:02d}{t_day:02d}"
+        t_root = calculate_vibrational_root(t_date_str)
+        t_moon = get_lunar_phase_details(t_year, t_month, t_day)
         
         result = evaluate_compatibility(user_lp, t_root)
         
