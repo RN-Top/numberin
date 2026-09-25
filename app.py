@@ -6,6 +6,7 @@ import re
 import urllib.request
 import urllib.parse
 import json
+import os
 from collections import Counter
 
 # Page Configuration
@@ -517,7 +518,6 @@ with st.sidebar:
         q_sum = sum(ord(c) for c in oracle_query.upper() if 'A' <= c <= 'Z') if oracle_query else 0
         draw_val = (lp_anchor + name_p['expression'] + q_sum + today.day + today.month)
         
-        # Collapse into 1-9 or Master
         card_num = reduce_number(draw_val)
         card_title, card_directive = ORACLE_CARDS.get(card_num, ("The Threshold", "Hold steady and observe."))
         
@@ -678,42 +678,85 @@ with tabs[0]:
             st.markdown(f"- **Distraction Axis (+3):** {dm['metal']} ({dm['planet']})")
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE
+# TAB 2: CORPUS KNOWLEDGE BASE (With Nag Hammadi & Pistis Sophia)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>The Full-Corpus Library Engine</h3>", unsafe_allow_html=True)
     st.markdown("Search, cross-examine, and extract patterns across complete canonical scriptures with intact, unabridged verse formatting.")
 
-    CORPUS_URLS = {
-        "King James Bible (Complete)": "https://www.gutenberg.org/cache/epub/10/pg10.txt",
-        "The Kybalion (Three Initiates)": "https://www.gutenberg.org/cache/epub/14264/pg14264.txt",
-        "The Book of Enoch": "https://www.gutenberg.org/cache/epub/45238/pg45238.txt",
-        "Pistis Sophia": "https://www.gutenberg.org/cache/epub/44423/pg44423.txt",
-        "I Ching (Legge Translation)": "https://www.gutenberg.org/cache/epub/25890/pg25890.txt"
+    CORPUS_MIRRORS = {
+        "King James Bible (Complete)": [
+            "https://www.gutenberg.org/cache/epub/10/pg10.txt",
+            "https://raw.githubusercontent.com/mxw/gutenberg-corpus/master/kjv.txt"
+        ],
+        "The Book of Enoch (R.H. Charles)": [
+            "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/enoch.txt",
+            "https://www.gutenberg.org/cache/epub/45238/pg45238.txt"
+        ],
+        "Nag Hammadi Library (Complete Codices)": [
+            "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/nag_hammadi.txt",
+            "https://archive.org/stream/TheNagHammadiLibrary/The%20Nag%20Hammadi%20Library_djvu.txt"
+        ],
+        "Pistis Sophia (G.R.S. Mead)": [
+            "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/pistis_sophia.txt",
+            "https://archive.org/stream/pistissophiawork00mead/pistissophiawork00mead_djvu.txt"
+        ],
+        "The Kybalion (Three Initiates)": [
+            "https://www.gutenberg.org/cache/epub/14264/pg14264.txt"
+        ],
+        "I Ching (Legge Translation)": [
+            "https://www.gutenberg.org/cache/epub/25890/pg25890.txt"
+        ]
+    }
+
+    LOCAL_FILE_FALLBACKS = {
+        "Nag Hammadi Library (Complete Codices)": "texts/nag_hammadi.txt",
+        "Pistis Sophia (G.R.S. Mead)": "texts/pistis_sophia.txt",
+        "The Book of Enoch (R.H. Charles)": "texts/enoch.txt"
     }
 
     @st.cache_data(show_spinner=False)
-    def fetch_full_text(url: str) -> str:
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=14) as response:
-                raw_bytes = response.read().decode('utf-8', errors='ignore')
-                return purify_corpus(raw_bytes)
-        except Exception:
-            return ""
+    def fetch_full_text(source_name: str, urls) -> str:
+        local_path = LOCAL_FILE_FALLBACKS.get(source_name)
+        if local_path and os.path.exists(local_path):
+            try:
+                with open(local_path, "r", encoding="utf-8", errors="ignore") as f:
+                    return purify_corpus(f.read())
+            except Exception:
+                pass
 
-    corpus_source = st.selectbox("Select Active Canonical Corpus", ["Custom Upload"] + list(CORPUS_URLS.keys()))
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            try:
+                req = urllib.request.Request(
+                    url, 
+                    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+                )
+                with urllib.request.urlopen(req, timeout=12) as response:
+                    raw_bytes = response.read().decode('utf-8', errors='ignore')
+                    cleaned = purify_corpus(raw_bytes)
+                    if len(cleaned) > 1000:
+                        return cleaned
+            except Exception:
+                continue
+        return ""
+
+    corpus_source = st.selectbox(
+        "Select Active Canonical Corpus", 
+        ["Custom Upload"] + list(CORPUS_MIRRORS.keys())
+    )
     corpus_text = ""
 
     if corpus_source == "Custom Upload":
-        uploaded_file = st.file_uploader("Upload any complete .txt or .md manuscript", type=["txt", "md"])
+        uploaded_file = st.file_uploader("Upload any manuscript or text file (.txt, .md)", type=["txt", "md"])
         if uploaded_file is not None:
             corpus_text = purify_corpus(uploaded_file.read().decode('utf-8', errors='ignore'))
     else:
         with st.spinner(f"Purifying and cataloging {corpus_source}..."):
-            corpus_text = fetch_full_text(CORPUS_URLS[corpus_source])
+            corpus_text = fetch_full_text(corpus_source, CORPUS_MIRRORS[corpus_source])
             if not corpus_text:
-                st.warning("Manuscript mirror unreachable. Please upload your local text file.")
+                st.warning(f"Could not reach external mirror for {corpus_source}. You can upload your local text file directly using 'Custom Upload' above.")
 
     if corpus_text:
         words_list = re.findall(r'\b[A-Za-z]+\b', corpus_text.lower())
@@ -724,14 +767,14 @@ with tabs[1]:
 
         st.markdown("#### Canonical Plain-Language Inquiry")
         query = st.text_input("Ask a question, enter a number, or search a word/verse:", 
-                              placeholder="e.g. 'fear', 'seven', 'most common words', 'least common words'")
+                              placeholder="e.g. 'archon', 'light', 'seven', 'most common words', 'pistis'")
 
         if query:
             q_clean = query.strip().lower()
             
             # 1. MOST COMMON WORDS
             if any(k in q_clean for k in ["most common", "shows up most", "up the most", "the much", "most frequent"]):
-                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it", "as", "by", "all", "this", "from", "said"}
+                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it", "as", "by", "all", "this", "from", "said", "i", "you", "them"}
                 filtered = [w for w in words_list if w not in stop_words and len(w) > 2]
                 counts = Counter(filtered).most_common(10)
                 st.markdown("#### Dominant Canonical Words (Excluding Stop-Words):")
