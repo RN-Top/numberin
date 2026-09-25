@@ -228,7 +228,6 @@ def angel_read(num_str: str) -> str:
     return "No primary triple repeating synchronicity found in the direct stream."
 
 def get_astronomical_julian_date(year: int, month: int, day: int, is_bce: bool = False) -> float:
-    # Astronomical year numbering: 1 BCE = 0, 2 BCE = -1, etc.
     astro_year = -(year - 1) if is_bce else year
     if month <= 2:
         astro_year -= 1
@@ -397,17 +396,6 @@ with tabs[0]:
         working_meta = HEPTAGRAM_777[working_idx]
         distract_meta = HEPTAGRAM_777[distraction_idx]
 
-        st.markdown(f"""
-        <div class="brass-card">
-            <h4 style="text-align: center; color: #d4af37; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
-            <div class="ring-container">
-                <div class="ring-badge">Outer Ring<br><small>{working_meta['day']}</small></div>
-                <div class="ring-badge">Middle Pivot<br><small>{working_meta['planet']}</small></div>
-                <div class="ring-badge">Inner Core<br><small>{working_meta['metal']}</small></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
         p_clean = prima_materia.strip() if prima_materia else "the quiet stillness you carried in"
         
         tincture_prose = (
@@ -419,18 +407,46 @@ with tabs[0]:
             f"and let the day's natural rhythm bear what your hands have grown tired of carrying."
         )
 
+        st.session_state["tincture_data"] = {
+            "working_meta": working_meta,
+            "distract_meta": distract_meta,
+            "tincture_prose": tincture_prose,
+            "total_alch": total_alch,
+            "working_idx": working_idx,
+            "a_year": a_year,
+            "a_era": a_era,
+            "a_month": a_month,
+            "a_day": a_day
+        }
+
+    if "tincture_data" in st.session_state:
+        td = st.session_state["tincture_data"]
+        wm = td["working_meta"]
+        dm = td["distract_meta"]
+
+        st.markdown(f"""
+        <div class="brass-card">
+            <h4 style="text-align: center; color: #d4af37; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
+            <div class="ring-container">
+                <div class="ring-badge">Outer Ring<br><small>{wm['day']}</small></div>
+                <div class="ring-badge">Middle Pivot<br><small>{wm['planet']}</small></div>
+                <div class="ring-badge">Inner Core<br><small>{wm['metal']}</small></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         st.markdown(f"""
         <div class="tincture-box">
             <strong>Prescription & Tincture:</strong><br><br>
-            {tincture_prose}
+            {td['tincture_prose']}
         </div>
         """, unsafe_allow_html=True)
 
         with st.expander("Examine the Bench Apparatus (Technical Breakdown)"):
-            st.markdown(f"- **Historical Horizon:** `{a_year} {a_era}, Month {a_month}, Day {a_day}`")
-            st.markdown(f"- **Working Modulo:** `{total_alch} ≡ {working_idx} (mod 7)`")
-            st.markdown(f"- **Core Metal Skeleton:** {working_meta['metal']} ({working_meta['planet']})")
-            st.markdown(f"- **Distraction Axis (+3):** {distract_meta['metal']} ({distract_meta['planet']})")
+            st.markdown(f"- **Historical Horizon:** `{td['a_year']} {td['a_era']}, Month {td['a_month']}, Day {td['a_day']}`")
+            st.markdown(f"- **Working Modulo:** `{td['total_alch']} ≡ {td['working_idx']} (mod 7)`")
+            st.markdown(f"- **Core Metal Skeleton:** {wm['metal']} ({wm['planet']})")
+            st.markdown(f"- **Distraction Axis (+3):** {dm['metal']} ({dm['planet']})")
 
 # ----------------------------------------------------
 # TAB 2: CORPUS KNOWLEDGE BASE
