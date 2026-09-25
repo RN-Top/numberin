@@ -46,6 +46,17 @@ st.markdown("""
         line-height: 1.7;
         color: #f5eedc;
     }
+    .ref-box {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-left: 3px solid #d4af37;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.92rem;
+        color: #e6edf3;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -273,6 +284,21 @@ def evaluate_compatibility(lp1: int, lp2: int) -> str:
         return "Friction and Spark: Dynamic tension. Progress requires deliberate accommodation."
     return "Neutral Orbit: Independent wavelengths that interact without friction or fusion."
 
+# Helper to find snippets/references for words in text
+def extract_references(full_text: str, query_token: str, max_refs: int = 5):
+    lines = full_text.splitlines()
+    matches = []
+    pattern = re.compile(rf'\b{re.escape(query_token)}\b', re.IGNORECASE)
+    for idx, line in enumerate(lines):
+        clean_l = line.strip()
+        if not clean_l:
+            continue
+        if pattern.search(clean_l):
+            matches.append(f"Line {idx+1}: {clean_l}")
+            if len(matches) >= max_refs:
+                break
+    return matches
+
 # ==========================================
 # 3. SIDEBAR: AUDIO & NATAL ANCHOR
 # ==========================================
@@ -449,7 +475,7 @@ with tabs[0]:
             st.markdown(f"- **Distraction Axis (+3):** {dm['metal']} ({dm['planet']})")
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE
+# TAB 2: CORPUS KNOWLEDGE BASE (Enhanced Query & Reference Engine)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("### The Full-Corpus Library Engine")
@@ -494,46 +520,78 @@ with tabs[1]:
 
         st.markdown("#### Corpus Plain-Language Inquiry")
         query = st.text_input("Ask a question or enter a search query:", 
-                              placeholder="e.g., 'find all the sevens', 'how many times fear appears', 'most common words', 'letter frequency'")
+                              placeholder="e.g. 'what word shows up the most', 'least common words', 'fear', 'find all sevens'")
 
         if query:
             q_clean = query.strip().lower()
             
-            if "seven" in q_clean or " 7 " in q_clean or q_clean.endswith(" 7"):
-                matches = len(re.findall(r'\b(7|seven|seventh)\b', corpus_text, re.IGNORECASE))
-                st.markdown(f"**Direct Result:** The number seven appears **{matches:,} times** across the full manuscript.")
-            elif "times" in q_clean or "find" in q_clean or "how many" in q_clean:
-                target_word = re.sub(r'^(find|how many times does|how many times|count|find every time it says)\s+', '', q_clean).strip().strip("'\"")
-                target_word = target_word.split()[0] if target_word else ""
-                if target_word:
-                    occ = words_list.count(target_word)
-                    st.markdown(f"**Direct Result:** The word **'{target_word}'** appears **{occ:,} times** in this text.")
-                else:
-                    st.markdown("Please name the specific word you would like to measure.")
-            elif "most common" in q_clean or "shows up most" in q_clean:
-                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it"}
+            # 1. MOST COMMON WORDS / WHAT SHOWS UP THE MOST
+            if any(k in q_clean for k in ["most common", "shows up most", "up the most", "the much", "most frequent", "highest frequency"]):
+                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it", "as", "by", "all", "this", "from"}
                 filtered = [w for w in words_list if w not in stop_words and len(w) > 2]
                 counts = Counter(filtered).most_common(10)
-                st.markdown("**Ten Most Frequent Significant Words:**")
+                st.markdown("#### Most Frequent Words (Excluding Articles/Conjunctions):")
                 for w, c in counts:
-                    st.markdown(f"- **{w}**: {c:,} times")
-            elif "shows up least" in q_clean or "least common" in q_clean:
-                rare = [w for w, c in Counter(words_list).items() if c == 1][:10]
-                st.markdown(f"**Single-Occurrence Words (Hapax Legomena Sample):** {', '.join(rare)}")
+                    st.markdown(f"- **{w}**: `{c:,}` times")
+                
+                top_word = counts[0][0]
+                st.markdown(f"##### Line References for '{top_word}':")
+                refs = extract_references(corpus_text, top_word, max_refs=4)
+                for r in refs:
+                    st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+
+            # 2. LEAST COMMON WORDS / SINGLE OCCURRENCES
+            elif any(k in q_clean for k in ["least common", "shows up least", "the least", "rarest", "hapax"]):
+                single_words = [w for w, c in Counter(words_list).items() if c == 1 and len(w) > 3]
+                sample_least = single_words[:10]
+                st.markdown("#### Single-Occurrence Words (Words Appearing Exactly Once):")
+                st.write(", ".join(sample_least))
+                
+                if sample_least:
+                    st.markdown(f"##### Line Reference for Rare Occurrence '{sample_least[0]}':")
+                    refs = extract_references(corpus_text, sample_least[0], max_refs=1)
+                    for r in refs:
+                        st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+
+            # 3. SEVENS OR DIGIT PATTERNS
+            elif "seven" in q_clean or " 7 " in q_clean or q_clean == "7":
+                matches = len(re.findall(r'\b(7|seven|seventh)\b', corpus_text, re.IGNORECASE))
+                st.markdown(f"**Direct Result:** The number seven appears **{matches:,} times** across the full manuscript.")
+                st.markdown("##### Excerpt References for 'seven':")
+                refs = extract_references(corpus_text, "seven", max_refs=4)
+                for r in refs:
+                    st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+
+            # 4. LETTER FREQUENCY
             elif "letter frequency" in q_clean or "letters" in q_clean:
                 letters_only = [c for c in corpus_text.upper() if 'A' <= c <= 'Z']
-                l_counts = Counter(letters_only).most_common(5)
-                st.markdown("**Dominant Letter Frequencies:**")
+                l_counts = Counter(letters_only).most_common(7)
+                st.markdown("#### Dominant Letter Frequencies:")
                 for l, count in l_counts:
                     pct = (count / len(letters_only)) * 100
                     st.markdown(f"- **{l}**: {count:,} times ({pct:.2f}%)")
-            elif "root" in q_clean or "numerology" in q_clean:
+
+            # 5. WHOLE-CORPUS NUMEROLOGY ROOT
+            elif "root" in q_clean or "grand root" in q_clean:
                 root_sum = sum(ord(c) - 64 for c in corpus_text.upper() if 'A' <= c <= 'Z')
                 collapsed = reduce_number(root_sum)
                 st.markdown(f"**Corpus Grand Root:** `{collapsed}` — {meaning(collapsed)}")
+
+            # 6. DIRECT PHRASE / TARGET WORD SEARCH WITH REFERENCES
             else:
-                raw_find = len(re.findall(re.escape(query.strip()), corpus_text, re.IGNORECASE))
-                st.markdown(f"Found **{raw_find:,} occurrences** matching '{query.strip()}'.")
+                target_word = re.sub(r'^(find|how many times does|how many times|count|find every time it says|search for)\s+', '', q_clean).strip().strip("'\"")
+                target_word = target_word.split()[0] if target_word else q_clean
+                
+                raw_find = len(re.findall(rf'\b{re.escape(target_word)}\b', corpus_text, re.IGNORECASE))
+                st.markdown(f"**Direct Result:** The word **'{target_word}'** appears **{raw_find:,} times** across the manuscript.")
+                
+                if raw_find > 0:
+                    st.markdown(f"##### Line References for '{target_word}':")
+                    refs = extract_references(corpus_text, target_word, max_refs=5)
+                    for r in refs:
+                        st.markdown(f"<div class='ref-box'>{r}</div>", unsafe_allow_html=True)
+                else:
+                    st.info("No exact occurrences found in this corpus.")
 
 # ----------------------------------------------------
 # TAB 3: MILESTONE TIMELINE LENS
