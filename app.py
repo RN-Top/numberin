@@ -1,6 +1,8 @@
 import streamlit as st
 import datetime
 import math
+import re
+from collections import Counter
 from PIL import Image
 
 # ---------------------------------------------------------
@@ -14,7 +16,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# CIPHERS, ASTRONOMICAL & NUMEROLOGY ENGINES
+# MATHEMATICAL, CIPHER & ASTRONOMICAL ENGINES
 # ---------------------------------------------------------
 
 CHALDEAN_MAP = {
@@ -35,7 +37,6 @@ PYTHAGOREAN_MAP = {
 }
 
 def reduce_number(n: int, keep_master: bool = True) -> int:
-    """Reduces an integer to a single digit or master number (11, 22, 33)."""
     while n > 9:
         if keep_master and n in [11, 22, 33]:
             return n
@@ -45,21 +46,18 @@ def reduce_number(n: int, keep_master: bool = True) -> int:
 def calculate_name_vibration(name: str, cipher: str = "Pythagorean") -> int:
     mapping = PYTHAGOREAN_MAP if cipher == "Pythagorean" else CHALDEAN_MAP
     total = sum(mapping.get(char.upper(), 0) for char in name if char.isalpha())
-    return reduce_number(total)
+    return reduce_number(total) if total > 0 else 0
 
 def get_julian_date(year: int, month: int, day: int, hour: float = 12.0) -> float:
-    """Calculates astronomical Julian Day Number for historical BCE/CE dates with fractional hours."""
     if month <= 2:
         year -= 1
         month += 12
     a = math.floor(year / 100)
     b = 2 - a + math.floor(a / 4)
     day_fraction = day + (hour / 24.0)
-    jd = math.floor(365.25 * (year + 4716)) + math.floor(30.6001 * (month + 1)) + day_fraction + b - 1524.5
-    return jd
+    return math.floor(365.25 * (year + 4716)) + math.floor(30.6001 * (month + 1)) + day_fraction + b - 1524.5
 
 def get_lunar_phase_details(year: int, month: int, day: int, hour: float = 12.0) -> dict:
-    """Computes moon age, illumination, and synodic phase name."""
     jd = get_julian_date(year, month, day, hour)
     synodic_month = 29.53058867
     days_since_new = (jd - 2451549.5) % synodic_month
@@ -124,17 +122,17 @@ def evaluate_compatibility(root1: int, root2: int) -> dict:
     return {"score": score, "description": desc}
 
 # ---------------------------------------------------------
-# DATA REPOSITORIES: DECANS, 7-7-7 ALCHEMY & SACRED TEXTS
+# CONSTANTS & REPOSITORIES
 # ---------------------------------------------------------
 
 HEPTAGRAM_777 = {
-    0: {"day": "Monday", "planet": "Moon ☽", "metal": "Silver", "essence": "Fluidity, Subconscious Memory, Receptivity", "tincture": "The White Elixir (Albedo)"},
-    1: {"day": "Tuesday", "planet": "Mars ♂", "metal": "Iron", "essence": "Kinetic Drive, Calcination, Severing Force", "tincture": "The Martial Tincture"},
-    2: {"day": "Wednesday", "planet": "Mercury ☿", "metal": "Quicksilver", "essence": "Volatile Synthesis, Transmutation, Messenger", "tincture": "The Philosophic Mercury"},
-    3: {"day": "Thursday", "planet": "Jupiter ♃", "metal": "Tin", "essence": "Expansion, Cohesion, Royal Authority", "tincture": "The Tincture of Saffron"},
-    4: {"day": "Friday", "planet": "Venus ♀", "metal": "Copper", "essence": "Harmonic Affinity, Binding Love, Equilibrium", "tincture": "The Emerald Tincture"},
-    5: {"day": "Saturday", "planet": "Saturn ♄", "metal": "Lead", "essence": "Nigredo, Structure, Fixation of the Volatile", "tincture": "The Black Stone of Saturn"},
-    6: {"day": "Sunday", "planet": "Sun ☉", "metal": "Gold", "essence": "Pure Spirit, Rubedo, Solar Illumination", "tincture": "The Aurum Potabile (Gold Elixir)"}
+    0: {"day": "Monday", "planet": "Moon ☽", "metal": "Silver", "essence": "Fluidity, Memory, Subconscious", "tincture": "The White Elixir (Albedo)"},
+    1: {"day": "Tuesday", "planet": "Mars ♂", "metal": "Iron", "essence": "Kinetic Drive, Severing, Heat", "tincture": "The Martial Tincture"},
+    2: {"day": "Wednesday", "planet": "Mercury ☿", "metal": "Quicksilver", "essence": "Volatile Synthesis, Transmutation", "tincture": "The Philosophic Mercury"},
+    3: {"day": "Thursday", "planet": "Jupiter ♃", "metal": "Tin", "essence": "Expansion, Cohesion, Royalty", "tincture": "The Tincture of Saffron"},
+    4: {"day": "Friday", "planet": "Venus ♀", "metal": "Copper", "essence": "Harmonic Affinity, Binding Love", "tincture": "The Emerald Tincture"},
+    5: {"day": "Saturday", "planet": "Saturn ♄", "metal": "Lead", "essence": "Nigredo, Structure, Fixation", "tincture": "The Black Stone of Saturn"},
+    6: {"day": "Sunday", "planet": "Sun ☉", "metal": "Gold", "essence": "Pure Spirit, Rubedo, Solar Will", "tincture": "The Aurum Potabile (Gold Elixir)"}
 }
 
 ZODIAC_DECANS = {
@@ -156,14 +154,14 @@ MILESTONES = {
     "American Declaration of Independence": {
         "date_str": "1776-07-04", "year": 1776, "month": 7, "day": 4,
         "category": "Historical Foundation",
-        "astronomy": "Waning Gibbous Moon transiting Aquarius into Pisces, approaching Last Quarter.",
+        "astronomy": "Waning Gibbous Moon transiting Aquarius into Pisces.",
         "details": "Foundational charter signed under Cancer Sun with high retrograde planetary dispersion."
     },
     "Crucifixion Blood Moon (Passover)": {
         "date_str": "0033-04-03", "year": 33, "month": 4, "day": 3,
         "category": "Sacred History",
-        "astronomy": "Partial/Total Blood Red Lunar Eclipse at moonrise over Jerusalem during Passover (14 Nisan).",
-        "details": "Concurs with scriptural records of darkening skies. Astronomical back-calculations verify the moon rising in eclipse in Virgo."
+        "astronomy": "Blood Red Lunar Eclipse at moonrise over Jerusalem during Passover (14 Nisan).",
+        "details": "Concurs with scriptural records of darkening skies. Astronomical back-calculations verify lunar eclipse in Virgo."
     },
     "Annus Lucis / Creation Epoch": {
         "date_str": "-4004-10-23", "year": -4004, "month": 10, "day": 23,
@@ -175,24 +173,12 @@ MILESTONES = {
         "date_str": "1914-07-28", "year": 1914, "month": 7, "day": 28,
         "category": "Modern Eschatology",
         "astronomy": "Waxing Crescent Moon transiting into Libra; solar eclipse followed on August 21, 1914.",
-        "details": "Viewed in historic biblical scholarship as the close of the 'Times of the Gentiles' and the onset of global warfare."
+        "details": "Historic biblical scholarship epoch signaling systemic global transition."
     },
-    "Planetary Hexagon Alignment": {
-        "date_str": "2017-01-20", "year": 2017, "month": 1, "day": 20,
-        "category": "Political Astrometry",
-        "astronomy": "Last Quarter Moon in Scorpio with wide dispersion across Mercury, Venus, Mars, and Jupiter.",
-        "details": "Marked by astrological study as an initiation of severe systemic disruption."
-    },
-    "Great Reset Declaration": {
-        "date_str": "2020-06-03", "year": 2020, "month": 6, "day": 3,
-        "category": "Global Transition",
-        "astronomy": "Waxing Gibbous Moon square Mars and Neptune; Venus inferior conjunction.",
-        "details": "Public unveiling of global institutional resets during worldwide societal suspension."
-    },
-    "The Great Year Precession": {
+    "The Great Year Solstice Precession": {
         "date_str": "2012-12-21", "year": 2012, "month": 12, "day": 21,
         "category": "Cosmic Precession",
-        "astronomy": "Solstice Sun aligned with the Galactic Equator, closing the ~25,772-year Precession Cycle.",
+        "astronomy": "Solstice Sun aligned with the Galactic Equator, closing the ~25,772-year cycle.",
         "details": "Culmination of long-count calendrical mathematics signaling entrance into a fresh precessional age."
     }
 }
@@ -212,41 +198,56 @@ KNOWLEDGE_BASE = {
     "33": {"archetype": "The Avatar of Compassion (Master)", "element": "Love", "keyword": "Universal Upliftment, Service", "reading": "Devoted to elevating consciousness through dedicated service and heart-centered guidance."}
 }
 
-PRELOADED_TEXTS = {
-    "The Book of Enoch (The Luminaries - Chapter 72)": [
-        "1. The book of the courses of the luminaries of the heaven, the relations of each, according to their classes, their dominion and their seasons, according to their names and places of origin, and according to their months.",
-        "2. First there goes forth the great luminary, named the Sun, and his circumference is like the circumference of the heaven, and he is quite filled with illuminating and heating fire.",
-        "3. The chariot on which he mounts, the wind drives, and the sun goes down from the heaven as he returns through the north in order to reach the east, and is so led that he comes to the appropriate portal and shines in the face of the heaven.",
-        "4. In this manner he rises in the first month in the great portal, which is the fourth portal of the six portals in the cast.",
-        "5. And in that fourth portal from which the sun rises in the first month are twelve window-openings, from which proceed a flame when they are opened in their season."
-    ],
-    "Pistis Sophia (Book of the Saviors)": [
-        "1. And Jesus continued again in the discourse and said unto his disciples: It came to pass, when I had come to the sphere of Fate, that I changed their paths and their courses according as they were appointed.",
-        "2. And Pistis Sophia cried out exceedingly; she sang praises to the Light of the Treasury which she had seen, for she was surrounded by the archons and the rulers of the darkness.",
-        "3. And the first power of the Treasury of Light shone down through the realms, purifying the twelve aeons, so that the light spark should be extracted from the matter of chaos.",
-        "4. He who hath ears to hear, let him hear what the Spirit saith unto the powers of the emanations: the light shall overcome the mixture, and Sophia shall return unto her place."
-    ],
-    "Nag Hammadi (Gospel of Thomas - Selections)": [
-        "Logion 1: Whoever discovers the interpretation of these sayings will not taste death.",
-        "Logion 2: Let him who seeks continue seeking until he finds. When he finds, he will become troubled. When he becomes troubled, he will be astonished, and he will rule over the All.",
-        "Logion 3: If your leaders say to you, 'Look, the Kingdom is in the sky,' then the birds of the sky will precede you. Rather, the Kingdom is inside of you, and it is outside of you.",
-        "Logion 22: When you make the two into one, and when you make the inner like the outer and the outer like the inner, and the upper like the lower, then you will enter the kingdom.",
-        "Logion 77: I am the light that is over all things. I am all: from me all came forth, and to me all attained. Split a piece of wood; I am there. Lift up the stone, and you will find me there."
-    ],
-    "The Bible (Genesis 1 & Revelation 12 Celestial Alignment)": [
-        "Genesis 1:1 In the beginning God created the heaven and the earth.",
-        "Genesis 1:14 And God said, Let there be lights in the firmament of the heaven to divide the day from the night; and let them be for signs, and for seasons, and for days, and years.",
-        "Genesis 1:16 And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.",
-        "Revelation 12:1 And there appeared a great wonder in heaven; a woman clothed with the sun, and the moon under her feet, and upon her head a crown of twelve stars.",
-        "Revelation 12:2 And she being with child cried, travailing in birth, and pained to be delivered."
-    ],
-    "I Ching (The Book of Changes - Hexagrams 1 & 2)": [
-        "Hexagram 1: QIAN - The Creative (Heaven over Heaven). The Creative works sublime success, furthering through perseverance.",
-        "Six unbroken light lines symbolize pure primal power, unceasing vitality, and the celestial father archetype.",
-        "Action: Persevere in virtue. The dragon rises from the depths to soar across the heavens.",
-        "Hexagram 2: KUN - The Receptive (Earth over Earth). The Receptive brings about sublime success, furthering through the perseverance of a mare.",
-        "Six divided Yin lines represent infinite receptivity, quiet devotion, and spatial foundation. Action: Do not seek to lead; find guidance in following the celestial rhythm."
-    ]
+PRELOADED_LIBRARIES = {
+    "The Book of Enoch (Full Luminaries - Ch. 72-74)": """
+1. The book of the courses of the luminaries of the heaven, the relations of each, according to their classes, their dominion and their seasons, according to their names and places of origin, and according to their months.
+2. First there goes forth the great luminary, named the Sun, and his circumference is like the circumference of the heaven, and he is quite filled with illuminating and heating fire.
+3. The chariot on which he mounts, the wind drives, and the sun goes down from the heaven as he returns through the north in order to reach the east, and is so led that he comes to the appropriate portal and shines in the face of the heaven.
+4. In this manner he rises in the first month in the great portal, which is the fourth portal of the six portals in the cast.
+5. And in that fourth portal from which the sun rises in the first month are twelve window-openings, from which proceed a flame when they are opened in their season.
+6. When the sun rises in the heaven, he comes forth through that fourth portal thirty mornings in succession, and sets accurately in the fourth portal in the west of the heaven.
+7. And during this period the day becomes daily longer and the night nightly shorter to the thirtieth morning.
+8. On that day the day is longer than the night by a ninth part, and the day amounts exactly to ten parts and the night to eight parts.
+9. And the sun rises from that fourth portal, and sets in the fourth, and returns to the fifth portal of the east thirty mornings, and rises from it and sets in the fifth portal.
+10. And then the day becomes longer by two parts and amounts to eleven parts, and the night becomes shorter and amounts to seven parts.
+11. And the sun returns to the east and enters into the sixth portal, and rises and sets in the sixth portal one-and-thirty mornings on account of its sign.
+12. On that day the day becomes longer than the night, and the day becomes double the night, and the day becomes twelve parts, and the night is shortened and becomes six parts.
+    """,
+    "Nag Hammadi: The Gospel of Thomas (Complete Core Logia)": """
+Logion 1: Whoever discovers the interpretation of these sayings will not taste death.
+Logion 2: Let him who seeks continue seeking until he finds. When he finds, he will become troubled. When he becomes troubled, he will be astonished, and he will rule over the All.
+Logion 3: If your leaders say to you, 'Look, the Kingdom is in the sky,' then the birds of the sky will precede you. Rather, the Kingdom is inside of you, and it is outside of you.
+Logion 4: The man old in days will not hesitate to ask a small child seven days old about the place of life, and he will live. For many who are first will become last, and they will become one and the same.
+Logion 5: Recognize what is before your face, and that which is hidden from you will be revealed to you. For there is nothing hidden that will not be made manifest.
+Logion 22: When you make the two into one, and when you make the inner like the outer and the outer like the inner, and the upper like the lower, then you will enter the kingdom.
+Logion 77: I am the light that is over all things. I am all: from me all came forth, and to me all attained. Split a piece of wood; I am there. Lift up the stone, and you will find me there.
+Logion 113: His disciples said to him, 'When will the Kingdom come?' Jesus said, 'It will not come by waiting for it. Rather, the Kingdom of the Father is spread out upon the earth, and men do not see it.'
+    """,
+    "Pistis Sophia: The Ascent & Treasury of Light": """
+1. And Jesus continued again in the discourse and said unto his disciples: It came to pass, when I had come to the sphere of Fate, that I changed their paths and their courses according as they were appointed.
+2. And Pistis Sophia cried out exceedingly; she sang praises to the Light of the Treasury which she had seen, for she was surrounded by the archons and the rulers of the darkness.
+3. And the first power of the Treasury of Light shone down through the realms, purifying the twelve aeons, so that the light spark should be extracted from the matter of chaos.
+4. The Lion-faced power, which is the half-light, had swallowed all the light-powers in Sophia and purged her strength into the deep matter.
+5. And Sophia cried: O Light of Lights, in whom I have had faith from the beginning, hearken now unto my repentance; deliver my light from the emanations of Self-willed.
+6. Then the Mystery commanded a great light-stream to descend from the first commandment, shining with twelve seals of light to liberate her soul into the thirteenth aeon.
+    """,
+    "Biblical Revelation & Genesis Alignment": """
+Genesis 1:1 In the beginning God created the heaven and the earth.
+Genesis 1:14 And God said, Let there be lights in the firmament of the heaven to divide the day from the night; and let them be for signs, and for seasons, and for days, and years.
+Genesis 1:16 And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.
+Revelation 12:1 And there appeared a great wonder in heaven; a woman clothed with the sun, and the moon under her feet, and upon her head a crown of twelve stars.
+Revelation 12:2 And she being with child cried, travailing in birth, and pained to be delivered.
+Revelation 21:1 And I saw a new heaven and a new earth: for the first heaven and the first earth were passed away; and there was no more sea.
+Revelation 22:13 I am Alpha and Omega, the beginning and the end, the first and the last.
+    """,
+    "I Ching (Hexagrams 1 & 2 Canonical Excerpt)": """
+Hexagram 1: QIAN - The Creative (Heaven over Heaven). The Creative works sublime success, furthering through perseverance.
+Six unbroken light lines symbolize pure primal power, unceasing vitality, and the celestial father archetype.
+Action: Persevere in virtue. The dragon rises from the depths to soar across the heavens.
+Hexagram 2: KUN - The Receptive (Earth over Earth). The Receptive brings about sublime success, furthering through the perseverance of a mare.
+Six divided Yin lines represent infinite receptivity, quiet devotion, and spatial foundation.
+Action: Do not seek to lead; find guidance in following the celestial rhythm.
+    """
 }
 
 # ---------------------------------------------------------
@@ -258,6 +259,7 @@ with st.sidebar:
     st.caption("Cosmic Frequency & Resonance Suite")
     st.write("---")
 
+    # Harmonic Audio Controls
     st.subheader("🎵 Harmonic Atmosphere")
     audio_source = st.selectbox(
         "Ambient Frequency Track",
@@ -279,6 +281,7 @@ with st.sidebar:
 
     st.write("---")
 
+    # Observer Anchors (Using clean number inputs to avoid mobile picker validation crashes)
     st.subheader("👤 Observer Natal Anchor")
     user_name = st.text_input("Your Name / Handle", value="", placeholder="Enter name...")
 
@@ -333,6 +336,7 @@ if search_query.strip():
     digits = [int(c) for c in query if c.isdigit()]
     letters = [c for c in query if c.isalpha()]
 
+    # Case A: Date Analysis
     if len(digits) >= 4 and len(letters) == 0:
         root_val = reduce_number(sum(digits))
         entry = KNOWLEDGE_BASE.get(str(root_val), KNOWLEDGE_BASE["1"])
@@ -383,6 +387,7 @@ if search_query.strip():
                     """,
                     unsafe_allow_html=True
                 )
+    # Case B: Name or Word Analysis
     else:
         pyth_val = calculate_name_vibration(query, "Pythagorean")
         chald_val = calculate_name_vibration(query, "Chaldean")
@@ -436,7 +441,7 @@ tab_milestones, tab_oracle, tab_alembic, tab_compat, tab_patterns, tab_knowledge
     "⚗️ 7-7-7 Alchemical Lens",
     "💫 Compatibility Matrix",
     "🔍 Pattern & Frequency Engine",
-    "📖 Book of Knowledge & Sacred Texts"
+    "📖 Books of Knowledge & Deep Corpus Engine"
 ])
 
 # TAB 1: MILESTONE TIMELINE LENS
@@ -692,77 +697,124 @@ with tab_patterns:
     st.subheader("Vibrational Distribution")
     st.bar_chart(char_freq)
 
-# TAB 6: BOOK OF KNOWLEDGE & SACRED TEXTS
+# TAB 6: BOOKS OF KNOWLEDGE & DEEP CORPUS ENGINE
 with tab_knowledge:
-    st.header("📖 The Book of Knowledge & Sacred Oracle Library")
-    st.caption("Canonical wisdom texts, Gnostic treatises, cosmological revelations, and document image scanner.")
+    st.header("📖 Books of Knowledge & Deep Corpus Engine")
+    st.caption("Analyze full pre-loaded books or upload custom treatises to detect patterns, anomalies, and generate readings on raw data.")
 
-    know_section = st.radio(
-        "Knowledge Navigation",
-        ["📜 Sacred Texts & Oracle Workbench", "🔢 Vibrational Root Definitions", "🖼️ Scan & Analyze Manuscript Page (JPEG)"],
+    source_type = st.radio(
+        "Corpus Source:",
+        ["Select Pre-Loaded Canonical Book", "Upload Custom Book / Manuscript (.txt)", "Scan Manuscript Page Image (JPEG/PNG)"],
         horizontal=True
     )
 
-    if know_section == "📜 Sacred Texts & Oracle Workbench":
-        st.subheader("Oracle Reading & Hidden Pattern Finder")
-        chosen_book = st.selectbox("Select Canonical Sacred Text:", list(PRELOADED_TEXTS.keys()))
-        book_verses = PRELOADED_TEXTS[chosen_book]
+    corpus_text = ""
+    active_book_title = ""
 
-        st.text_area("Full Excerpt Display", "\n".join(book_verses), height=180)
-
-        st.markdown("#### 🔍 Oracle Pattern & Hidden Meaning Extraction")
-        search_kw = st.text_input("Filter for Word, Symbol, or Verse Number:", value="Sun")
-        
-        clean_kw = search_kw.strip().lower()
-        matching_verses = [v for v in book_verses if clean_kw in v.lower()]
-
-        if matching_verses:
-            st.success(f"Found {len(matching_verses)} matching passages for '{search_kw}':")
-            for idx, passage in enumerate(matching_verses):
-                v_pyth = calculate_name_vibration(passage, "Pythagorean")
-                v_chald = calculate_name_vibration(passage, "Chaldean")
-                with st.expander(f"Verse Match {idx + 1} | Pyth Root {v_pyth} | Chald Root {v_chald}"):
-                    st.write(f"> *{passage}*")
-                    p_compat = evaluate_compatibility(user_lp, v_pyth)
-                    st.info(f"**Observer Resonance with Verse:** {p_compat['description']} (Index: {p_compat['score']}%)")
+    if source_type == "Select Pre-Loaded Canonical Book":
+        active_book_title = st.selectbox("Select Canonical Work:", list(PRELOADED_LIBRARIES.keys()))
+        corpus_text = PRELOADED_LIBRARIES[active_book_title].strip()
+    elif source_type == "Upload Custom Book / Manuscript (.txt)":
+        uploaded_doc = st.file_uploader("Upload Text Document (.txt)", type=["txt"])
+        if uploaded_doc:
+            corpus_text = uploaded_doc.read().decode("utf-8", errors="ignore")
+            active_book_title = uploaded_doc.name
+            st.success(f"Loaded '{active_book_title}' ({len(corpus_text):,} characters).")
         else:
-            st.warning(f"No direct lines found containing '{search_kw}'. Try other keywords from the text above.")
-
-    elif know_section == "🔢 Vibrational Root Definitions":
-        st.subheader("Canonical Archetypes & Geometric Roots")
-        selected_number = st.selectbox("Consult Number Root:", list(KNOWLEDGE_BASE.keys()))
-        entry = KNOWLEDGE_BASE[selected_number]
-
-        b1, b2 = st.columns(2)
-        with b1:
-            st.markdown(f"### Root {selected_number}: {entry['archetype']}")
-            st.markdown(f"**Elemental Current:** `{entry['element']}`")
-            st.markdown(f"**Key Vibrations:** `{entry['keyword']}`")
-            st.write(f"**Full Reading Matrix:** {entry['reading']}")
-
-        with b2:
-            st.markdown("### Lunar Phase Esotericism")
-            st.write("""
-            * **New Moon (Conjunction):** Seed point of pure intent, unmanifest potential, and initiation.
-            * **Crescent & Quarter:** Momentum building, navigating resistance, anchoring structure.
-            * **Full Moon (Opposition):** Total illumination, confrontation of polarities, and revelations.
-            * **Waning Phases:** Synthesis, harvesting wisdom, releasing outworn cycles.
-            """)
-
+            corpus_text = PRELOADED_LIBRARIES["The Book of Enoch (Full Luminaries - Ch. 72-74)"].strip()
+            active_book_title = "The Book of Enoch (Default)"
     else:
-        st.subheader("🖼️ Manuscript & Page Image Scanner")
-        st.caption("Upload JPEG / PNG images of ancient book folios (e.g. Voynich folios) for visual inspection and cipher notes.")
-
-        uploaded_img = st.file_uploader("Upload Image File (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
+        st.subheader("🖼️ Visual Manuscript Page Inspector")
+        uploaded_img = st.file_uploader("Upload Page/Folio (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
         if uploaded_img is not None:
             image = Image.open(uploaded_img)
             col_img1, col_img2 = st.columns([1.5, 1])
             with col_img1:
-                st.image(image, caption=f"Uploaded Folio: {uploaded_img.name}", use_container_width=True)
+                st.image(image, caption=f"Loaded Folio: {uploaded_img.name}", use_container_width=True)
             with col_img2:
-                st.markdown("### 📝 Folio Analysis & Cipher Notes")
-                folio_label = st.text_input("Folio / Coordinate Label:", value="Folio-Alpha")
-                notes = st.text_area("Decipherment & Symbol Observations:", height=150, placeholder="Record astronomical glyphs, decan spokes, or marginalia cipher values...")
-                if st.button("Save Notations to Memory"):
-                    label_root = calculate_name_vibration(folio_label, "Pythagorean")
-                    st.success(f"Logged {folio_label} (Vibrational Root: {label_root}) into workbench context.")
+                folio_label = st.text_input("Folio Coordinate / Identification:", value="Folio-Alpha")
+                notes = st.text_area("Decipherment & Symbol Observations:", height=150, placeholder="Transcribe words, glyphs, or structural anomalies...")
+                if st.button("Log Folio to Reading Engine"):
+                    l_root = calculate_name_vibration(folio_label, "Pythagorean")
+                    st.success(f"Logged {folio_label} (Vibrational Root: {l_root}) into workbench context.")
+
+    if corpus_text:
+        st.markdown("---")
+        # Text Metrics & Anomaly Engine
+        words = re.findall(r'\b[A-Za-z]+\b', corpus_text)
+        word_counts = Counter([w.lower() for w in words])
+        total_words = len(words)
+        unique_words = len(word_counts)
+        hapax_legomena = [w for w, c in word_counts.items() if c == 1]
+        
+        # Calculate root vibration of the entire text
+        corpus_root = calculate_name_vibration(corpus_text, "Pythagorean")
+        reading_entry = KNOWLEDGE_BASE.get(str(corpus_root), KNOWLEDGE_BASE["1"])
+
+        st.subheader(f"📊 Corpus Diagnostics: {active_book_title}")
+        c_c1, c_c2, c_c3, c_c4 = st.columns(4)
+        c_c1.metric("Total Words", f"{total_words:,}")
+        c_c2.metric("Unique Vocabulary", f"{unique_words:,}")
+        c_c3.metric("Oddities (1-time words)", f"{len(hapax_legomena):,}")
+        c_c4.metric("Corpus Root", f"Root {corpus_root}")
+
+        # Data-Supplied Reading Section
+        st.markdown("### 🔮 Data-Supplied Reading on Loaded Book")
+        compat_with_user = evaluate_compatibility(user_lp, corpus_root)
+        
+        col_read1, col_read2 = st.columns([1.2, 1])
+        with col_read1:
+            st.info(f"""
+            **Corpus Archetype:** **{reading_entry['archetype']}** (Element: `{reading_entry['element']}`)  
+            **Guiding Principle:** {reading_entry['keyword']}  
+            **Synthesis:** {reading_entry['reading']}
+            """)
+        with col_read2:
+            display_user = user_name if user_name else "Observer"
+            st.success(f"""
+            **Resonance with {display_user}:**  
+            Observer Life Path `{user_lp}`  ↔  Book Root `{corpus_root}`  
+            **Index:** `{compat_with_user['score']}%`  
+            *{compat_with_user['description']}*
+            """)
+
+        # Search, Pattern & Oddity Discovery
+        st.markdown("---")
+        st.subheader("🔍 Pattern, Word & Anomaly Filter")
+        
+        col_s1, col_s2 = st.columns([2, 1])
+        with col_s1:
+            query_word = st.text_input("Find Patterns for Word, Symbol or Phrase:", value="Sun")
+        with col_s2:
+            filter_mode = st.selectbox("Search Lens:", ["Case-Insensitive Match", "Exact Word Boundary", "Search Hapax / Oddities"])
+
+        if filter_mode == "Search Hapax / Oddities":
+            st.markdown(f"**Singular Anomalies (Words appearing only once in the entire book):**")
+            st.write(", ".join(hapax_legomena[:100]) + ("..." if len(hapax_legomena) > 100 else ""))
+        else:
+            if query_word.strip():
+                clean_q = query_word.strip()
+                pattern = r'\b' + re.escape(clean_q) + r'\b' if filter_mode == "Exact Word Boundary" else re.escape(clean_q)
+                
+                # Split text into sentences / passages for fine-grained scanning
+                sentences = re.split(r'(?<=[.!?\n]) +', corpus_text)
+                matches = [s.strip() for s in sentences if re.search(pattern, s, re.IGNORECASE) and s.strip()]
+
+                if matches:
+                    st.success(f"Discovered **{len(matches)}** resonant occurrences for '{query_word}':")
+                    for i, m in enumerate(matches[:25]):
+                        m_pyth = calculate_name_vibration(m, "Pythagorean")
+                        m_chald = calculate_name_vibration(m, "Chaldean")
+                        with st.expander(f"Match #{i + 1} | Pyth Root {m_pyth} | Chald Root {m_chald}"):
+                            st.write(f"> *{m}*")
+                            p_eval = evaluate_compatibility(user_lp, m_pyth)
+                            st.caption(f"Resonance with Observer: {p_eval['score']}% — {p_eval['description']}")
+                    if len(matches) > 25:
+                        st.caption(f"*Displaying first 25 of {len(matches)} occurrences.*")
+                else:
+                    st.warning(f"No direct passages found containing '{query_word}'.")
+
+        # Visual Word Frequency Distribution
+        with st.expander("📈 View Top 20 Most Frequent Words"):
+            common_words = dict(word_counts.most_common(20))
+            st.bar_chart(common_words)
