@@ -1,8 +1,11 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import datetime
 import math
 import re
 import urllib.request
+import urllib.parse
+import json
 from collections import Counter
 
 # Page Configuration
@@ -42,6 +45,15 @@ st.markdown("""
         padding: 24px;
         margin: 16px 0 24px 0;
         box-shadow: 0 0 25px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(212, 175, 55, 0.12);
+    }
+
+    .sidebar-oracle-card {
+        background: rgba(26, 22, 16, 0.85);
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 8px;
+        padding: 14px;
+        margin-top: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
     }
 
     .ring-container {
@@ -122,7 +134,6 @@ st.markdown("""
         margin-left: 8px;
     }
 
-    /* Print View Styling */
     @media print {
         body, .stApp {
             background: #ffffff !important;
@@ -239,9 +250,67 @@ KNOWLEDGE_BASE = {
     33: "Master 33: The compassionate hearth, sacrificial preservation of truth."
 }
 
+ORACLE_CARDS = {
+    1: ("The Uncarved Stone", "Take direct ownership of the initial stroke. Do not ask for external permission."),
+    2: ("The Still Water", "Observe before speaking. The mirror will reveal the subtle misalignment without force."),
+    3: ("The Singing Wire", "Give voice to the unpolished thought. Expression clears the stagnant atmosphere."),
+    4: ("The Ashlar Corner", "Establish the boundary first. True freedom requires an impenetrable perimeter."),
+    5: ("The Open Gale", "Release the mooring line. Attempting to control this current will only snap the mast."),
+    6: ("The Golden Crucible", "Tend to what is within arm's reach. Harmony begins at your immediate hearth."),
+    7: ("The Veil of Silence", "Withdraw the senses inward. What appears missing on the surface is resolving underneath."),
+    8: ("The Balanced Scales", "Demand sovereign recompense. The ledger must balance without guilt or apology."),
+    9: ("The Final Embers", "Let what has burned out go cold. Sweep the hearth to receive the new seed."),
+    11: ("The Lightning Rod", "You are the conductor, not the source. Ground the sudden inspiration into clay."),
+    22: ("The Master Builder", "Draft the blueprint for longevity. What you construct now will outlast the current storm."),
+    33: ("The Sacred Hearth", "Offer compassionate presence without self-sacrifice. Be the anchor, not the raft.")
+}
+
+GEO_FALLBACK = {
+    "naples, fl": (26.1420, -81.7948, "Naples, Florida, USA"),
+    "naples, florida": (26.1420, -81.7948, "Naples, Florida, USA"),
+    "new york, ny": (40.7128, -74.0060, "New York, NY, USA"),
+    "los angeles, ca": (34.0522, -118.2437, "Los Angeles, CA, USA"),
+    "chicago, il": (41.8781, -87.6298, "Chicago, IL, USA"),
+    "austin, tx": (30.2672, -97.7431, "Austin, TX, USA"),
+    "miami, fl": (25.7617, -80.1918, "Miami, FL, USA"),
+    "london, uk": (51.5074, -0.1278, "London, United Kingdom"),
+    "paris, france": (48.8566, 2.3522, "Paris, France"),
+    "jerusalem": (31.7683, 35.2137, "Jerusalem"),
+    "cairo, egypt": (30.0444, 31.2357, "Cairo, Egypt"),
+    "rome, italy": (41.9028, 12.4964, "Rome, Italy")
+}
+
 # ==========================================
-# 2. CORE HELPER FUNCTIONS & DEEP PARSING
+# 2. CORE HELPER FUNCTIONS & GEOCODER
 # ==========================================
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def geocode_location(query_str: str):
+    q_norm = query_str.strip().lower()
+    if not q_norm:
+        return 26.1420, -81.7948, "Naples, Florida, USA"
+
+    for k, v in GEO_FALLBACK.items():
+        if k in q_norm or q_norm in k:
+            return v[0], v[1], v[2]
+
+    try:
+        url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(query_str)}&format=json&limit=1"
+        req = urllib.request.Request(url, headers={'User-Agent': 'NumberinHarmonicsApp/2.0'})
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data and len(data) > 0:
+                lat = float(data[0]['lat'])
+                lon = float(data[0]['lon'])
+                name = data[0].get('display_name', query_str).split(',')[0]
+                return lat, lon, name
+    except Exception:
+        pass
+
+    hash_val = sum(ord(c) for c in q_norm)
+    pseudo_lat = ((hash_val * 7) % 140) - 70
+    pseudo_lon = ((hash_val * 13) % 360) - 180
+    return float(pseudo_lat), float(pseudo_lon), query_str.title()
 
 def reduce_number(n: int, preserve_master: bool = True) -> int:
     n = abs(int(n))
@@ -399,7 +468,7 @@ def extract_full_verses(corpus_text: str, query: str, max_results: int = 5):
     return matches
 
 # ==========================================
-# 3. SIDEBAR: AUDIO & UNIVERSAL NATAL ANCHOR
+# 3. SIDEBAR: AUDIO, NATAL ANCHOR & NUMEROLOGY ORACLE
 # ==========================================
 
 with st.sidebar:
@@ -435,8 +504,44 @@ with st.sidebar:
     st.markdown(f"**Expression:** `{name_p['expression']}`")
     st.markdown(f"**Sun Sign:** `{sun_anchor}`")
     st.markdown(f"**Moon Phase:** `{moon_anchor}`")
+    
+    # NUMEROLOGY ORACLE IN SIDEBAR
     st.markdown("---")
-    st.caption("Universal Anchor active across all chambers.")
+    st.markdown("<h3 style='color:#f5c542; font-size:1.15rem;'>🔮 NUMEROLOGY ORACLE</h3>", unsafe_allow_html=True)
+    st.caption("Cast a current query into the vibrational wheel.")
+    
+    oracle_query = st.text_input("Ask the Oracle a question:", placeholder="What current requires my focus today?", key="sb_oracle_q")
+    
+    if st.button("Consult the Oracle", key="sb_oracle_btn"):
+        today = datetime.date.today()
+        q_sum = sum(ord(c) for c in oracle_query.upper() if 'A' <= c <= 'Z') if oracle_query else 0
+        draw_val = (lp_anchor + name_p['expression'] + q_sum + today.day + today.month)
+        
+        # Collapse into 1-9 or Master
+        card_num = reduce_number(draw_val)
+        card_title, card_directive = ORACLE_CARDS.get(card_num, ("The Threshold", "Hold steady and observe."))
+        
+        st.session_state["sidebar_oracle_res"] = {
+            "num": card_num,
+            "title": card_title,
+            "directive": card_directive,
+            "query": oracle_query
+        }
+        
+    if "sidebar_oracle_res" in st.session_state:
+        sor = st.session_state["sidebar_oracle_res"]
+        st.markdown(f"""
+        <div class="sidebar-oracle-card">
+            <span style="color:#d4af37; font-size:0.75rem; font-weight:bold; letter-spacing:0.05em; font-family:'Cinzel', serif;">ORACLE CAST #{sor['num']}</span>
+            <h4 style="color:#fff4cc; margin:4px 0 6px 0; font-size:1.05rem;">{sor['title']}</h4>
+            <p style="font-size:0.86rem; line-height:1.5; color:#f1f4f8; margin-bottom:0;">
+                {sor['directive']}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.caption("Universal Anchor pinned across all active reading chambers.")
 
 # ==========================================
 # 4. UNIVERSAL SEARCH / INPUT CLASSIFIER
@@ -573,7 +678,7 @@ with tabs[0]:
             st.markdown(f"- **Distraction Axis (+3):** {dm['metal']} ({dm['planet']})")
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE (Full-Verse Purified Engine)
+# TAB 2: CORPUS KNOWLEDGE BASE
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>The Full-Corpus Library Engine</h3>", unsafe_allow_html=True)
@@ -713,7 +818,7 @@ with tabs[1]:
                     st.info("No exact occurrences found in this corpus.")
 
 # ----------------------------------------------------
-# TAB 3: SPATIOTEMPORAL FREQUENCY MAP & PRINTABLE CHARTER (New)
+# TAB 3: SPATIOTEMPORAL FREQUENCY MAP & PRINTABLE CHARTER
 # ----------------------------------------------------
 with tabs[2]:
     st.markdown("<h3 style='color:#f5c542;'>Spatiotemporal Frequency Map</h3>", unsafe_allow_html=True)
@@ -734,21 +839,23 @@ with tabs[2]:
         with tc4:
             st_time = st.time_input("Birth Time (Approx)", value=datetime.time(12, 0), key="st_time")
 
-        st.markdown("**2. Spatial Coordinates (Origin vs. Present)**")
+        st.markdown("**2. Spatial Ground (Auto-Detected City & State)**")
         sc1, sc2 = st.columns(2)
         with sc1:
-            st.caption("Origin Ground (Birthplace)")
-            origin_lat = st.number_input("Origin Lat (°N/S)", value=26.14, step=0.1, key="o_lat")
-            origin_lon = st.number_input("Origin Lon (°E/W)", value=-81.79, step=0.1, key="o_lon")
+            origin_city = st.text_input("Birth Place (City, State / Country)", value="Naples, Florida", key="o_city")
+            origin_lat, origin_lon, orig_resolved = geocode_location(origin_city)
+            st.caption(f"📍 Resolved: `{orig_resolved}` ({origin_lat:.2f}°, {origin_lon:.2f}°)")
+
         with sc2:
-            st.caption("Present Ground (Current)")
-            same_loc = st.checkbox("Currently at Origin Ground", value=True, key="same_loc")
+            same_loc = st.checkbox("Currently at Birthplace", value=True, key="same_loc")
             if same_loc:
-                curr_lat = origin_lat
-                curr_lon = origin_lon
+                curr_city = origin_city
+                curr_lat, curr_lon, curr_resolved = origin_lat, origin_lon, orig_resolved
+                st.caption(f"📍 Anchored to Origin Ground")
             else:
-                curr_lat = st.number_input("Current Lat (°N/S)", value=40.71, step=0.1, key="c_lat")
-                curr_lon = st.number_input("Current Lon (°E/W)", value=-74.00, step=0.1, key="c_lon")
+                curr_city = st.text_input("Current Residence (City, State / Country)", value="Austin, Texas", key="c_city")
+                curr_lat, curr_lon, curr_resolved = geocode_location(curr_city)
+                st.caption(f"📍 Resolved: `{curr_resolved}` ({curr_lat:.2f}°, {curr_lon:.2f}°)")
 
     with col_map_in2:
         st.markdown("**3. Biological Wave & Active Horizon**")
@@ -772,12 +879,12 @@ with tabs[2]:
     is_inhale = (6 <= hour_val < 18)
     diurnal_label = "Solar Inhale (Electric / Outward)" if is_inhale else "Lunar Exhale (Magnetic / Deep Ground)"
 
-    # Location Pitches (Geomagnetic base)
+    # Location Pitches
     origin_pitch = reduce_number(round(abs(origin_lat) + abs(origin_lon)))
     curr_pitch = reduce_number(round(abs(curr_lat) + abs(curr_lon)))
     displacement_delta = abs(origin_pitch - curr_pitch)
 
-    # Karmic Voids & Saturated Nodes across the Name and Blueprint
+    # Karmic Voids & Saturated Nodes
     digits_present = [int(c) for c in (str(st_lp) + str(st_expr) + str(st_soul) + str(st_pers) + str(st_yr) + str(st_mo) + str(st_dy)) if c.isdigit()]
     counts = Counter(digits_present)
     all_pillars = set(range(1, 10))
@@ -789,23 +896,21 @@ with tabs[2]:
     peak_window = f"{peak_start_hour:02d}:15 – {(peak_start_hour + 1) % 24:02d}:00"
 
     # ==========================================
-    # TRI-RING CYMATIC VECTOR VISUALIZER (SVG)
+    # TRI-RING CYMATIC VECTOR VISUALIZER (SVG via Components)
     # ==========================================
     center_x, center_y = 260, 260
     r_outer = 220
     r_mid = 160
     r_inner = 95
 
-    # Style scheme based on Charter Mode
     is_parchment = ("Print-Ready" in charter_mode)
-    bg_color = "#fbf8ef" if is_parchment else "rgba(10, 12, 16, 0.85)"
+    bg_color = "#fbf8ef" if is_parchment else "rgba(10, 12, 16, 0.95)"
     ring_stroke = "rgba(120, 95, 30, 0.4)" if is_parchment else "rgba(212, 175, 55, 0.25)"
     text_color = "#2a2415" if is_parchment else "#fff4cc"
     gold_fill = "rgba(197, 160, 89, 0.35)" if is_parchment else "rgba(245, 197, 66, 0.28)"
     gold_line = "#9e7d3b" if is_parchment else "#f5c542"
     amber_point = "#c85a17" if is_parchment else "#ffaa44"
 
-    # Middle Ring: 9-Pillar Angular Coordinates
     node_coords = {}
     for i in range(1, 10):
         deg = -90 + (i - 1) * (360 / 9)
@@ -814,12 +919,10 @@ with tabs[2]:
         y = center_y + r_mid * math.sin(rad)
         node_coords[i] = (x, y)
 
-    # Active Polygon Shape
     active_seq = [st_lp, st_expr, st_soul, st_pers, st_py]
     poly_pts = [f"{node_coords[p][0]:.1f},{node_coords[p][1]:.1f}" for p in active_seq]
     poly_str = " ".join(poly_pts)
 
-    # Origin & Current Location Markers (Outer Ring)
     deg_orig = -90 + (origin_pitch - 1) * 40
     rad_orig = math.radians(deg_orig)
     orig_x = center_x + r_outer * math.cos(rad_orig)
@@ -830,49 +933,44 @@ with tabs[2]:
     curr_x = center_x + r_outer * math.cos(rad_curr)
     curr_y = center_y + r_outer * math.sin(rad_curr)
 
-    # Circadian Window Angle (Inner Ring)
     deg_circ = -90 + (peak_start_hour / 24.0) * 360
     rad_circ = math.radians(deg_circ)
     circ_x = center_x + r_inner * math.cos(rad_circ)
     circ_y = center_y + r_inner * math.sin(rad_circ)
 
-    svg_mandala = f"""
-    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
-        <svg width="520" height="520" viewBox="0 0 520 520" style="background: {bg_color}; border: 1px solid rgba(212,175,55,0.4); border-radius: 50%; box-shadow: 0 0 35px rgba(0,0,0,0.85);">
-            <!-- Concentric Guide Rings -->
-            <circle cx="{center_x}" cy="{center_y}" r="{r_outer}" fill="none" stroke="{ring_stroke}" stroke-width="1.5" stroke-dasharray="4,4"/>
-            <circle cx="{center_x}" cy="{center_y}" r="{r_mid}" fill="none" stroke="{ring_stroke}" stroke-width="2"/>
-            <circle cx="{center_x}" cy="{center_y}" r="{r_inner}" fill="none" stroke="{ring_stroke}" stroke-width="1.5"/>
+    svg_nodes = "".join([
+        f'<circle cx="{node_coords[i][0]}" cy="{node_coords[i][1]}" r="14" fill="{"#0b0d10" if not is_parchment else "#ffffff"}" stroke="{"#555" if i in void_pillars else (amber_point if i in saturated_pillars else gold_line)}" stroke-width="{"1" if i in void_pillars else "2.5"}"/>'
+        f'<text x="{node_coords[i][0]}" y="{node_coords[i][1] + 4}" fill="{"#666" if i in void_pillars else text_color}" font-size="11" font-weight="700" text-anchor="middle" font-family="sans-serif">{i}</text>'
+        for i in range(1, 10)
+    ])
 
-            <!-- Axis Ray Cross -->
-            <line x1="{center_x}" y1="{center_y - r_outer - 15}" x2="{center_x}" y2="{center_y + r_outer + 15}" stroke="{ring_stroke}" stroke-width="0.8"/>
-            <line x1="{center_x - r_outer - 15}" y1="{center_y}" x2="{center_x + r_outer + 15}" y2="{center_y}" stroke="{ring_stroke}" stroke-width="0.8"/>
-
-            <!-- Geometric Active Silhouette -->
-            <polygon points="{poly_str}" fill="{gold_fill}" stroke="{gold_line}" stroke-width="2.5" style="filter: drop-shadow(0 0 10px {gold_line});"/>
-
-            <!-- The 9 Archetypal Pillars (Middle Ring) -->
-            {"".join(f'''
-                <circle cx="{coords[0]}" cy="{coords[1]}" r="14" fill="{'#0b0d10' if not is_parchment else '#ffffff'}" stroke="{'#555' if i in void_pillars else (amber_point if i in saturated_pillars else gold_line)}" stroke-width="{'1' if i in void_pillars else '2.5'}"/>
-                <text x="{coords[0]}" y="{coords[1] + 4}" fill="{'#666' if i in void_pillars else text_color}" font-size="11" font-weight="700" text-anchor="middle" font-family="Cinzel">{i}</text>
-            ''' for i, coords in node_coords.items())}
-
-            <!-- Origin & Current Spatial Anchors (Outer Ring) -->
-            <circle cx="{orig_x}" cy="{orig_y}" r="8" fill="#d4af37" stroke="#fff" stroke-width="2"/>
-            <text x="{orig_x}" y="{orig_y - 12}" fill="{text_color}" font-size="9" font-weight="700" text-anchor="middle" font-family="Cinzel">ORIGIN</text>
-
-            <circle cx="{curr_x}" cy="{curr_y}" r="8" fill="{amber_point}" stroke="#fff" stroke-width="2"/>
-            <text x="{curr_x}" y="{curr_y + 18}" fill="{text_color}" font-size="9" font-weight="700" text-anchor="middle" font-family="Cinzel">PRESENT</text>
-            <line x1="{orig_x}" y1="{orig_y}" x2="{curr_x}" y2="{curr_y}" stroke="{amber_point}" stroke-width="1.8" stroke-dasharray="3,3"/>
-
-            <!-- Circadian Peak Ray (Inner Ring) -->
-            <line x1="{center_x}" y1="{center_y}" x2="{circ_x}" y2="{circ_y}" stroke="{gold_line}" stroke-width="3"/>
-            <circle cx="{circ_x}" cy="{circ_y}" r="5" fill="#fff" stroke="{gold_line}" stroke-width="2"/>
-            <text x="{center_x}" y="{center_y + 4}" fill="{text_color}" font-size="10" font-weight="700" text-anchor="middle" font-family="Cinzel">HORIZON</text>
-        </svg>
-    </div>
+    svg_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin:0; background:transparent; display:flex; justify-content:center; align-items:center;">
+    <svg width="520" height="520" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" style="background:{bg_color}; border:1px solid rgba(212,175,55,0.4); border-radius:50%; box-shadow:0 0 35px rgba(0,0,0,0.85);">
+        <circle cx="{center_x}" cy="{center_y}" r="{r_outer}" fill="none" stroke="{ring_stroke}" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <circle cx="{center_x}" cy="{center_y}" r="{r_mid}" fill="none" stroke="{ring_stroke}" stroke-width="2"/>
+        <circle cx="{center_x}" cy="{center_y}" r="{r_inner}" fill="none" stroke="{ring_stroke}" stroke-width="1.5"/>
+        <line x1="{center_x}" y1="{center_y - r_outer - 15}" x2="{center_x}" y2="{center_y + r_outer + 15}" stroke="{ring_stroke}" stroke-width="0.8"/>
+        <line x1="{center_x - r_outer - 15}" y1="{center_y}" x2="{center_x + r_outer + 15}" y2="{center_y}" stroke="{ring_stroke}" stroke-width="0.8"/>
+        <polygon points="{poly_str}" fill="{gold_fill}" stroke="{gold_line}" stroke-width="2.5"/>
+        {svg_nodes}
+        <circle cx="{orig_x}" cy="{orig_y}" r="8" fill="#d4af37" stroke="#fff" stroke-width="2"/>
+        <text x="{orig_x}" y="{orig_y - 12}" fill="{text_color}" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">ORIGIN</text>
+        <circle cx="{curr_x}" cy="{curr_y}" r="8" fill="{amber_point}" stroke="#fff" stroke-width="2"/>
+        <text x="{curr_x}" y="{curr_y + 18}" fill="{text_color}" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">PRESENT</text>
+        <line x1="{orig_x}" y1="{orig_y}" x2="{curr_x}" y2="{curr_y}" stroke="{amber_point}" stroke-width="1.8" stroke-dasharray="3,3"/>
+        <line x1="{center_x}" y1="{center_y}" x2="{circ_x}" y2="{circ_y}" stroke="{gold_line}" stroke-width="3"/>
+        <circle cx="{circ_x}" cy="{circ_y}" r="5" fill="#fff" stroke="{gold_line}" stroke-width="2"/>
+        <text x="{center_x}" y="{center_y + 4}" fill="{text_color}" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">HORIZON</text>
+    </svg>
+    </body>
+    </html>
     """
-    st.markdown(svg_mandala, unsafe_allow_html=True)
+
+    components.html(svg_html, height=540)
 
     # ==========================================
     # THE SPIRITUAL DIAGNOSTIC HUD
@@ -896,7 +994,7 @@ with tabs[2]:
             <div class="verse-badge">DISPLACEMENT PRESSURE</div>
             <h3 style="color:#fff4cc; margin: 4px 0;">Delta: {displacement_delta} Harmonic</h3>
             <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
-                Origin Ground vibrates to <strong>Pitch {origin_pitch}</strong>; Present Ground vibrates to <strong>Pitch {curr_pitch}</strong>. 
+                Origin ({orig_resolved}) vibrates to <strong>Pitch {origin_pitch}</strong>; Present Ground ({curr_resolved}) vibrates to <strong>Pitch {curr_pitch}</strong>. 
                 {('You are anchored in your natal soil. Energy flows in its original groove.' if displacement_delta == 0 else 'Displacement creates dynamic atmospheric friction. The local land accelerates growth outside your comfort zone.')}
             </p>
         </div>
