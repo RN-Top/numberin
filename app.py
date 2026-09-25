@@ -2,8 +2,12 @@ import streamlit as st
 import datetime
 import math
 
+# ---------------------------------------------------------
+# APPLICATION CONFIGURATION
+# ---------------------------------------------------------
 st.set_page_config(
-    page_title="Celestial & Decan Alignment Workbench",
+    page_title="Numberin 💥",
+    page_icon="💥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -12,8 +16,8 @@ st.set_page_config(
 # ASTRONOMICAL, JULIAN & NUMEROLOGY ENGINES
 # ---------------------------------------------------------
 
-def get_julian_date(year, month, day):
-    """Calculates Julian Day Number for historical BCE/CE dates."""
+def get_julian_date(year: int, month: int, day: int) -> float:
+    """Calculates the Julian Day Number for historical BCE/CE dates."""
     if month <= 2:
         year -= 1
         month += 12
@@ -22,7 +26,7 @@ def get_julian_date(year, month, day):
     jd = math.floor(365.25 * (year + 4716)) + math.floor(30.6001 * (month + 1)) + day + b - 1524.5
     return jd
 
-def get_lunar_phase_details(year, month, day):
+def get_lunar_phase_details(year: int, month: int, day: int) -> dict:
     """Computes moon age, illumination, and traditional phase name."""
     jd = get_julian_date(year, month, day)
     synodic_month = 29.53058867
@@ -54,7 +58,7 @@ def get_lunar_phase_details(year, month, day):
         "phase_ratio": round(phase_ratio, 3)
     }
 
-def calculate_vibrational_root(date_str):
+def calculate_vibrational_root(date_str: str) -> int:
     """Reduces any date string to single-digit or master number root."""
     digits = [int(c) for c in date_str if c.isdigit()]
     total = sum(digits)
@@ -62,7 +66,8 @@ def calculate_vibrational_root(date_str):
         total = sum(int(d) for d in str(total))
     return total
 
-def calculate_resonance(user_root, target_root):
+def calculate_resonance(user_root: int, target_root: int) -> str:
+    """Evaluates the harmonic relationship between two vibrational numbers."""
     diff = abs(user_root - target_root)
     if diff == 0:
         return "Direct Harmonic Mirror (100% Alignment)"
@@ -91,7 +96,7 @@ ZODIAC_DECANS = {
 }
 
 # ---------------------------------------------------------
-# DATA: HISTORICAL & COSMIC MILESTONES
+# DATA: HISTORICAL & CELESTIAL MILESTONES
 # ---------------------------------------------------------
 
 MILESTONES = {
@@ -138,6 +143,7 @@ MILESTONES = {
 # ---------------------------------------------------------
 
 with st.sidebar:
+    st.title("Numberin 💥")
     st.header("👤 Observer Anchor")
     user_birth_date = st.date_input("Natal / Inquiry Date", value=datetime.date(1990, 1, 1))
     user_root = calculate_vibrational_root(user_birth_date.strftime("%Y%m%d"))
@@ -147,11 +153,14 @@ with st.sidebar:
     st.markdown(f"**Natal Phase:** `{user_moon['phase']}`")
     st.markdown(f"**Illumination:** `{user_moon['illumination']}%`")
     st.markdown("---")
-    st.caption("Use these coordinates across the decan oracle and milestone timeline tabs.")
+    st.caption("Active observer coordinates applied across all Numberin modules.")
 
 # ---------------------------------------------------------
-# WORKBENCH TABS
+# MAIN INTERFACE & WORKBENCH TABS
 # ---------------------------------------------------------
+
+st.title("💥 Numberin")
+st.caption("Celestial cycles, astronomical phases, and numerical resonance engine.")
 
 tab1, tab2, tab3 = st.tabs([
     "🌌 Timeline Lens & Milestones",
