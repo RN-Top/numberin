@@ -46,19 +46,20 @@ def calculate_name_vibration(name: str, cipher: str = "Pythagorean") -> int:
     total = sum(mapping.get(char.upper(), 0) for char in name if char.isalpha())
     return reduce_number(total)
 
-def get_julian_date(year: int, month: int, day: int) -> float:
-    """Calculates the astronomical Julian Day Number for historical BCE/CE dates."""
+def get_julian_date(year: int, month: int, day: int, hour: float = 12.0) -> float:
+    """Calculates the astronomical Julian Day Number for historical BCE/CE dates with time."""
     if month <= 2:
         year -= 1
         month += 12
     a = math.floor(year / 100)
     b = 2 - a + math.floor(a / 4)
-    jd = math.floor(365.25 * (year + 4716)) + math.floor(30.6001 * (month + 1)) + day + b - 1524.5
+    day_fraction = day + (hour / 24.0)
+    jd = math.floor(365.25 * (year + 4716)) + math.floor(30.6001 * (month + 1)) + day_fraction + b - 1524.5
     return jd
 
-def get_lunar_phase_details(year: int, month: int, day: int) -> dict:
+def get_lunar_phase_details(year: int, month: int, day: int, hour: float = 12.0) -> dict:
     """Computes moon age, illumination, and traditional phase name."""
-    jd = get_julian_date(year, month, day)
+    jd = get_julian_date(year, month, day, hour)
     synodic_month = 29.53058867
     days_since_new = (jd - 2451549.5) % synodic_month
     phase_ratio = days_since_new / synodic_month
@@ -88,23 +89,26 @@ def get_lunar_phase_details(year: int, month: int, day: int) -> dict:
         "phase_ratio": round(phase_ratio, 3)
     }
 
+def get_approx_sun_sign(month: int, day: int) -> str:
+    """Calculates approximate solar zodiac sign."""
+    dates = [
+        (1, 20, "Capricorn"), (2, 19, "Aquarius"), (3, 20, "Pisces"),
+        (4, 20, "Aries"), (5, 21, "Taurus"), (6, 21, "Gemini"),
+        (7, 22, "Cancer"), (8, 23, "Leo"), (9, 23, "Virgo"),
+        (10, 23, "Libra"), (11, 22, "Scorpio"), (12, 21, "Sagittarius"),
+        (12, 31, "Capricorn")
+    ]
+    for m, d, sign in dates:
+        if (month, day) <= (m, d):
+            return sign
+    return "Capricorn"
+
 def calculate_vibrational_root(date_str: str) -> int:
     digits = [int(c) for c in date_str if c.isdigit()]
     return reduce_number(sum(digits))
 
 def evaluate_compatibility(root1: int, root2: int) -> dict:
-    """Calculates compatibility harmonics between two vibrational profiles."""
-    harmonic_families = {
-        "Physical / Pragmatic": [1, 4, 7],
-        "Emotional / Instinctive": [2, 5, 8],
-        "Mental / Visionary": [3, 6, 9],
-        "Master Axis": [11, 22, 33]
-    }
-    
-    score = 70
-    desc = "Dynamic balance with polarity."
     diff = abs(root1 - root2)
-    
     if diff == 0:
         score = 98
         desc = "Harmonic Mirror: Identical vibrational rhythm; mutual reflection."
@@ -117,7 +121,6 @@ def evaluate_compatibility(root1: int, root2: int) -> dict:
     else:
         score = 65
         desc = "Catalytic Polarity: Constructive tension driving mutual growth."
-
     return {"score": score, "description": desc}
 
 # ---------------------------------------------------------
@@ -149,13 +152,13 @@ MILESTONES = {
     "Annus Lucis / Traditional Creation Epoch": {
         "date_str": "-4004-10-23", "year": -4004, "month": 10, "day": 23,
         "category": "Biblical & Hermetic",
-        "astronomy": "Equinoctial conjunction matching Archbishop Ussher's canonical biblical chronology.",
+        "astronomy": "Equinoctial conjunction matching Archbishop Ussher's canonical chronology.",
         "details": "Zero-point marker encoding foundational creation mathematics across classical Hermetic traditions."
     },
     "WW1 Outbreak (1914 Epoch)": {
         "date_str": "1914-07-28", "year": 1914, "month": 7, "day": 28,
         "category": "Modern Eschatology",
-        "astronomy": "Waxing Crescent Moon transiting into Libra; major solar eclipse followed within 24 days on August 21, 1914.",
+        "astronomy": "Waxing Crescent Moon transiting into Libra; major solar eclipse followed on August 21, 1914.",
         "details": "Viewed in historic biblical scholarship as the close of the 'Times of the Gentiles' and the descent of systemic warfare."
     },
     "Planetary Hexagon & Inauguration Alignment": {
@@ -194,24 +197,58 @@ KNOWLEDGE_BASE = {
 }
 
 # ---------------------------------------------------------
-# SIDEBAR: OBSERVER ANCHOR
+# SIDEBAR: NATAL ANCHOR, OBSERVATORY & AUDIO
 # ---------------------------------------------------------
 
 with st.sidebar:
     st.title("💥 Numberin")
-    st.markdown("**Unified Frequency & Celestial Engine**")
+    st.caption("Cosmic Frequency & Resonance Suite")
     st.write("---")
 
-    user_name = st.text_input("Observer Name / Identifier", value="Seeker")
-    user_birth_date = st.date_input("Natal Date", value=datetime.date(1990, 1, 1))
+    # 1. Audio / Atmosphere Player
+    st.subheader("🎵 Harmonic Atmosphere")
+    audio_source = st.selectbox(
+        "Audio Track / Frequency",
+        ["432 Hz Pure Sine (Deep Resonance)", "528 Hz DNA / Transformation Tone", "Custom Audio URL / File Upload"]
+    )
+    
+    if audio_source == "432 Hz Pure Sine (Deep Resonance)":
+        # Public domain clean meditation sine wave
+        st.audio("https://ia800108.us.archive.org/11/items/432HzTone/432Hz_2min.mp3")
+    elif audio_source == "528 Hz DNA / Transformation Tone":
+        st.audio("https://ia801503.us.archive.org/15/items/528HzTone/528Hz_Tone.mp3")
+    else:
+        uploaded_audio = st.file_uploader("Upload Audio File (.mp3, .wav)", type=["mp3", "wav"])
+        if uploaded_audio:
+            st.audio(uploaded_audio)
+        else:
+            custom_url = st.text_input("Or enter streaming audio URL:")
+            if custom_url:
+                st.audio(custom_url)
 
+    st.write("---")
+
+    # 2. Detailed Observer Coordinates
+    st.subheader("👤 Natal Coordinates")
+    user_name = st.text_input("Full Name / Identifier", value="Erin")
+    user_birth_date = st.date_input("Date of Birth", value=datetime.date(1983, 11, 19))
+    user_birth_time = st.time_input("Time of Birth", value=datetime.time(12, 0))
+    user_birth_place = st.text_input("Birthplace (City, State/Country)", value="Naples, Florida")
+    
+    # Decimal hour for astronomical calculation
+    decimal_hour = user_birth_time.hour + (user_birth_time.minute / 60.0)
+
+    # Computations
     user_lp = calculate_vibrational_root(user_birth_date.strftime("%Y%m%d"))
     user_name_val = calculate_name_vibration(user_name)
-    user_moon = get_lunar_phase_details(user_birth_date.year, user_birth_date.month, user_birth_date.day)
+    user_sun_sign = get_approx_sun_sign(user_birth_date.month, user_birth_date.day)
+    user_moon = get_lunar_phase_details(user_birth_date.year, user_birth_date.month, user_birth_date.day, decimal_hour)
 
-    st.markdown(f"**Life Path:** `{user_lp}`")
+    st.markdown(f"**Life Path Number:** `{user_lp}`")
     st.markdown(f"**Expression Vibration:** `{user_name_val}`")
+    st.markdown(f"**Solar Sign:** `{user_sun_sign}`")
     st.markdown(f"**Natal Moon:** `{user_moon['phase']}` ({user_moon['illumination']}%)")
+    st.caption(f"Coordinates locked: {user_birth_place} @ {user_birth_time.strftime('%H:%M')}")
     st.write("---")
 
 # ---------------------------------------------------------
@@ -229,11 +266,11 @@ tab_milestones, tab_oracle, tab_compat, tab_patterns, tab_knowledge = st.tabs([
 ])
 
 # ---------------------------------------------------------
-# TAB 1: MILESTONE TIMELINE LENS & HISTORICAL READINGS
+# TAB 1: MILESTONE TIMELINE LENS & READINGS
 # ---------------------------------------------------------
 with tab_milestones:
-    st.header("Chronos & Cosmos: Milestone Lens")
-    st.caption("Inspect astronomical phases, ancient eclipses, and vibrational resonance with history.")
+    st.header("Chronos & Cosmos: Milestone Timeline")
+    st.caption("Cross-reference historical dates against celestial events, eclipses, and personal resonance.")
 
     selected_milestone = st.selectbox("Select Historical or Cosmic Turning Point:", list(MILESTONES.keys()))
     m_info = MILESTONES[selected_milestone]
@@ -259,12 +296,12 @@ with tab_milestones:
 
     with col_read:
         st.subheader("⚡ Personal Synchronicity Reading")
-        st.markdown(f"**Your Life Path:** `{user_lp}`  ↔  **Milestone Vibration:** `{m_root}`")
+        st.markdown(f"**{user_name} ({user_birth_place})**  |  Life Path `{user_lp}`  ↔  Milestone `{m_root}`")
         st.metric("Resonance Score", f"{m_compat['score']}%")
         st.success(m_compat['description'])
         st.markdown(f"""
-        * **Lunar Counterpart:** You entered under a **{user_moon['phase']}**, encountering an event sealed under a **{m_lunar['phase']}**.
-        * **Energetic Reading:** Reflects the balance between your innate purpose and this historic turning point.
+        * **Lunar Counterpart:** Born under a **{user_moon['phase']}** ({user_moon['illumination']}%), encountering an event sealed under a **{m_lunar['phase']}** ({m_lunar['illumination']}%).
+        * **Solar Anchor:** Transiting from your **{user_sun_sign}** solar foundation into this historic nexus point.
         """)
 
 # ---------------------------------------------------------
@@ -274,7 +311,7 @@ with tab_oracle:
     st.header("Decan Oracle & Zodiac Coordinates")
     st.caption("Ptolemaic decans and planetary rulers mapped across 30° radial increments.")
 
-    sign = st.selectbox("Explore Zodiac Sector:", list(ZODIAC_DECANS.keys()))
+    sign = st.selectbox("Explore Zodiac Sector:", list(ZODIAC_DECANS.keys()), index=list(ZODIAC_DECANS.keys()).index(user_sun_sign) if user_sun_sign in ZODIAC_DECANS else 0)
     cols = st.columns(3)
 
     for i, (decan_deg, ruler) in enumerate(ZODIAC_DECANS[sign]):
@@ -298,10 +335,18 @@ with tab_compat:
     comp_type = st.radio("Comparison Mode", ["Compare with another Person", "Compare with an Event / Date"], horizontal=True)
 
     if comp_type == "Compare with another Person":
-        p_name = st.text_input("Partner / Collaborator Name", value="Companion")
-        p_date = st.date_input("Partner Natal Date", value=datetime.date(1992, 5, 15))
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            p_name = st.text_input("Partner / Collaborator Name", value="Companion")
+            p_date = st.date_input("Partner Natal Date", value=datetime.date(1992, 5, 15))
+        with col_p2:
+            p_time = st.time_input("Partner Birth Time", value=datetime.time(12, 0))
+            p_place = st.text_input("Partner Birth Place", value="Unknown")
+
+        p_dec_hour = p_time.hour + (p_time.minute / 60.0)
         p_root = calculate_vibrational_root(p_date.strftime("%Y%m%d"))
-        p_moon = get_lunar_phase_details(p_date.year, p_date.month, p_date.day)
+        p_moon = get_lunar_phase_details(p_date.year, p_date.month, p_date.day, p_dec_hour)
+        p_sun = get_approx_sun_sign(p_date.month, p_date.day)
         
         result = evaluate_compatibility(user_lp, p_root)
         
@@ -311,7 +356,7 @@ with tab_compat:
         c_c.metric("Compatibility Index", f"{result['score']}%")
 
         st.info(f"**Synastry Dynamic:** {result['description']}")
-        st.write(f"* **Moon Phase Interaction:** {user_name} ({user_moon['phase']}) transiting alongside {p_name} ({p_moon['phase']}).")
+        st.write(f"* **Solar & Lunar Dynamics:** {user_name} ({user_sun_sign} / {user_moon['phase']}) transiting alongside {p_name} ({p_sun} / {p_moon['phase']}).")
 
     else:
         target_date = st.date_input("Target Date for Assessment", value=datetime.date.today())
@@ -342,7 +387,6 @@ with tab_patterns:
     k1.metric("Pythagorean Root", pyth_val)
     k2.metric("Chaldean Root", chald_val)
 
-    # Character frequency breakdown
     cleaned_text = [c.upper() for c in user_text if c.isalpha()]
     char_freq = {}
     for c in cleaned_text:
