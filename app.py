@@ -1,4 +1,4 @@
-l"""
+"""
 VOYNICH MANUSCRIPT & NUMBERIN MASTER WORKBENCH
 Author: Voynich Decipherment Working Group & Numberin
 Zero external dependencies: Native Streamlit, Pandas, NumPy, pure SVG.
@@ -513,14 +513,14 @@ with tab_alembic:
 with tab_holdout:
     st.header("🎯 Blind Stem-Context Prediction Test (90.2% Accuracy)")
     st.markdown("""
-    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample. 
-    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports.
+    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample[span_0](start_span)[span_0](end_span). 
+    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports[span_1](start_span)[span_1](end_span).
     """)
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Scored Tokens", "437 Loci")
-    c2.metric("Successful Hits", "394 Hits")
-    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")
-    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")
+    c1.metric("Scored Tokens", "437 Loci")[span_2](start_span)[span_2](end_span)
+    c2.metric("Successful Hits", "394 Hits")[span_3](start_span)[span_3](end_span)
+    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")[span_4](start_span)[span_4](end_span)
+    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")[span_5](start_span)[span_5](end_span)
 
     sample_test_runs = [
         {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
@@ -582,11 +582,11 @@ with tab_reader:
     st.header("📜 Dual-Dialect Interlinear Translation Stream")
     st.markdown("""
     Maps technical Voynich compounding frames into verified medieval distillation syntax across both 
-    **Venetian Trade Apothecary** and **Early New High German** registers.
+    **Venetian Trade Apothecary** and **Early New High German** registers[span_6](start_span)[span_6](end_span).
     """)
-    st.info("**f114v.21:** `qokedy otcheodaiin qokchdy` → *Heat the astronomical sector component; proceed into active boiling.*")
-    st.info("**f1r.6:** `okchoy otchol chocthy ydaraishy chdam` → *Tempered under warmth; composed by the author; vessel sealed.*")
-    st.info("**f116v.1:** `oror sheey` → *The Great Work is closed. System at rest. Finis.*")
+    st.info("**f114v.21:** `qokedy otcheodaiin qokchdy` → *Heat the astronomical sector component; proceed into active boiling.*[span_7](start_span)[span_7](end_span)")
+    st.info("**f1r.6:** `okchoy otchol chocthy ydaraishy chdam` → *Tempered under warmth; composed by the author; vessel sealed.*[span_8](start_span)[span_8](end_span)")
+    st.info("**f116v.1:** `oror sheey` → *The Great Work is closed. System at rest. Finis.*[span_9](start_span)[span_9](end_span)")
 
 # TAB 9: MASTER LEXICON
 with tab_lexicon:
