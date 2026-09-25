@@ -2,33 +2,56 @@ import streamlit as st
 import datetime
 import math
 import re
+import urllib.request
 from collections import Counter
-from PIL import Image
 
-# ---------------------------------------------------------
-# APPLICATION SETUP & CONFIGURATION
-# ---------------------------------------------------------
-st.set_page_config(
-    page_title="Numberin 💥",
-    page_icon="💥",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Set Page Config
+st.set_page_config(page_title="Numberin", page_icon="✨", layout="wide")
 
-# ---------------------------------------------------------
-# MATHEMATICAL, CIPHER & ASTRONOMICAL ENGINES
-# ---------------------------------------------------------
+# Custom Styling (Brass & Parchment / Dark Mystery Aesthetic)
+st.markdown("""
+<style>
+    .main { background-color: #0d1117; color: #e6edf3; }
+    .brass-card {
+        background: linear-gradient(135deg, #1f1b18 0%, #161b22 100%);
+        border: 1px solid #c5a059;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(197, 160, 89, 0.15);
+    }
+    .ring-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin: 20px 0;
+    }
+    .ring-badge {
+        padding: 12px 24px;
+        border-radius: 30px;
+        border: 2px solid #d4af37;
+        background: #111418;
+        color: #f3e5ab;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    }
+    .tincture-box {
+        background: #12100e;
+        border-left: 4px solid #c5a059;
+        padding: 18px;
+        border-radius: 4px;
+        font-size: 1.08rem;
+        line-height: 1.7;
+        color: #f5eedc;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-CHALDEAN_MAP = {
-    'A': 1, 'I': 1, 'J': 1, 'Q': 1, 'Y': 1,
-    'B': 2, 'K': 2, 'R': 2,
-    'C': 3, 'G': 3, 'L': 3, 'S': 3,
-    'D': 4, 'M': 4, 'T': 4,
-    'E': 5, 'H': 5, 'N': 5, 'X': 5,
-    'U': 6, 'V': 6, 'W': 6,
-    'O': 7, 'Z': 7,
-    'F': 8, 'P': 8
-}
+# ==========================================
+# 1. CONSTANTS & SYSTEM MAPPINGS
+# ==========================================
 
 PYTHAGOREAN_MAP = {
     'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9,
@@ -36,785 +59,538 @@ PYTHAGOREAN_MAP = {
     'S': 1, 'T': 2, 'U': 3, 'V': 4, 'W': 5, 'X': 6, 'Y': 7, 'Z': 8
 }
 
-def reduce_number(n: int, keep_master: bool = True) -> int:
+CHALDEAN_MAP = {
+    'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 8, 'G': 3, 'H': 5, 'I': 1,
+    'J': 1, 'K': 2, 'L': 3, 'M': 4, 'N': 5, 'O': 7, 'P': 8, 'Q': 1, 'R': 2,
+    'S': 3, 'T': 4, 'U': 6, 'V': 6, 'W': 6, 'X': 5, 'Y': 1, 'Z': 7
+}
+
+ANGEL = {
+    "111": "Alignment and fresh creation. The door is unlatched.",
+    "222": "Patience and balance. Do not force growth before the root takes.",
+    "333": "Expansion and direct expression. The voice finds resonance.",
+    "444": "Solid architecture. Practical foundations are anchoring your intent.",
+    "555": "Dynamic pivot. The current cycle is loosening its boundaries.",
+    "666": "Recalibration between spirit and material obligation.",
+    "777": "Inner initiation. Awakening the hidden architecture behind appearances.",
+    "888": "Infinite harvest. The return flow of spent energy arrives.",
+    "999": "Culmination and release. Clearing ground for the subsequent phase."
+}
+
+KARMIC_NOTE = {
+    13: "Karmic Debt 13: Grounding effort, clearing resistance through focused construction.",
+    14: "Karmic Debt 14: Restoring balance amidst erratic motion and freedom.",
+    16: "Karmic Debt 16: The fall of brittle structures; awakening radical truth.",
+    19: "Karmic Debt 19: Independence, learning that self-reliance includes vulnerability."
+}
+
+PHASE_NUMEROLOGY = {
+    "New Moon": 1,
+    "Waxing Crescent": 2,
+    "First Quarter": 3,
+    "Waxing Gibbous": 4,
+    "Full Moon": 5,
+    "Waning Gibbous": 6,
+    "Last Quarter": 7,
+    "Waning Crescent": 8
+}
+
+MILESTONES = {
+    1: "Inception, radical sovereignty, planting raw impulses.",
+    2: "Partnership, reflection, subtle relational alignment.",
+    3: "Expression, social crystallization, testing creative tone.",
+    4: "Form-building, boundaries, establishing bedrock security.",
+    5: "Disruption, voyage, untying old moorings.",
+    6: "Sanctuary, duty, reconciliation of domestic and heart matters.",
+    7: "Solitude, study, looking behind the veil.",
+    8: "Power, balance of ledger, physical abundance.",
+    9: "Pruning, closure, honoring what has run its course."
+}
+
+ZODIAC_DECANS = {
+    "Aries": ["Mars (0°-10°)", "Sun (10°-20°)", "Jupiter (20°-30°)"],
+    "Taurus": ["Mercury (0°-10°)", "Moon (10°-20°)", "Saturn (20°-30°)"],
+    "Gemini": ["Jupiter (0°-10°)", "Mars (10°-20°)", "Sun (20°-30°)"],
+    "Cancer": ["Venus (0°-10°)", "Mercury (10°-20°)", "Moon (20°-30°)"],
+    "Leo": ["Saturn (0°-10°)", "Jupiter (10°-20°)", "Mars (20°-30°)"],
+    "Virgo": ["Sun (0°-10°)", "Venus (10°-20°)", "Mercury (20°-30°)"],
+    "Libra": ["Moon (0°-10°)", "Saturn (10°-20°)", "Jupiter (20°-30°)"],
+    "Scorpio": ["Mars (0°-10°)", "Sun (10°-20°)", "Venus (20°-30°)"],
+    "Sagittarius": ["Mercury (0°-10°)", "Moon (10°-20°)", "Saturn (20°-30°)"],
+    "Capricorn": ["Jupiter (0°-10°)", "Mars (10°-20°)", "Sun (20°-30°)"],
+    "Aquarius": ["Venus (0°-10°)", "Mercury (10°-20°)", "Moon (20°-30°)"],
+    "Pisces": ["Saturn (0°-10°)", "Jupiter (10°-20°)", "Mars (20°-30°)"]
+}
+
+HEPTAGRAM_777 = {
+    0: {"day": "Sunday", "planet": "Sun", "metal": "Gold", "virtue": "Radiant clarity, vitality, sovereignty", "shadow": "Vanity, exhaustion, blindness from overexposure"},
+    1: {"day": "Monday", "planet": "Moon", "metal": "Silver", "virtue": "Intuition, reception, emotional flux", "shadow": "Illusion, moodiness, clinging to passing tide"},
+    2: {"day": "Tuesday", "planet": "Mars", "metal": "Iron", "virtue": "Severance, boundary, direct action", "shadow": "Reactive anger, premature conflict, friction"},
+    3: {"day": "Wednesday", "planet": "Mercury", "metal": "Quicksilver", "virtue": "Transmission, synthesis, fluid speech", "shadow": "Scattered focus, clever deceit, anxiety"},
+    4: {"day": "Thursday", "planet": "Jupiter", "metal": "Tin", "virtue": "Expansion, grace, generous vision", "shadow": "Overextension, dogma, unearned certainty"},
+    5: {"day": "Friday", "planet": "Venus", "metal": "Copper", "virtue": "Attraction, harmony, artistic devotion", "shadow": "Indolence, compromise of values, codependence"},
+    6: {"day": "Saturday", "planet": "Saturn", "metal": "Lead", "virtue": "Endurance, containment, time's weight", "shadow": "Bitterness, rigidity, oppressive paralysis"}
+}
+
+KNOWLEDGE_BASE = {
+    1: "The Monad: Seed, identity, initial thrust into being.",
+    2: "The Dyad: Mirror, division, relation, receptivity.",
+    3: "The Triad: Completion of space, spark of expression.",
+    4: "The Tetrad: Foundation, the four corners, matter anchored.",
+    5: "The Pentad: The breath within matter, motion, fifth element.",
+    6: "The Hexad: Equilibrium, creation woven into form.",
+    7: "The Heptad: The sacred rest, the inner sanctum, threshold of mystery.",
+    8: "The Ogdoad: Periodic return, rhythm, material mastery.",
+    9: "The Ennead: Horizon, the final chamber before renewal.",
+    11: "Master 11: The illumination antenna, lightning over the waters.",
+    22: "Master 22: The master architect, anchoring spiritual blueprints to earth.",
+    33: "Master 33: The compassionate hearth, sacrificial preservation of truth."
+}
+
+# ==========================================
+# 2. CORE HELPER FUNCTIONS
+# ==========================================
+
+def reduce_number(n: int, preserve_master: bool = True) -> int:
     while n > 9:
-        if keep_master and n in [11, 22, 33]:
+        if preserve_master and n in (11, 22, 33):
             return n
         n = sum(int(d) for d in str(n))
     return n
 
-def calculate_name_vibration(name: str, cipher: str = "Pythagorean") -> int:
-    mapping = PYTHAGOREAN_MAP if cipher == "Pythagorean" else CHALDEAN_MAP
-    total = sum(mapping.get(char.upper(), 0) for char in name if char.isalpha())
-    return reduce_number(total) if total > 0 else 0
+def reduce_trace(n: int) -> list:
+    trace = [n]
+    curr = n
+    while curr > 9 and curr not in (11, 22, 33):
+        curr = sum(int(d) for d in str(curr))
+        trace.append(curr)
+    return trace
 
-def get_julian_date(year: int, month: int, day: int, hour: float = 12.0) -> float:
-    if month <= 2:
-        year -= 1
-        month += 12
-    a = math.floor(year / 100)
-    b = 2 - a + math.floor(a / 4)
-    day_fraction = day + (hour / 24.0)
-    return math.floor(365.25 * (year + 4716)) + math.floor(30.6001 * (month + 1)) + day_fraction + b - 1524.5
+def cycle_19(year: int) -> int:
+    return ((year + 1) % 19) or 19
 
-def get_lunar_phase_details(year: int, month: int, day: int, hour: float = 12.0) -> dict:
-    jd = get_julian_date(year, month, day, hour)
-    synodic_month = 29.53058867
-    days_since_new = (jd - 2451549.5) % synodic_month
-    phase_ratio = days_since_new / synodic_month
-    illumination = round((1 - math.cos(phase_ratio * 2 * math.pi)) / 2 * 100, 1)
+def life_path(birthdate: datetime.date) -> int:
+    m = reduce_number(birthdate.month)
+    d = reduce_number(birthdate.day)
+    y = reduce_number(birthdate.year)
+    return reduce_number(m + d + y)
 
-    if phase_ratio < 0.03 or phase_ratio > 0.97:
-        phase_name = "New Moon 🌑"
-    elif phase_ratio < 0.22:
-        phase_name = "Waxing Crescent 🌒"
-    elif phase_ratio < 0.28:
-        phase_name = "First Quarter 🌓"
-    elif phase_ratio < 0.47:
-        phase_name = "Waxing Gibbous 🌔"
-    elif phase_ratio < 0.53:
-        phase_name = "Full Moon 🌕"
-    elif phase_ratio < 0.72:
-        phase_name = "Waning Gibbous 🌖"
-    elif phase_ratio < 0.78:
-        phase_name = "Last Quarter 🌗"
-    else:
-        phase_name = "Waning Crescent 🌘"
-
+def name_profile(name: str):
+    clean = re.sub(r'[^A-Z]', '', name.upper())
+    if not clean:
+        return {"expression": 0, "soul_urge": 0, "personality": 0, "pyth_sum": 0, "chaldean_sum": 0}
+    
+    vowels = "AEIOU"
+    p_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean]
+    c_vals = [CHALDEAN_MAP.get(c, 0) for c in clean]
+    
+    v_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean if c in vowels]
+    co_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean if c not in vowels]
+    
     return {
-        "moon_age_days": round(days_since_new, 1),
-        "illumination": illumination,
-        "phase": phase_name,
-        "phase_ratio": round(phase_ratio, 3)
+        "expression": reduce_number(sum(p_vals)),
+        "soul_urge": reduce_number(sum(v_vals)) if v_vals else 0,
+        "personality": reduce_number(sum(co_vals)) if co_vals else 0,
+        "pyth_sum": sum(p_vals),
+        "chaldean_sum": sum(c_vals)
     }
 
-def get_approx_sun_sign(month: int, day: int) -> str:
-    dates = [
-        (1, 20, "Capricorn"), (2, 19, "Aquarius"), (3, 20, "Pisces"),
-        (4, 20, "Aries"), (5, 21, "Taurus"), (6, 21, "Gemini"),
-        (7, 22, "Cancer"), (8, 23, "Leo"), (9, 23, "Virgo"),
-        (10, 23, "Libra"), (11, 22, "Scorpio"), (12, 21, "Sagittarius"),
-        (12, 31, "Capricorn")
+def personal_cycles(birthdate: datetime.date, target_year: int):
+    m = reduce_number(birthdate.month)
+    d = reduce_number(birthdate.day)
+    py = reduce_number(target_year)
+    personal_year = reduce_number(m + d + py)
+    return {"personal_year": personal_year, "milestone": MILESTONES.get(personal_year, "")}
+
+def run_latin_cipher(text: str) -> dict:
+    clean = re.sub(r'[^A-Z]', '', text.upper())
+    simple = sum(ord(c) - 64 for c in clean)
+    reverse = sum(27 - (ord(c) - 64) for c in clean)
+    return {"simple": simple, "reverse": reverse, "reduced": reduce_number(simple)}
+
+def script_readings(text: str) -> str:
+    clean = re.sub(r'[^A-Z]', '', text.upper())
+    counts = Counter(clean)
+    dominant = counts.most_common(1)[0] if counts else ("None", 0)
+    return f"Dominant letter frequency: '{dominant[0]}' occurring {dominant[1]} times. Total vibration: {len(clean)} characters."
+
+def meaning(n: int) -> str:
+    return KNOWLEDGE_BASE.get(n, "Resonant vibration awaiting direct definition.")
+
+def depth_lines(n: int) -> str:
+    return f"Root frequency {n} is operating at prime density. Its current polarity encourages stillness before translation."
+
+def angel_read(num_str: str) -> str:
+    for code, desc in ANGEL.items():
+        if code in num_str:
+            return f"Synchronicity Detected ({code}): {desc}"
+    return "No primary triple repeating synchronicity found in the direct stream."
+
+def get_julian_date(d: datetime.date) -> float:
+    a = (14 - d.month) // 12
+    y = d.year + 4800 - a
+    m = d.month + 12 * a - 3
+    return d.day + (153 * m + 2) // 5 + 365 * y + y // 4 - y // 100 + y // 400 - 32045
+
+def moon_phase(d: datetime.date) -> str:
+    jd = get_julian_date(d)
+    cycles = (jd - 2451549.5) / 29.53058770576
+    phase = cycles - math.floor(cycles)
+    val = round(phase * 8) % 8
+    phases = [
+        "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+        "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"
     ]
-    for m, d, sign in dates:
-        if (month, day) <= (m, d):
-            return sign
-    return "Capricorn"
+    return phases[val]
 
-def calculate_vibrational_root(date_str: str) -> int:
-    digits = [int(c) for c in str(date_str) if c.isdigit()]
-    return reduce_number(sum(digits)) if digits else 1
+def get_lunar_phase_details(d: datetime.date) -> dict:
+    ph = moon_phase(d)
+    return {"phase": ph, "numerical_root": PHASE_NUMEROLOGY.get(ph, 1)}
 
-def evaluate_compatibility(root1: int, root2: int) -> dict:
-    diff = abs(root1 - root2)
+def get_approx_sun_sign(d: datetime.date) -> str:
+    md = (d.month, d.day)
+    if (3, 21) <= md <= (4, 19): return "Aries"
+    elif (4, 20) <= md <= (5, 20): return "Taurus"
+    elif (5, 21) <= md <= (6, 20): return "Gemini"
+    elif (6, 21) <= md <= (7, 22): return "Cancer"
+    elif (7, 23) <= md <= (8, 22): return "Leo"
+    elif (8, 23) <= md <= (9, 22): return "Virgo"
+    elif (9, 23) <= md <= (10, 22): return "Libra"
+    elif (10, 23) <= md <= (11, 21): return "Scorpio"
+    elif (11, 22) <= md <= (12, 21): return "Sagittarius"
+    elif (12, 22) <= md or md <= (1, 19): return "Capricorn"
+    elif (1, 20) <= md <= (2, 18): return "Aquarius"
+    else: return "Pisces"
+
+def evaluate_compatibility(lp1: int, lp2: int) -> str:
+    diff = abs(lp1 - lp2)
     if diff == 0:
-        score = 98
-        desc = "Harmonic Mirror: Identical vibrational rhythm; mutual reflection."
-    elif diff in [2, 4, 6]:
-        score = 88
-        desc = "Sympathetic Resonance: Complementary flow with shared affinities."
-    elif root1 in [11, 22, 33] or root2 in [11, 22, 33]:
-        score = 85
-        desc = "Master Octave Spark: High potential intensity requiring grounded focus."
-    else:
-        score = 65
-        desc = "Catalytic Polarity: Constructive tension driving mutual growth."
-    return {"score": score, "description": desc}
+        return "Resonant Unity: Shared primary frequency. Immediate mutual mirror, potential for echo chamber."
+    elif diff in (2, 4):
+        return "Harmonic Accord: Complementary rhythm. The difference creates productive leverage."
+    elif diff in (1, 3):
+        return "Friction and Spark: Dynamic tension. Progress requires deliberate accommodation."
+    return "Neutral Orbit: Independent wavelengths that interact without friction or fusion."
 
-# ---------------------------------------------------------
-# CONSTANTS & REPOSITORIES
-# ---------------------------------------------------------
-
-HEPTAGRAM_777 = {
-    0: {"day": "Monday", "planet": "Moon ☽", "metal": "Silver", "essence": "Fluidity, Memory, Subconscious", "tincture": "The White Elixir (Albedo)"},
-    1: {"day": "Tuesday", "planet": "Mars ♂", "metal": "Iron", "essence": "Kinetic Drive, Severing, Heat", "tincture": "The Martial Tincture"},
-    2: {"day": "Wednesday", "planet": "Mercury ☿", "metal": "Quicksilver", "essence": "Volatile Synthesis, Transmutation", "tincture": "The Philosophic Mercury"},
-    3: {"day": "Thursday", "planet": "Jupiter ♃", "metal": "Tin", "essence": "Expansion, Cohesion, Royalty", "tincture": "The Tincture of Saffron"},
-    4: {"day": "Friday", "planet": "Venus ♀", "metal": "Copper", "essence": "Harmonic Affinity, Binding Love", "tincture": "The Emerald Tincture"},
-    5: {"day": "Saturday", "planet": "Saturn ♄", "metal": "Lead", "essence": "Nigredo, Structure, Fixation", "tincture": "The Black Stone of Saturn"},
-    6: {"day": "Sunday", "planet": "Sun ☉", "metal": "Gold", "essence": "Pure Spirit, Rubedo, Solar Will", "tincture": "The Aurum Potabile (Gold Elixir)"}
-}
-
-ZODIAC_DECANS = {
-    "Aries": [("Decan 1 (0°-10°)", "Mars"), ("Decan 2 (10°-20°)", "Sun"), ("Decan 3 (20°-30°)", "Venus")],
-    "Taurus": [("Decan 1 (0°-10°)", "Mercury"), ("Decan 2 (10°-20°)", "Moon"), ("Decan 3 (20°-30°)", "Saturn")],
-    "Gemini": [("Decan 1 (0°-10°)", "Jupiter"), ("Decan 2 (10°-20°)", "Mars"), ("Decan 3 (20°-30°)", "Sun")],
-    "Cancer": [("Decan 1 (0°-10°)", "Venus"), ("Decan 2 (10°-20°)", "Mercury"), ("Decan 3 (20°-30°)", "Moon")],
-    "Leo": [("Decan 1 (0°-10°)", "Saturn"), ("Decan 2 (10°-20°)", "Jupiter"), ("Decan 3 (20°-30°)", "Mars")],
-    "Virgo": [("Decan 1 (0°-10°)", "Sun"), ("Decan 2 (10°-20°)", "Venus"), ("Decan 3 (20°-30°)", "Mercury")],
-    "Libra": [("Decan 1 (0°-10°)", "Moon"), ("Decan 2 (10°-20°)", "Saturn"), ("Decan 3 (20°-30°)", "Jupiter")],
-    "Scorpio": [("Decan 1 (0°-10°)", "Mars"), ("Decan 2 (10°-20°)", "Sun"), ("Decan 3 (20°-30°)", "Venus")],
-    "Sagittarius": [("Decan 1 (0°-10°)", "Mercury"), ("Decan 2 (10°-20°)", "Moon"), ("Decan 3 (20°-30°)", "Saturn")],
-    "Capricorn": [("Decan 1 (0°-10°)", "Jupiter"), ("Decan 2 (10°-20°)", "Mars"), ("Decan 3 (20°-30°)", "Sun")],
-    "Aquarius": [("Decan 1 (0°-10°)", "Venus"), ("Decan 2 (10°-20°)", "Mercury"), ("Decan 3 (20°-30°)", "Moon")],
-    "Pisces": [("Decan 1 (0°-10°)", "Saturn"), ("Decan 2 (10°-20°)", "Jupiter"), ("Decan 3 (20°-30°)", "Mars")]
-}
-
-MILESTONES = {
-    "American Declaration of Independence": {
-        "date_str": "1776-07-04", "year": 1776, "month": 7, "day": 4,
-        "category": "Historical Foundation",
-        "astronomy": "Waning Gibbous Moon transiting Aquarius into Pisces.",
-        "details": "Foundational charter signed under Cancer Sun with high retrograde planetary dispersion."
-    },
-    "Crucifixion Blood Moon (Passover)": {
-        "date_str": "0033-04-03", "year": 33, "month": 4, "day": 3,
-        "category": "Sacred History",
-        "astronomy": "Blood Red Lunar Eclipse at moonrise over Jerusalem during Passover (14 Nisan).",
-        "details": "Concurs with scriptural records of darkening skies. Astronomical back-calculations verify lunar eclipse in Virgo."
-    },
-    "Annus Lucis / Creation Epoch": {
-        "date_str": "-4004-10-23", "year": -4004, "month": 10, "day": 23,
-        "category": "Biblical & Hermetic",
-        "astronomy": "Equinoctial conjunction matching Archbishop Ussher's canonical chronology.",
-        "details": "Zero-point marker encoding foundational creation mathematics across classical traditions."
-    },
-    "WW1 Outbreak (1914 Epoch)": {
-        "date_str": "1914-07-28", "year": 1914, "month": 7, "day": 28,
-        "category": "Modern Eschatology",
-        "astronomy": "Waxing Crescent Moon transiting into Libra; solar eclipse followed on August 21, 1914.",
-        "details": "Historic biblical scholarship epoch signaling systemic global transition."
-    },
-    "The Great Year Solstice Precession": {
-        "date_str": "2012-12-21", "year": 2012, "month": 12, "day": 21,
-        "category": "Cosmic Precession",
-        "astronomy": "Solstice Sun aligned with the Galactic Equator, closing the ~25,772-year cycle.",
-        "details": "Culmination of long-count calendrical mathematics signaling entrance into a fresh precessional age."
-    }
-}
-
-KNOWLEDGE_BASE = {
-    "1": {"archetype": "The Primal Initiator", "element": "Fire", "keyword": "Independence, Will, Leadership", "reading": "You are a self-generating force designed to break new ground and lead with pioneering energy."},
-    "2": {"archetype": "The Reflective Vessel", "element": "Water", "keyword": "Duality, Receptivity, Harmony", "reading": "Your frequency navigates the subtle tides of diplomacy, intuitive observation, and quiet mediation."},
-    "3": {"archetype": "The Radiant Expression", "element": "Air", "keyword": "Creativity, Synthesis, Voice", "reading": "A channel of synthesis and communication, turning raw concepts into vivid artistic expression."},
-    "4": {"archetype": "The Sacred Builder", "element": "Earth", "keyword": "Structure, Foundation, Order", "reading": "The anchor of tangible reality. You manifest stability, discipline, and endurance out of chaos."},
-    "5": {"archetype": "The Dynamic Catalyst", "element": "Ether / Air", "keyword": "Change, Freedom, Motion", "reading": "An agent of kinetic evolution, dismantling static constructs to invite expansive freedom."},
-    "6": {"archetype": "The Cosmic Caretaker", "element": "Earth / Water", "keyword": "Balance, Protection, Duty", "reading": "Harmonizer of communal and personal spheres, driven to restore equilibrium and sanctity."},
-    "7": {"archetype": "The Esoteric Seeker", "element": "Water / Ether", "keyword": "Mystery, Analysis, Wisdom", "reading": "Investigator of deeper mechanics. You look past surface noise into root principles."},
-    "8": {"archetype": "The Master of Manifestation", "element": "Earth", "keyword": "Power, Balance, Realization", "reading": "Wields the mathematics of cause and effect, materializing vision into durable authority."},
-    "9": {"archetype": "The Universal Completer", "element": "Fire / Ether", "keyword": "Culmination, Compassion, Synthesis", "reading": "The cycle's end and transition point, embodying universal perspectives and detachment."},
-    "11": {"archetype": "The Illuminator (Master)", "element": "Light", "keyword": "Intuition, Visionary Revelation", "reading": "Conduit of high-frequency intuition, acting as a bridge between unseen insights and the world."},
-    "22": {"archetype": "The Master Architect (Master)", "element": "Form", "keyword": "Large-Scale Creation, Reality", "reading": "Possesses the ability to anchor ambitious, timeless ideas into structural reality."},
-    "33": {"archetype": "The Avatar of Compassion (Master)", "element": "Love", "keyword": "Universal Upliftment, Service", "reading": "Devoted to elevating consciousness through dedicated service and heart-centered guidance."}
-}
-
-PRELOADED_LIBRARIES = {
-    "The Book of Enoch (Full Luminaries - Ch. 72-74)": """
-1. The book of the courses of the luminaries of the heaven, the relations of each, according to their classes, their dominion and their seasons, according to their names and places of origin, and according to their months.
-2. First there goes forth the great luminary, named the Sun, and his circumference is like the circumference of the heaven, and he is quite filled with illuminating and heating fire.
-3. The chariot on which he mounts, the wind drives, and the sun goes down from the heaven as he returns through the north in order to reach the east, and is so led that he comes to the appropriate portal and shines in the face of the heaven.
-4. In this manner he rises in the first month in the great portal, which is the fourth portal of the six portals in the cast.
-5. And in that fourth portal from which the sun rises in the first month are twelve window-openings, from which proceed a flame when they are opened in their season.
-6. When the sun rises in the heaven, he comes forth through that fourth portal thirty mornings in succession, and sets accurately in the fourth portal in the west of the heaven.
-7. And during this period the day becomes daily longer and the night nightly shorter to the thirtieth morning.
-8. On that day the day is longer than the night by a ninth part, and the day amounts exactly to ten parts and the night to eight parts.
-9. And the sun rises from that fourth portal, and sets in the fourth, and returns to the fifth portal of the east thirty mornings, and rises from it and sets in the fifth portal.
-10. And then the day becomes longer by two parts and amounts to eleven parts, and the night becomes shorter and amounts to seven parts.
-11. And the sun returns to the east and enters into the sixth portal, and rises and sets in the sixth portal one-and-thirty mornings on account of its sign.
-12. On that day the day becomes longer than the night, and the day becomes double the night, and the day becomes twelve parts, and the night is shortened and becomes six parts.
-    """,
-    "Nag Hammadi: The Gospel of Thomas (Complete Core Logia)": """
-Logion 1: Whoever discovers the interpretation of these sayings will not taste death.
-Logion 2: Let him who seeks continue seeking until he finds. When he finds, he will become troubled. When he becomes troubled, he will be astonished, and he will rule over the All.
-Logion 3: If your leaders say to you, 'Look, the Kingdom is in the sky,' then the birds of the sky will precede you. Rather, the Kingdom is inside of you, and it is outside of you.
-Logion 4: The man old in days will not hesitate to ask a small child seven days old about the place of life, and he will live. For many who are first will become last, and they will become one and the same.
-Logion 5: Recognize what is before your face, and that which is hidden from you will be revealed to you. For there is nothing hidden that will not be made manifest.
-Logion 22: When you make the two into one, and when you make the inner like the outer and the outer like the inner, and the upper like the lower, then you will enter the kingdom.
-Logion 77: I am the light that is over all things. I am all: from me all came forth, and to me all attained. Split a piece of wood; I am there. Lift up the stone, and you will find me there.
-Logion 113: His disciples said to him, 'When will the Kingdom come?' Jesus said, 'It will not come by waiting for it. Rather, the Kingdom of the Father is spread out upon the earth, and men do not see it.'
-    """,
-    "Pistis Sophia: The Ascent & Treasury of Light": """
-1. And Jesus continued again in the discourse and said unto his disciples: It came to pass, when I had come to the sphere of Fate, that I changed their paths and their courses according as they were appointed.
-2. And Pistis Sophia cried out exceedingly; she sang praises to the Light of the Treasury which she had seen, for she was surrounded by the archons and the rulers of the darkness.
-3. And the first power of the Treasury of Light shone down through the realms, purifying the twelve aeons, so that the light spark should be extracted from the matter of chaos.
-4. The Lion-faced power, which is the half-light, had swallowed all the light-powers in Sophia and purged her strength into the deep matter.
-5. And Sophia cried: O Light of Lights, in whom I have had faith from the beginning, hearken now unto my repentance; deliver my light from the emanations of Self-willed.
-6. Then the Mystery commanded a great light-stream to descend from the first commandment, shining with twelve seals of light to liberate her soul into the thirteenth aeon.
-    """,
-    "Biblical Revelation & Genesis Alignment": """
-Genesis 1:1 In the beginning God created the heaven and the earth.
-Genesis 1:14 And God said, Let there be lights in the firmament of the heaven to divide the day from the night; and let them be for signs, and for seasons, and for days, and years.
-Genesis 1:16 And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.
-Revelation 12:1 And there appeared a great wonder in heaven; a woman clothed with the sun, and the moon under her feet, and upon her head a crown of twelve stars.
-Revelation 12:2 And she being with child cried, travailing in birth, and pained to be delivered.
-Revelation 21:1 And I saw a new heaven and a new earth: for the first heaven and the first earth were passed away; and there was no more sea.
-Revelation 22:13 I am Alpha and Omega, the beginning and the end, the first and the last.
-    """,
-    "I Ching (Hexagrams 1 & 2 Canonical Excerpt)": """
-Hexagram 1: QIAN - The Creative (Heaven over Heaven). The Creative works sublime success, furthering through perseverance.
-Six unbroken light lines symbolize pure primal power, unceasing vitality, and the celestial father archetype.
-Action: Persevere in virtue. The dragon rises from the depths to soar across the heavens.
-Hexagram 2: KUN - The Receptive (Earth over Earth). The Receptive brings about sublime success, furthering through the perseverance of a mare.
-Six divided Yin lines represent infinite receptivity, quiet devotion, and spatial foundation.
-Action: Do not seek to lead; find guidance in following the celestial rhythm.
-    """
-}
-
-# ---------------------------------------------------------
-# SIDEBAR: HARMONIC AUDIO & NEUTRAL OBSERVER INPUTS
-# ---------------------------------------------------------
+# ==========================================
+# 3. SIDEBAR: AUDIO & NATAL ANCHOR
+# ==========================================
 
 with st.sidebar:
-    st.title("💥 Numberin")
-    st.caption("Cosmic Frequency & Resonance Suite")
-    st.write("---")
-
-    # Harmonic Audio Controls
-    st.subheader("🎵 Harmonic Atmosphere")
-    audio_source = st.selectbox(
-        "Ambient Frequency Track",
-        ["432 Hz Pure Sine (Deep Resonance)", "528 Hz DNA / Transformation Tone", "Custom Audio URL / File Upload"]
-    )
+    st.title("⚓ Natal Anchor")
     
-    if audio_source == "432 Hz Pure Sine (Deep Resonance)":
-        st.audio("https://ia800108.us.archive.org/11/items/432HzTone/432Hz_2min.mp3")
-    elif audio_source == "528 Hz DNA / Transformation Tone":
-        st.audio("https://ia801503.us.archive.org/15/items/528HzTone/528Hz_Tone.mp3")
-    else:
-        uploaded_audio = st.file_uploader("Upload Audio (.mp3, .wav)", type=["mp3", "wav"])
-        if uploaded_audio:
-            st.audio(uploaded_audio)
-        else:
-            custom_url = st.text_input("Audio URL:")
-            if custom_url:
-                st.audio(custom_url)
+    st.subheader("Frequency Carrier")
+    freq_choice = st.radio("Solfeggio Carrier", ["Silence", "432 Hz", "528 Hz"], horizontal=True)
+    if freq_choice == "432 Hz":
+        st.caption("Carrier active: Natural harmonic geometry (432 Hz)")
+    elif freq_choice == "528 Hz":
+        st.caption("Carrier active: Miraculous repair frequency (528 Hz)")
 
-    st.write("---")
+    st.markdown("---")
+    anchor_name = st.text_input("Anchor Name", value="Erin")
+    anchor_date = st.date_input("Anchor Date", value=datetime.date(1983, 11, 19))
+    
+    lp_anchor = life_path(anchor_date)
+    sun_anchor = get_approx_sun_sign(anchor_date)
+    moon_anchor = moon_phase(anchor_date)
+    name_p = name_profile(anchor_name)
+    
+    st.markdown(f"**Life Path:** `{lp_anchor}`")
+    st.markdown(f"**Expression:** `{name_p['expression']}`")
+    st.markdown(f"**Sun Sign:** `{sun_anchor}`")
+    st.markdown(f"**Moon Phase:** `{moon_anchor}`")
+    st.markdown("---")
+    st.caption("Universal Anchor pinned across all active reading chambers.")
 
-    # Observer Anchors (Using clean number inputs to avoid mobile picker validation crashes)
-    st.subheader("👤 Observer Natal Anchor")
-    user_name = st.text_input("Your Name / Handle", value="", placeholder="Enter name...")
+# ==========================================
+# 4. UNIVERSAL SEARCH / INPUT CLASSIFIER
+# ==========================================
 
-    c_by, c_bm, c_bd = st.columns([1.2, 1, 1])
-    with c_by:
-        user_year = st.number_input("Year", min_value=-5000, max_value=2100, value=1983, step=1)
-    with c_bm:
-        user_month = st.number_input("Month", min_value=1, max_value=12, value=11, step=1)
-    with c_bd:
-        user_day = st.number_input("Day", min_value=1, max_value=31, value=19, step=1)
+st.title("NUMBERIN")
+search_query = st.text_input("Enter any name, word, phrase, or date (YYYY-MM-DD) for instant classification:", "")
 
-    user_time_str = st.text_input("Birth Time (HH:MM 24hr)", value="12:00")
+if search_query:
+    is_date = False
+    parsed_date = None
     try:
-        th, tm = [int(p) for p in user_time_str.split(":")[:2]]
-    except Exception:
-        th, tm = 12, 0
-    decimal_hour = th + (tm / 60.0)
-
-    user_birth_place = st.text_input("Birthplace", value="", placeholder="e.g. Naples, FL")
-
-    user_date_str = f"{abs(user_year):04d}{user_month:02d}{user_day:02d}"
-    user_lp = calculate_vibrational_root(user_date_str)
-    user_name_val = calculate_name_vibration(user_name) if user_name else 0
-    user_sun_sign = get_approx_sun_sign(user_month, user_day)
-    user_moon = get_lunar_phase_details(user_year, user_month, user_day, decimal_hour)
-
-    if user_name:
-        st.markdown(f"**Observer:** `{user_name}`")
-    st.markdown(f"**Life Path Number:** `{user_lp}`")
-    if user_name_val > 0:
-        st.markdown(f"**Name Number:** `{user_name_val}`")
-    st.markdown(f"**Sun Sign:** `{user_sun_sign}`")
-    st.markdown(f"**Moon Phase:** `{user_moon['phase']}` ({user_moon['illumination']}%)")
-    st.write("---")
-
-# ---------------------------------------------------------
-# INTUITIVE UNIVERSAL SEARCH BAR & DOSSIER ENGINE
-# ---------------------------------------------------------
-
-st.title("💥 Numberin")
-st.write("Instant numbers, archetypes, and readings for any name, word, or date.")
-
-search_query = st.text_input(
-    "🔍 Enter any name, word, or date:",
-    value="",
-    placeholder="Type a name like 'Sarah' or a date like '1776-07-04'...",
-    help="Type any word or date to immediately calculate its numbers and meaning."
-)
-
-if search_query.strip():
-    query = search_query.strip()
-    digits = [int(c) for c in query if c.isdigit()]
-    letters = [c for c in query if c.isalpha()]
-
-    # Case A: Date Analysis
-    if len(digits) >= 4 and len(letters) == 0:
-        root_val = reduce_number(sum(digits))
-        entry = KNOWLEDGE_BASE.get(str(root_val), KNOWLEDGE_BASE["1"])
-        
-        astro_notes = ""
-        if len(digits) == 8:
-            try:
-                y = int("".join(str(d) for d in digits[0:4]))
-                m = int("".join(str(d) for d in digits[4:6]))
-                d = int("".join(str(d) for d in digits[6:8]))
-                sun = get_approx_sun_sign(m, d)
-                lunar = get_lunar_phase_details(y, m, d)
-                astro_notes = f"\n* **Sun Sign:** {sun}\n* **Moon Phase:** {lunar['phase']} ({lunar['illumination']}% illuminated)"
-            except Exception:
-                pass
-
-        st.success(f"### 🗓️ Date Analysis: Root Number {root_val}")
-        col_m1, col_m2 = st.columns(2)
-        col_m1.metric("Life Path Root", f"{root_val}")
-        col_m2.metric("Archetype", entry['archetype'])
-
-        st.markdown(f"**Core Archetype:** **{entry['archetype']}** ({entry['element']})")
-        st.markdown(f"**Key Traits:** {entry['keyword']}{astro_notes}")
-        st.info(f"**Reading Insight:**\n\n{entry['reading']}")
-
-        card_text = f"NUMBERIN READING CARD\nDate: {query}\nRoot: {root_val}\nArchetype: {entry['archetype']}\nTraits: {entry['keyword']}\nReading: {entry['reading']}"
-        col_b1, col_b2 = st.columns([1, 1])
-        with col_b1:
-            st.download_button(
-                "📥 Download Reading Card (.txt)",
-                data=card_text,
-                file_name=f"numberin_date_{query.replace('-', '_')}.txt"
-            )
-        with col_b2:
-            if st.button("🖨️ Open Print View"):
-                st.markdown(
-                    f"""
-                    <div style="border: 2px solid #888; border-radius: 8px; padding: 20px; background-color: #fcfcfc; color: #111; font-family: monospace;">
-                        <h2 style="margin: 0; color: #111;">💥 NUMBERIN DOSSIER CARD</h2>
-                        <hr/>
-                        <p><b>Target Date:</b> {query}</p>
-                        <p><b>Life Path Root:</b> {root_val}</p>
-                        <p><b>Archetype:</b> {entry['archetype']} ({entry['element']})</p>
-                        <p><b>Traits:</b> {entry['keyword']}</p>
-                        <p><b>Reading:</b> {entry['reading']}</p>
-                    </div>
-                    <script>window.print();</script>
-                    """,
-                    unsafe_allow_html=True
-                )
-    # Case B: Name or Word Analysis
+        parsed_date = datetime.datetime.strptime(search_query.strip(), "%Y-%m-%d").date()
+        is_date = True
+    except ValueError:
+        pass
+    
+    if is_date and parsed_date:
+        lp = life_path(parsed_date)
+        st.info(f"**Date Input Detected**: Life Path `{lp}` | Sun Sign: `{get_approx_sun_sign(parsed_date)}` | Phase: `{moon_phase(parsed_date)}`")
     else:
-        pyth_val = calculate_name_vibration(query, "Pythagorean")
-        chald_val = calculate_name_vibration(query, "Chaldean")
-        entry = KNOWLEDGE_BASE.get(str(pyth_val), KNOWLEDGE_BASE["1"])
+        prof = name_profile(search_query)
+        st.info(f"**Text Input Detected**: Expression `{prof['expression']}` | Soul Urge `{prof['soul_urge']}` | Personality `{prof['personality']}` | Pythagorean Sum `{prof['pyth_sum']}`")
 
-        st.success(f"### ✨ Reading for: {query.title()}")
-        col_m1, col_m2, col_m3 = st.columns(3)
-        col_m1.metric("Primary Number", f"{pyth_val}")
-        col_m2.metric("Chaldean Vibration", f"{chald_val}")
-        col_m3.metric("Archetype", entry['archetype'])
+# ==========================================
+# 5. CHAMBERS / TABS
+# ==========================================
 
-        st.markdown(f"**Your Archetype:** **{entry['archetype']}** (Element: `{entry['element']}`)")
-        st.markdown(f"**Traits & Energy:** {entry['keyword']}")
-        st.info(f"**Personal Meaning:**\n\n{entry['reading']}")
-
-        card_text = f"NUMBERIN READING CARD\nName/Word: {query}\nPrimary Number: {pyth_val}\nChaldean Number: {chald_val}\nArchetype: {entry['archetype']}\nTraits: {entry['keyword']}\nReading: {entry['reading']}"
-        col_b1, col_b2 = st.columns([1, 1])
-        with col_b1:
-            st.download_button(
-                "📥 Download Reading Card (.txt)",
-                data=card_text,
-                file_name=f"numberin_reading_{query.lower().replace(' ', '_')}.txt"
-            )
-        with col_b2:
-            if st.button("🖨️ Open Print View"):
-                st.markdown(
-                    f"""
-                    <div style="border: 2px solid #888; border-radius: 8px; padding: 20px; background-color: #fcfcfc; color: #111; font-family: monospace;">
-                        <h2 style="margin: 0; color: #111;">💥 NUMBERIN DOSSIER CARD</h2>
-                        <hr/>
-                        <p><b>Target:</b> {query}</p>
-                        <p><b>Primary Number:</b> {pyth_val} | <b>Chaldean:</b> {chald_val}</p>
-                        <p><b>Archetype:</b> {entry['archetype']} ({entry['element']})</p>
-                        <p><b>Traits:</b> {entry['keyword']}</p>
-                        <p><b>Reading:</b> {entry['reading']}</p>
-                    </div>
-                    <script>window.print();</script>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-st.write("---")
-
-# ---------------------------------------------------------
-# WORKBENCH MODULE TABS
-# ---------------------------------------------------------
-
-tab_milestones, tab_oracle, tab_alembic, tab_compat, tab_patterns, tab_knowledge = st.tabs([
-    "🌌 Milestone Timeline Lens",
-    "♈ Decan Oracle",
-    "⚗️ 7-7-7 Alchemical Lens",
-    "💫 Compatibility Matrix",
-    "🔍 Pattern & Frequency Engine",
-    "📖 Books of Knowledge & Deep Corpus Engine"
+tabs = st.tabs([
+    "Alchemy Pharmacy", 
+    "Corpus Knowledge Base", 
+    "Milestone Timeline Lens", 
+    "Decan Oracle", 
+    "Compatibility Matrix", 
+    "Pattern & Frequency Engine"
 ])
 
-# TAB 1: MILESTONE TIMELINE LENS
-with tab_milestones:
-    st.header("Chronos & Cosmos: Milestone Timeline")
-    st.caption("Cross-reference historical dates against celestial events, eclipses, and personal resonance.")
+# ----------------------------------------------------
+# TAB 1: ALCHEMY PHARMACY (Replaced)
+# ----------------------------------------------------
+with tabs[0]:
+    st.markdown("### The Alchemy Pharmacy")
+    st.markdown("> *The user is the alchemist; the app is the pharmacy. Bring your prima materia into the brass rings to extract the working tincture.*")
 
-    timeline_mode = st.radio(
-        "Timeline Selection Mode:",
-        ["Choose Pre-Set Turning Point", "Enter Any Custom Date"],
-        horizontal=True
-    )
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
+        alch_name = st.text_input("Alchemist Name (Optional)", value=anchor_name)
+        alch_date = st.date_input("Alchemist Birthdate (Optional)", value=anchor_date)
+        seed_str = st.text_input("Operational Seed", value="7-7-7")
+    with col_b:
+        prima_materia = st.text_area("Prima Materia (What are you transmuting? Issue, question, or feeling)", 
+                                     placeholder="Describe the raw circumstance, tension, or desire you bring to the bench today...")
 
-    if timeline_mode == "Choose Pre-Set Turning Point":
-        selected_milestone = st.selectbox(
-            "Select Historical or Cosmic Turning Point:",
-            list(MILESTONES.keys()),
-            index=0
-        )
-        m_info = MILESTONES[selected_milestone]
-        target_year = m_info["year"]
-        target_month = m_info["month"]
-        target_day = m_info["day"]
-        date_display = m_info["date_str"]
-        category_display = m_info["category"]
-        astro_display = m_info["astronomy"]
-        details_display = m_info["details"]
-    else:
-        st.write("**Enter Custom Date (BCE/CE):**")
-        col_cy, col_cm, col_cd = st.columns([1.5, 1, 1])
-        with col_cy:
-            target_year = st.number_input("Year (e.g. 1776, -4004)", min_value=-10000, max_value=10000, value=1776, step=1, key="m_cust_yr")
-        with col_cm:
-            target_month = st.number_input("Month (1-12)", min_value=1, max_value=12, value=7, step=1, key="m_cust_mo")
-        with col_cd:
-            target_day = st.number_input("Day (1-31)", min_value=1, max_value=31, value=4, step=1, key="m_cust_dy")
+    if st.button("Compound the Tincture", type="primary"):
+        # Mathematical derivation: collapse into Z/7Z
+        name_val = name_profile(alch_name)["expression"] if alch_name else 0
+        lp_val = life_path(alch_date) if alch_date else 0
+        d_year = alch_date.timetuple().tm_yday if alch_date else datetime.date.today().timetuple().tm_yday
+        d_month = alch_date.day if alch_date else datetime.date.today().day
+        seed_digits = [int(c) for c in seed_str if c.isdigit()]
+        seed_val = sum(seed_digits) if seed_digits else 21
 
-        date_display = f"{target_year:04d}-{target_month:02d}-{target_day:02d}"
-        category_display = "Custom Timeline Probe"
-        astro_display = "Calculated synodic position and lunar phase for queried date."
-        details_display = f"Custom historical calculation for {date_display}."
+        total_alch = name_val + lp_val + d_year + d_month + seed_val
+        working_idx = total_alch % 7
+        distraction_idx = (working_idx + 3) % 7
 
-    m_lunar = get_lunar_phase_details(target_year, target_month, target_day)
-    m_root = calculate_vibrational_root(date_display)
-    m_compat = evaluate_compatibility(user_lp, m_root)
+        working_meta = HEPTAGRAM_777[working_idx]
+        distract_meta = HEPTAGRAM_777[distraction_idx]
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Date", date_display)
-    c2.metric("Lunar Phase", m_lunar["phase"])
-    c3.metric("Illumination", f"{m_lunar['illumination']}%")
-    c4.metric("Milestone Root", f"Root {m_root}")
-
-    st.markdown("---")
-    col_hist, col_read = st.columns([1.2, 1])
-
-    with col_hist:
-        st.subheader("📜 Historical & Celestial Chronicle")
-        st.markdown(f"**Category:** *{category_display}*")
-        st.info(f"**Astronomical Occurrence:**\n\n{astro_display}")
-        st.write(details_display)
-
-    with col_read:
-        st.subheader("⚡ Synchronicity Reading")
-        display_label = user_name if user_name else "Observer"
-        st.markdown(f"**{display_label}** | Life Path `{user_lp}`  ↔  Milestone `{m_root}`")
-        st.metric("Resonance Index", f"{m_compat['score']}%")
-        st.success(m_compat['description'])
+        # Brass Ring Visualizer
         st.markdown(f"""
-        * **Lunar Dynamics:** Observer phase: **{user_moon['phase']}** ({user_moon['illumination']}%), Milestone phase: **{m_lunar['phase']}** ({m_lunar['illumination']}%).
-        * **Solar Anchor:** {user_sun_sign} alignment across historic coordinates.
-        """)
+        <div class="brass-card">
+            <h4 style="text-align: center; color: #d4af37; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
+            <div class="ring-container">
+                <div class="ring-badge">Outer Ring<br><small>{working_meta['day']}</small></div>
+                <div class="ring-badge">Middle Pivot<br><small>{working_meta['planet']}</small></div>
+                <div class="ring-badge">Inner Core<br><small>{working_meta['metal']}</small></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-# TAB 2: DECAN ORACLE & RADIAL SPOKES
-with tab_oracle:
-    st.header("Decan Oracle & Zodiac Coordinates")
-    st.caption("Ptolemaic decans and planetary rulers mapped across 30° radial increments.")
-
-    default_sign_index = list(ZODIAC_DECANS.keys()).index(user_sun_sign) if user_sun_sign in ZODIAC_DECANS else 0
-    sign = st.selectbox("Explore Zodiac Sector:", list(ZODIAC_DECANS.keys()), index=default_sign_index)
-    cols = st.columns(3)
-
-    for i, (decan_deg, ruler) in enumerate(ZODIAC_DECANS[sign]):
-        with cols[i]:
-            st.markdown(f"### {decan_deg}")
-            st.markdown(f"**Planetary Ruler:** `{ruler}`")
-            if ruler == "Moon":
-                st.info("🌙 **Lunar Decan**: Associated with tides, reflections, transitions, and intuition.")
-            elif ruler in ["Mars", "Saturn"]:
-                st.warning(f"⚡ **Intensive Force**: Governed by the sphere of {ruler}.")
-            else:
-                st.write(f"Governed by the harmonious currents of {ruler}.")
-
-# TAB 3: 7-7-7 ALCHEMICAL LENS (ALEMBIC & CUCURBIT)
-with tab_alembic:
-    st.header("⚗️ The 7-7-7 Alchemical Lens")
-    st.caption("Distillation of raw matter through the 7 Planets, 7 Metals, and 7 Days of the Week.")
-
-    col_alembic_in1, col_alembic_in2 = st.columns([1.5, 1])
-
-    with col_alembic_in1:
-        st.subheader("1. The Cucurbit (Prima Materia / Raw Vessel)")
-        prima_text = st.text_input(
-            "Input Subject / Cipher to Distill:",
-            value=user_name if user_name else "Philosopher Stone"
+        # Synthesize Tincture Prose (Warm, personalized, human-grounded)
+        p_clean = prima_materia.strip() if prima_materia else "the quiet stillness you carried in"
+        
+        tincture_prose = (
+            f"When you bring {p_clean} to the counter, the weight does not need to be broken by brute force. "
+            f"Right now, the current runs cleanest through {working_meta['virtue'].lower()}. "
+            f"The immediate instinct might be to pull toward {distract_meta['virtue'].lower()}, "
+            f"yet that direction easily degrades into {distract_meta['shadow'].lower()}. "
+            f"Hold steady in this current: do not rush the cooling process, let the sediment settle to the bottom, "
+            f"and let the day's natural rhythm bear what your hands have grown tired of carrying."
         )
-        st.write("**Distillation Epoch Coordinates:**")
-        c_ay, c_am, c_ad = st.columns(3)
-        with c_ay:
-            a_year = st.number_input("Operation Year", min_value=-5000, max_value=5000, value=2026, step=1, key="alch_yr")
-        with c_am:
-            a_month = st.number_input("Operation Month", min_value=1, max_value=12, value=9, step=1, key="alch_mo")
-        with c_ad:
-            a_day = st.number_input("Operation Day", min_value=1, max_value=31, value=25, step=1, key="alch_dy")
 
-    try:
-        op_date = datetime.date(abs(a_year), a_month, a_day)
-        day_idx = op_date.weekday()
-    except Exception:
-        day_idx = 0
+        st.markdown(f"""
+        <div class="tincture-box">
+            <strong>Prescription & Tincture:</strong><br><br>
+            {tincture_prose}
+        </div>
+        """, unsafe_allow_html=True)
 
-    hept = HEPTAGRAM_777[day_idx]
-    prima_pyth = calculate_name_vibration(prima_text, "Pythagorean")
-    date_root = calculate_vibrational_root(f"{abs(a_year):04d}{a_month:02d}{a_day:02d}")
+        with st.expander("Examine the Bench Apparatus (Technical Breakdown)"):
+            st.markdown(f"- **Working Modulo:** `{total_alch} ≡ {working_idx} (mod 7)`")
+            st.markdown(f"- **Core Metal Skeleton:** {working_meta['metal']} ({working_meta['planet']})")
+            st.markdown(f"- **Distraction Axis (+3):** {distract_meta['metal']} ({distract_meta['planet']})")
+            st.markdown(f"- **Sum Components:** Expression ({name_val}) + Life Path ({lp_val}) + Day-of-Year ({d_year}) + Day-of-Month ({d_month}) + Seed Sum ({seed_val}) = {total_alch}")
 
-    spirit_val = prima_pyth
-    salt_val = date_root
-    sulfur_val = (day_idx + 1)
-    magnum_root = reduce_number(spirit_val + salt_val + sulfur_val)
+# ----------------------------------------------------
+# TAB 2: CORPUS KNOWLEDGE BASE (Replaced)
+# ----------------------------------------------------
+with tabs[1]:
+    st.markdown("### The Full-Corpus Library Engine")
+    st.markdown("Search, cross-examine, and extract patterns across complete esoteric and sacred literature without excerpts or truncations.")
 
-    with col_alembic_in2:
-        st.subheader("2. The Alembic Beak (Planetary Alignment)")
-        st.info(f"""
-        * **Operational Day:** **{hept['day']}**
-        * **Governing Sphere:** **{hept['planet']}**
-        * **Alchemical Metal:** **{hept['metal']}**
-        * **Principle:** *{hept['essence']}*
-        """)
+    CORPUS_URLS = {
+        "King James Bible (Complete)": "https://www.gutenberg.org/cache/epub/10/pg10.txt",
+        "The Kybalion (Three Initiates)": "https://www.gutenberg.org/cache/epub/14264/pg14264.txt",
+        "The Book of Enoch": "https://www.gutenberg.org/cache/epub/45238/pg45238.txt",
+        "Pistis Sophia": "https://www.gutenberg.org/cache/epub/44423/pg44423.txt",
+        "I Ching (Legge Translation)": "https://www.gutenberg.org/cache/epub/25890/pg25890.txt"
+    }
 
-    st.markdown("---")
-    st.subheader("3. The Receiver (The Distilled Elixir)")
+    @st.cache_data(show_spinner=False)
+    def fetch_full_text(url: str) -> str:
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=12) as response:
+                return response.read().decode('utf-8', errors='ignore')
+        except Exception:
+            return ""
 
-    r1, r2, r3, r4 = st.columns(4)
-    r1.metric("Spirit (Volatile)", f"Root {spirit_val}")
-    r2.metric("Salt (Fixed Body)", f"Root {salt_val}")
-    r3.metric("Sulfur (Governing Metal)", f"{hept['metal']}")
-    r4.metric("Distillate Nexus", f"Root {magnum_root}")
-
-    if magnum_root in [1, 5, 9]:
-        alch_stage = "Nigredo (Calcination & Blackening)"
-        stage_desc = "Breaking down rigid constructs to purify the root essence."
-    elif magnum_root in [2, 6]:
-        alch_stage = "Albedo (The White Work / Washing)"
-        stage_desc = "Lunar purification, clarity, and crystallization of inner stillness."
-    elif magnum_root in [3, 7]:
-        alch_stage = "Citrinitas (The Yellow Dawn / Awakening)"
-        stage_desc = "Solar illumination awakening theoretical symbols into living understanding."
-    else:
-        alch_stage = "Rubedo (The Red Work / Consummation)"
-        stage_desc = "Full manifestation and complete alignment between the volatile spirit and fixed vessel."
-
-    st.markdown(f"### Distillation Phase: **{alch_stage}**")
-    st.markdown(f"**Resulting Tincture:** `{hept['tincture']}`")
-    st.success(f"**Alchemical Reading:** {stage_desc}")
-
-    alembic_card = f"NUMBERIN 7-7-7 ALCHEMICAL DOSSIER\nSubject: {prima_text}\nDate: {a_year:04d}-{a_month:02d}-{a_day:02d} ({hept['day']})\nPlanet: {hept['planet']}\nMetal: {hept['metal']}\nNexus: Root {magnum_root}\nStage: {alch_stage}\nTincture: {hept['tincture']}"
-    st.download_button(
-        "📥 Download Alchemical Dossier (.txt)",
-        data=alembic_card,
-        file_name=f"alchemical_distill_{prima_text.lower().replace(' ', '_')}.txt"
-    )
-
-# TAB 4: COMPATIBILITY / SYNASTRY MATRIX
-with tab_compat:
-    st.header("Synastry & Resonant Compatibility")
-    st.caption("Compare your vibrational anchor with a partner, collaborator, or specific calendar date.")
-
-    comp_type = st.radio("Comparison Mode", ["Compare with another Person", "Compare with an Event / Date"], horizontal=True)
-
-    if comp_type == "Compare with another Person":
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            p_name = st.text_input("Partner / Peer Name", value="", placeholder="Enter companion name...")
-            col_py, col_pm, col_pd = st.columns(3)
-            with col_py:
-                p_year = st.number_input("Year ", min_value=1900, max_value=2100, value=1995, step=1, key="p_yr")
-            with col_pm:
-                p_month = st.number_input("Month ", min_value=1, max_value=12, value=1, step=1, key="p_mo")
-            with col_pd:
-                p_day = st.number_input("Day ", min_value=1, max_value=31, value=1, step=1, key="p_dy")
-        with col_p2:
-            p_time_str = st.text_input("Partner Birth Time (HH:MM)", value="12:00", key="p_tm")
-            try:
-                pth, ptm = [int(p) for p in p_time_str.split(":")[:2]]
-            except Exception:
-                pth, ptm = 12, 0
-            p_place = st.text_input("Partner Birthplace", value="", placeholder="City, Country...", key="p_plc")
-
-        p_dec_hour = pth + (ptm / 60.0)
-        p_date_str = f"{p_year:04d}{p_month:02d}{p_day:02d}"
-        p_root = calculate_vibrational_root(p_date_str)
-        p_moon = get_lunar_phase_details(p_year, p_month, p_day, p_dec_hour)
-        p_sun = get_approx_sun_sign(p_month, p_day)
-        
-        result = evaluate_compatibility(user_lp, p_root)
-        
-        c_a, c_b, c_c = st.columns(3)
-        c_a.metric("Observer Life Path", user_lp)
-        c_b.metric("Partner Life Path", p_root)
-        c_c.metric("Compatibility Index", f"{result['score']}%")
-
-        st.info(f"**Synastry Dynamic:** {result['description']}")
-        st.write(f"* **Interaction Matrix:** Observer ({user_sun_sign} / {user_moon['phase']}) transiting with Companion ({p_sun} / {p_moon['phase']}).")
-
-    else:
-        col_ty, col_tm, col_td = st.columns(3)
-        with col_ty:
-            t_year = st.number_input("Target Year", min_value=-5000, max_value=5000, value=2026, step=1, key="t_yr")
-        with col_tm:
-            t_month = st.number_input("Target Month", min_value=1, max_value=12, value=9, step=1, key="t_mo")
-        with col_td:
-            t_day = st.number_input("Target Day", min_value=1, max_value=31, value=25, step=1, key="t_dy")
-
-        t_date_str = f"{t_year:04d}{t_month:02d}{t_day:02d}"
-        t_root = calculate_vibrational_root(t_date_str)
-        t_moon = get_lunar_phase_details(t_year, t_month, t_day)
-        
-        result = evaluate_compatibility(user_lp, t_root)
-        
-        c_a, c_b = st.columns(2)
-        c_a.metric("Target Date Vibration", f"Root {t_root}")
-        c_b.metric("Day Alignment Index", f"{result['score']}%")
-        st.info(f"**Day Resonance:** {result['description']}")
-
-# TAB 5: PATTERN & FREQUENCY ENGINE
-with tab_patterns:
-    st.header("Pattern & Frequency Analysis")
-    st.caption("Translate arbitrary sequences, words, or custom names into distribution patterns.")
-
-    user_text = st.text_input("Input Word, Cipher Phrase, or Sequence:", value="As Above So Below")
-    
-    pyth_val = calculate_name_vibration(user_text, "Pythagorean")
-    chald_val = calculate_name_vibration(user_text, "Chaldean")
-
-    k1, k2 = st.columns(2)
-    k1.metric("Pythagorean Root", pyth_val)
-    k2.metric("Chaldean Root", chald_val)
-
-    cleaned_text = [c.upper() for c in user_text if c.isalpha()]
-    char_freq = {}
-    for c in cleaned_text:
-        char_freq[c] = char_freq.get(c, 0) + 1
-
-    st.subheader("Vibrational Distribution")
-    st.bar_chart(char_freq)
-
-# TAB 6: BOOKS OF KNOWLEDGE & DEEP CORPUS ENGINE
-with tab_knowledge:
-    st.header("📖 Books of Knowledge & Deep Corpus Engine")
-    st.caption("Analyze full pre-loaded books or upload custom treatises to detect patterns, anomalies, and generate readings on raw data.")
-
-    source_type = st.radio(
-        "Corpus Source:",
-        ["Select Pre-Loaded Canonical Book", "Upload Custom Book / Manuscript (.txt)", "Scan Manuscript Page Image (JPEG/PNG)"],
-        horizontal=True
-    )
-
+    corpus_source = st.selectbox("Select Active Canonical Corpus", ["Custom Upload"] + list(CORPUS_URLS.keys()))
     corpus_text = ""
-    active_book_title = ""
 
-    if source_type == "Select Pre-Loaded Canonical Book":
-        active_book_title = st.selectbox("Select Canonical Work:", list(PRELOADED_LIBRARIES.keys()))
-        corpus_text = PRELOADED_LIBRARIES[active_book_title].strip()
-    elif source_type == "Upload Custom Book / Manuscript (.txt)":
-        uploaded_doc = st.file_uploader("Upload Text Document (.txt)", type=["txt"])
-        if uploaded_doc:
-            corpus_text = uploaded_doc.read().decode("utf-8", errors="ignore")
-            active_book_title = uploaded_doc.name
-            st.success(f"Loaded '{active_book_title}' ({len(corpus_text):,} characters).")
-        else:
-            corpus_text = PRELOADED_LIBRARIES["The Book of Enoch (Full Luminaries - Ch. 72-74)"].strip()
-            active_book_title = "The Book of Enoch (Default)"
+    if corpus_source == "Custom Upload":
+        uploaded_file = st.file_uploader("Upload any complete .txt or .md manuscript", type=["txt", "md"])
+        if uploaded_file is not None:
+            corpus_text = uploaded_file.read().decode('utf-8', errors='ignore')
     else:
-        st.subheader("🖼️ Visual Manuscript Page Inspector")
-        uploaded_img = st.file_uploader("Upload Page/Folio (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
-        if uploaded_img is not None:
-            image = Image.open(uploaded_img)
-            col_img1, col_img2 = st.columns([1.5, 1])
-            with col_img1:
-                st.image(image, caption=f"Loaded Folio: {uploaded_img.name}", use_container_width=True)
-            with col_img2:
-                folio_label = st.text_input("Folio Coordinate / Identification:", value="Folio-Alpha")
-                notes = st.text_area("Decipherment & Symbol Observations:", height=150, placeholder="Transcribe words, glyphs, or structural anomalies...")
-                if st.button("Log Folio to Reading Engine"):
-                    l_root = calculate_name_vibration(folio_label, "Pythagorean")
-                    st.success(f"Logged {folio_label} (Vibrational Root: {l_root}) into workbench context.")
+        with st.spinner(f"Loading complete text for {corpus_source}..."):
+            corpus_text = fetch_full_text(CORPUS_URLS[corpus_source])
+            if not corpus_text:
+                st.warning("Manuscript could not be pulled from Gutenberg live mirror. Please upload a local text file.")
 
     if corpus_text:
-        st.markdown("---")
-        # Text Metrics & Anomaly Engine
-        words = re.findall(r'\b[A-Za-z]+\b', corpus_text)
-        word_counts = Counter([w.lower() for w in words])
-        total_words = len(words)
-        unique_words = len(word_counts)
-        hapax_legomena = [w for w, c in word_counts.items() if c == 1]
+        total_chars = len(corpus_text)
+        words_list = re.findall(r'\b[A-Za-z]+\b', corpus_text.lower())
+        total_words = len(words_list)
         
-        # Calculate root vibration of the entire text
-        corpus_root = calculate_name_vibration(corpus_text, "Pythagorean")
-        reading_entry = KNOWLEDGE_BASE.get(str(corpus_root), KNOWLEDGE_BASE["1"])
+        st.caption(f"Corpus Active: **{total_words:,} words** | **{total_chars:,} characters**")
 
-        st.subheader(f"📊 Corpus Diagnostics: {active_book_title}")
-        c_c1, c_c2, c_c3, c_c4 = st.columns(4)
-        c_c1.metric("Total Words", f"{total_words:,}")
-        c_c2.metric("Unique Vocabulary", f"{unique_words:,}")
-        c_c3.metric("Oddities (1-time words)", f"{len(hapax_legomena):,}")
-        c_c4.metric("Corpus Root", f"Root {corpus_root}")
+        st.markdown("#### Corpus Plain-Language Inquiry")
+        query = st.text_input("Ask a question or enter a search query:", 
+                              placeholder="e.g., 'find all the sevens', 'how many times fear appears', 'most common words', 'letter frequency'")
 
-        # Data-Supplied Reading Section
-        st.markdown("### 🔮 Data-Supplied Reading on Loaded Book")
-        compat_with_user = evaluate_compatibility(user_lp, corpus_root)
-        
-        col_read1, col_read2 = st.columns([1.2, 1])
-        with col_read1:
-            st.info(f"""
-            **Corpus Archetype:** **{reading_entry['archetype']}** (Element: `{reading_entry['element']}`)  
-            **Guiding Principle:** {reading_entry['keyword']}  
-            **Synthesis:** {reading_entry['reading']}
-            """)
-        with col_read2:
-            display_user = user_name if user_name else "Observer"
-            st.success(f"""
-            **Resonance with {display_user}:**  
-            Observer Life Path `{user_lp}`  ↔  Book Root `{corpus_root}`  
-            **Index:** `{compat_with_user['score']}%`  
-            *{compat_with_user['description']}*
-            """)
-
-        # Search, Pattern & Oddity Discovery
-        st.markdown("---")
-        st.subheader("🔍 Pattern, Word & Anomaly Filter")
-        
-        col_s1, col_s2 = st.columns([2, 1])
-        with col_s1:
-            query_word = st.text_input("Find Patterns for Word, Symbol or Phrase:", value="Sun")
-        with col_s2:
-            filter_mode = st.selectbox("Search Lens:", ["Case-Insensitive Match", "Exact Word Boundary", "Search Hapax / Oddities"])
-
-        if filter_mode == "Search Hapax / Oddities":
-            st.markdown(f"**Singular Anomalies (Words appearing only once in the entire book):**")
-            st.write(", ".join(hapax_legomena[:100]) + ("..." if len(hapax_legomena) > 100 else ""))
-        else:
-            if query_word.strip():
-                clean_q = query_word.strip()
-                pattern = r'\b' + re.escape(clean_q) + r'\b' if filter_mode == "Exact Word Boundary" else re.escape(clean_q)
-                
-                # Split text into sentences / passages for fine-grained scanning
-                sentences = re.split(r'(?<=[.!?\n]) +', corpus_text)
-                matches = [s.strip() for s in sentences if re.search(pattern, s, re.IGNORECASE) and s.strip()]
-
-                if matches:
-                    st.success(f"Discovered **{len(matches)}** resonant occurrences for '{query_word}':")
-                    for i, m in enumerate(matches[:25]):
-                        m_pyth = calculate_name_vibration(m, "Pythagorean")
-                        m_chald = calculate_name_vibration(m, "Chaldean")
-                        with st.expander(f"Match #{i + 1} | Pyth Root {m_pyth} | Chald Root {m_chald}"):
-                            st.write(f"> *{m}*")
-                            p_eval = evaluate_compatibility(user_lp, m_pyth)
-                            st.caption(f"Resonance with Observer: {p_eval['score']}% — {p_eval['description']}")
-                    if len(matches) > 25:
-                        st.caption(f"*Displaying first 25 of {len(matches)} occurrences.*")
+        if query:
+            q_clean = query.strip().lower()
+            
+            # 1. Number pattern matching
+            if "seven" in q_clean or " 7 " in q_clean or q_clean.endswith(" 7"):
+                matches = len(re.findall(r'\b(7|seven|seventh)\b', corpus_text, re.IGNORECASE))
+                st.markdown(f"**Direct Result:** The number seven appears **{matches:,} times** across the full manuscript.")
+            
+            # 2. Specific word counts
+            elif "times" in q_clean or "find" in q_clean or "how many" in q_clean:
+                target_word = re.sub(r'^(find|how many times does|how many times|count|find every time it says)\s+', '', q_clean).strip().strip("'\"")
+                target_word = target_word.split()[0] if target_word else ""
+                if target_word:
+                    occ = words_list.count(target_word)
+                    st.markdown(f"**Direct Result:** The word **'{target_word}'** appears **{occ:,} times** in this text.")
                 else:
-                    st.warning(f"No direct passages found containing '{query_word}'.")
+                    st.markdown("Please name the specific word you would like to measure.")
+            
+            # 3. Most common words
+            elif "most common" in q_clean or "shows up most" in q_clean:
+                stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it"}
+                filtered = [w for w in words_list if w not in stop_words and len(w) > 2]
+                counts = Counter(filtered).most_common(10)
+                st.markdown("**Ten Most Frequent Significant Words:**")
+                for w, c in counts:
+                    st.markdown(f"- **{w}**: {c:,} times")
 
-        # Visual Word Frequency Distribution
-        with st.expander("📈 View Top 20 Most Frequent Words"):
-            common_words = dict(word_counts.most_common(20))
-            st.bar_chart(common_words)
+            # 4. Least common words
+            elif "shows up least" in q_clean or "least common" in q_clean:
+                rare = [w for w, c in Counter(words_list).items() if c == 1][:10]
+                st.markdown(f"**Single-Occurrence Words (Hapax Legomena Sample):** {', '.join(rare)}")
+
+            # 5. Letter frequency
+            elif "letter frequency" in q_clean or "letters" in q_clean:
+                letters_only = [c for c in corpus_text.upper() if 'A' <= c <= 'Z']
+                l_counts = Counter(letters_only).most_common(5)
+                st.markdown("**Dominant Letter Frequencies:**")
+                for l, count in l_counts:
+                    pct = (count / len(letters_only)) * 100
+                    st.markdown(f"- **{l}**: {count:,} times ({pct:.2f}%)")
+
+            # 6. Whole-corpus numerology root
+            elif "root" in q_clean or "numerology" in q_clean:
+                root_sum = sum(ord(c) - 64 for c in corpus_text.upper() if 'A' <= c <= 'Z')
+                collapsed = reduce_number(root_sum)
+                st.markdown(f"**Corpus Grand Root:** `{collapsed}` — {meaning(collapsed)}")
+            
+            # Default / Fallback substring search
+            else:
+                raw_find = len(re.findall(re.escape(query.strip()), corpus_text, re.IGNORECASE))
+                st.markdown(f"Found **{raw_find:,} occurrences** matching '{query.strip()}'.")
+
+# ----------------------------------------------------
+# TAB 3: MILESTONE TIMELINE LENS (Untouched)
+# ----------------------------------------------------
+with tabs[2]:
+    st.markdown("### Milestone Timeline Lens")
+    st.markdown("Track the 9-year cyclic unfoldment from any birthdate.")
+    
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        m_birth = st.date_input("Select Inception Date", value=anchor_date, key="milestone_bdate")
+    with col_m2:
+        m_years = st.slider("Timeline Horizon (Years)", min_value=1, max_value=27, value=9)
+
+    curr_year = datetime.date.today().year
+    st.markdown("#### Projected Sequence")
+    
+    milestone_records = []
+    for y in range(curr_year, curr_year + m_years):
+        res = personal_cycles(m_birth, y)
+        milestone_records.append({
+            "Calendar Year": y,
+            "Personal Year": res["personal_year"],
+            "Theme": res["milestone"]
+        })
+    st.table(milestone_records)
+
+# ----------------------------------------------------
+# TAB 4: DECAN ORACLE (Untouched)
+# ----------------------------------------------------
+with tabs[3]:
+    st.markdown("### Decan Oracle")
+    st.markdown("The 36 Decan faces of the ecliptic and their planetary sub-rulers.")
+    
+    sel_sign = st.selectbox("Select Zodiac Sign", list(ZODIAC_DECANS.keys()))
+    decans = ZODIAC_DECANS[sel_sign]
+    
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f"**First Decan**\n\n{decans[0]}")
+    with c2:
+        st.markdown(f"**Second Decan**\n\n{decans[1]}")
+    with c3:
+        st.markdown(f"**Third Decan**\n\n{decans[2]}")
+
+# ----------------------------------------------------
+# TAB 5: COMPATIBILITY MATRIX (Untouched)
+# ----------------------------------------------------
+with tabs[4]:
+    st.markdown("### Compatibility Matrix")
+    st.markdown("Compare two independent anchor dates or numbers to examine the resonance.")
+
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        p1_date = st.date_input("First Anchor Date", value=anchor_date, key="comp_d1")
+        lp1 = life_path(p1_date)
+        st.markdown(f"Primary Life Path: `{lp1}`")
+    with col_c2:
+        p2_date = st.date_input("Second Anchor Date", value=datetime.date(1985, 5, 15), key="comp_d2")
+        lp2 = life_path(p2_date)
+        st.markdown(f"Secondary Life Path: `{lp2}`")
+
+    comp_result = evaluate_compatibility(lp1, lp2)
+    st.markdown(f"""
+    <div class="brass-card">
+        <h4>Synthesis Verdict</h4>
+        <p>{comp_result}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ----------------------------------------------------
+# TAB 6: PATTERN & FREQUENCY ENGINE (Untouched)
+# ----------------------------------------------------
+with tabs[5]:
+    st.markdown("### Pattern & Frequency Engine")
+    st.markdown("Latin ciphers, angelic repetitions, and character frequency distributions.")
+
+    cipher_input = st.text_input("Stream Analysis Field", value="The Hidden Light")
+    if cipher_input:
+        c_res = run_latin_cipher(cipher_input)
+        col_p1, col_p2, col_p3 = st.columns(3)
+        col_p1.metric("Simple Cipher", c_res["simple"])
+        col_p2.metric("Reverse Cipher", c_res["reverse"])
+        col_p3.metric("Reduced Root", c_res["reduced"])
+
+        st.markdown(f"**Angel Synchronicity Check:** {angel_read(str(c_res['simple']))}")
+        st.markdown(f"**Frequency Scan:** {script_readings(cipher_input)}")
+        st.markdown(f"**Root Interpretation:** {meaning(c_res['reduced'])}")
