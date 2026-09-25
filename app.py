@@ -111,7 +111,7 @@ def evaluate_compatibility(root1: int, root2: int) -> dict:
     diff = abs(root1 - root2)
     if diff == 0:
         score = 98
-        desc = "Harmonic Mirror: Identical vibrational rhythm; mutual reflection."
+        desc = "Harmonic Mirror: Identical vibrational rhythm; natural reflection."
     elif diff in [2, 4, 6]:
         score = 88
         desc = "Sympathetic Resonance: Complementary flow with shared affinities."
@@ -147,13 +147,13 @@ MILESTONES = {
         "date_str": "0033-04-03", "year": 33, "month": 4, "day": 3,
         "category": "Sacred History",
         "astronomy": "Partial/Total Blood Red Lunar Eclipse at moonrise over Jerusalem during Passover (14 Nisan).",
-        "details": "Concurs with scriptural records of celestial darkening. Astronomical retro-calculations verify an eclipse in the constellation Virgo."
+        "details": "Concurs with scriptural records of darkening skies. Astronomical back-calculations verify the moon rising in eclipse in the constellation Virgo."
     },
     "Annus Lucis / Traditional Creation Epoch": {
         "date_str": "-4004-10-23", "year": -4004, "month": 10, "day": 23,
         "category": "Biblical & Hermetic",
         "astronomy": "Equinoctial conjunction matching Archbishop Ussher's canonical chronology.",
-        "details": "Zero-point marker encoding foundational creation mathematics across classical Hermetic traditions."
+        "details": "Zero-point marker encoding foundational creation mathematics across classical traditions."
     },
     "WW1 Outbreak (1914 Epoch)": {
         "date_str": "1914-07-28", "year": 1914, "month": 7, "day": 28,
@@ -165,7 +165,7 @@ MILESTONES = {
         "date_str": "2017-01-20", "year": 2017, "month": 1, "day": 20,
         "category": "Political Astrometry",
         "astronomy": "Last Quarter Moon in Scorpio with wide dispersion across Mercury, Venus, Mars, and Jupiter.",
-        "details": "Marked by astrological study as an initiation of severe systemic and administrative disruption."
+        "details": "Marked by astrological study as an initiation of severe systemic disruption."
     },
     "Great Reset Launch": {
         "date_str": "2020-06-03", "year": 2020, "month": 6, "day": 3,
@@ -182,18 +182,18 @@ MILESTONES = {
 }
 
 KNOWLEDGE_BASE = {
-    "1": {"archetype": "The Primal Initiator", "element": "Fire", "keyword": "Independence, Will, Origin", "reading": "You are a self-generating force designed to break new ground and pioneer original structures."},
+    "1": {"archetype": "The Primal Initiator", "element": "Fire", "keyword": "Independence, Will, Leadership", "reading": "You are a self-generating force designed to break new ground and lead with pioneering energy."},
     "2": {"archetype": "The Reflective Vessel", "element": "Water", "keyword": "Duality, Receptivity, Harmony", "reading": "Your frequency navigates the subtle tides of diplomacy, intuitive observation, and quiet mediation."},
-    "3": {"archetype": "The Radiant Expression", "element": "Air", "keyword": "Creativity, Synthesis, Voice", "reading": "A channel of synthesis and communication, turning raw ideas into tangible creative expression."},
+    "3": {"archetype": "The Radiant Expression", "element": "Air", "keyword": "Creativity, Synthesis, Voice", "reading": "A channel of synthesis and communication, turning raw concepts into vivid artistic expression."},
     "4": {"archetype": "The Sacred Builder", "element": "Earth", "keyword": "Structure, Foundation, Order", "reading": "The anchor of tangible reality. You manifest stability, discipline, and endurance out of chaos."},
     "5": {"archetype": "The Dynamic Catalyst", "element": "Ether / Air", "keyword": "Change, Freedom, Motion", "reading": "An agent of kinetic evolution, dismantling static constructs to invite expansive freedom."},
     "6": {"archetype": "The Cosmic Caretaker", "element": "Earth / Water", "keyword": "Balance, Protection, Duty", "reading": "Harmonizer of communal and personal spheres, driven to restore equilibrium and sanctity."},
-    "7": {"archetype": "The Esoteric Seeker", "element": "Water / Ether", "keyword": "Mystery, Analysis, Inner Solitude", "reading": "Investigator of veiled mechanics. You look past surface noise into root principles."},
-    "8": {"archetype": "The Master of Manifestation", "element": "Earth", "keyword": "Power, Equilibrium, Karmic Return", "reading": "Wields the mathematics of cause and effect, materializing vision into durable authority."},
-    "9": {"archetype": "The Universal Completer", "element": "Fire / Ether", "keyword": "Culmination, Compassion, Wisdom", "reading": "The cycle's end and transition point, embodying universal perspectives and detachment."},
-    "11": {"archetype": "The Illuminator (Master)", "element": "Light", "keyword": "Intuition, Visionary Revelation, Lightning", "reading": "Master conduit of high-frequency intuition, acting as a bridge between unseen and material realms."},
-    "22": {"archetype": "The Master Architect (Master)", "element": "Form", "keyword": "Large-Scale Creation, Systemic Manifestation", "reading": "Possesses the ability to anchor grandiose, timeless ideas into structural world reality."},
-    "33": {"archetype": "The Avatar of Compassion (Master)", "element": "Love", "keyword": "Universal Upliftment, Dedicated Service", "reading": "Devoted to elevating human consciousness through selfless service and heart-centered mastery."}
+    "7": {"archetype": "The Esoteric Seeker", "element": "Water / Ether", "keyword": "Mystery, Analysis, Wisdom", "reading": "Investigator of deeper mechanics. You look past surface noise into root principles."},
+    "8": {"archetype": "The Master of Manifestation", "element": "Earth", "keyword": "Power, Balance, Realization", "reading": "Wields the mathematics of cause and effect, materializing vision into durable authority."},
+    "9": {"archetype": "The Universal Completer", "element": "Fire / Ether", "keyword": "Culmination, Compassion, Synthesis", "reading": "The cycle's end and transition point, embodying universal perspectives and detachment."},
+    "11": {"archetype": "The Illuminator (Master)", "element": "Light", "keyword": "Intuition, Visionary Revelation", "reading": "Conduit of high-frequency intuition, acting as a bridge between unseen insights and the world."},
+    "22": {"archetype": "The Master Architect (Master)", "element": "Form", "keyword": "Large-Scale Creation, Reality", "reading": "Possesses the ability to anchor ambitious, timeless ideas into structural reality."},
+    "33": {"archetype": "The Avatar of Compassion (Master)", "element": "Love", "keyword": "Universal Upliftment, Service", "reading": "Devoted to elevating consciousness through dedicated service and heart-centered guidance."}
 }
 
 PRELOADED_TEXTS = {
@@ -244,10 +244,10 @@ with st.sidebar:
     st.caption("Cosmic Frequency & Resonance Suite")
     st.write("---")
 
-    # Audio Section
+    # 1. Harmonic Audio Atmosphere
     st.subheader("🎵 Harmonic Atmosphere")
     audio_source = st.selectbox(
-        "Audio Track / Ambient Frequency",
+        "Ambient Frequency Track",
         ["432 Hz Pure Sine (Deep Resonance)", "528 Hz DNA / Transformation Tone", "Custom Audio URL / File Upload"]
     )
     
@@ -256,22 +256,22 @@ with st.sidebar:
     elif audio_source == "528 Hz DNA / Transformation Tone":
         st.audio("https://ia801503.us.archive.org/15/items/528HzTone/528Hz_Tone.mp3")
     else:
-        uploaded_audio = st.file_uploader("Upload Audio File (.mp3, .wav)", type=["mp3", "wav"])
+        uploaded_audio = st.file_uploader("Upload Audio (.mp3, .wav)", type=["mp3", "wav"])
         if uploaded_audio:
             st.audio(uploaded_audio)
         else:
-            custom_url = st.text_input("Or enter streaming audio URL:")
+            custom_url = st.text_input("Audio URL:")
             if custom_url:
                 st.audio(custom_url)
 
     st.write("---")
 
-    # Observer Inputs
+    # 2. General Observer Inputs (Blank / User Controlled)
     st.subheader("👤 Observer Natal Anchor")
-    user_name = st.text_input("Observer Name / Handle", value="", placeholder="Enter name or title...")
-    user_birth_date = st.date_input("Date of Birth", value=datetime.date(2000, 1, 1))
-    user_birth_time = st.time_input("Time of Birth", value=datetime.time(12, 0))
-    user_birth_place = st.text_input("Birth Location (City, Country)", value="", placeholder="e.g. London, UK or Chicago, IL")
+    user_name = st.text_input("Your Name / Handle", value="", placeholder="Enter your name...")
+    user_birth_date = st.date_input("Your Birth Date", value=datetime.date(2000, 1, 1))
+    user_birth_time = st.time_input("Your Birth Time", value=datetime.time(12, 0))
+    user_birth_place = st.text_input("Birthplace (City, State/Country)", value="", placeholder="e.g. Naples, FL")
 
     decimal_hour = user_birth_time.hour + (user_birth_time.minute / 60.0)
     user_lp = calculate_vibrational_root(user_birth_date.strftime("%Y%m%d"))
@@ -281,103 +281,95 @@ with st.sidebar:
 
     if user_name:
         st.markdown(f"**Observer:** `{user_name}`")
-    st.markdown(f"**Life Path Root:** `{user_lp}`")
+    st.markdown(f"**Life Path Number:** `{user_lp}`")
     if user_name_val > 0:
-        st.markdown(f"**Expression Vibration:** `{user_name_val}`")
+        st.markdown(f"**Name Number:** `{user_name_val}`")
     st.markdown(f"**Sun Sign:** `{user_sun_sign}`")
-    st.markdown(f"**Natal Moon:** `{user_moon['phase']}` ({user_moon['illumination']}%)")
+    st.markdown(f"**Moon Phase:** `{user_moon['phase']}` ({user_moon['illumination']}%)")
     st.write("---")
 
 # ---------------------------------------------------------
-# TOP SEARCH BAR & INSTANT NUMEROLOGY DOSSIER
+# INTUITIVE UNIVERSAL SEARCH BAR & DOSSIER ENGINE
 # ---------------------------------------------------------
 
-st.title("💥 Numberin: Cosmic & Numerical Dashboard")
+st.title("💥 Numberin")
+st.write("Instant numbers, archetypes, and readings for any name, word, or date.")
 
-with st.container():
-    st.subheader("🔍 Universal Numerology & Frequency Search")
-    st.caption("Calculate instant vibrations, generate an esoteric reading, and download or print the dossier card.")
+search_query = st.text_input(
+    "🔍 Enter any name, word, or date:",
+    value="",
+    placeholder="Type a name like 'Sarah' or a date like '1990-05-15'...",
+    help="Type any word or date to immediately calculate its numbers and meaning."
+)
 
-    search_col1, search_col2, search_col3 = st.columns([2, 1, 1])
-    with search_col1:
-        query_text = st.text_input("Name, Phrase, or Inquiry Word", value=user_name if user_name else "Cosmic Resonance")
-    with search_col2:
-        query_date = st.date_input("Reference / Target Date", value=user_birth_date)
-    with search_col3:
-        target_cipher = st.selectbox("Active Cipher", ["Pythagorean", "Chaldean"])
+# Run calculation if something was entered
+if search_query.strip():
+    query = search_query.strip()
+    digits = [int(c) for c in query if c.isdigit()]
+    letters = [c for c in query if c.isalpha()]
 
-    s_name_pyth = calculate_name_vibration(query_text, "Pythagorean")
-    s_name_chald = calculate_name_vibration(query_text, "Chaldean")
-    s_date_root = calculate_vibrational_root(query_date.strftime("%Y%m%d"))
-    s_moon = get_lunar_phase_details(query_date.year, query_date.month, query_date.day)
-    s_sun = get_approx_sun_sign(query_date.month, query_date.day)
+    # Case A: Date Search
+    if len(digits) >= 4 and len(letters) == 0:
+        root_val = reduce_number(sum(digits))
+        entry = KNOWLEDGE_BASE.get(str(root_val), KNOWLEDGE_BASE["1"])
+        
+        # Approximate astrology if 8 digits (YYYYMMDD or YYYY-MM-DD)
+        astro_notes = ""
+        if len(digits) == 8:
+            try:
+                y = int("".join(str(d) for d in digits[0:4]))
+                m = int("".join(str(d) for d in digits[4:6]))
+                d = int("".join(str(d) for d in digits[6:8]))
+                sun = get_approx_sun_sign(m, d)
+                lunar = get_lunar_phase_details(y, m, d)
+                astro_notes = f"\n* **Sun Sign:** {sun}\n* **Moon Phase:** {lunar['phase']} ({lunar['illumination']}% illuminated)"
+            except Exception:
+                pass
 
-    active_name_val = s_name_pyth if target_cipher == "Pythagorean" else s_name_chald
-    combined_resonance = reduce_number(active_name_val + s_date_root)
-    knowledge_entry = KNOWLEDGE_BASE.get(str(combined_resonance), KNOWLEDGE_BASE["1"])
+        st.success(f"### 🗓️ Date Analysis: Root Number {root_val}")
+        col_m1, col_m2 = st.columns(2)
+        col_m1.metric("Life Path Root", f"{root_val}")
+        col_m2.metric("Archetype", entry['archetype'])
 
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Pythagorean Root", f"Root {s_name_pyth}")
-    m2.metric("Chaldean Root", f"Root {s_name_chald}")
-    m3.metric("Date Life Path", f"Root {s_date_root}")
-    m4.metric("Solar Sign", s_sun)
-    m5.metric("Lunar Phase", s_moon["phase"])
+        st.markdown(f"**Core Archetype:** **{entry['archetype']}** ({entry['element']})")
+        st.markdown(f"**Key Traits:** {entry['keyword']}{astro_notes}")
+        st.info(f"**Reading Insight:**\n\n{entry['reading']}")
 
-    reading_content = f"""
-=====================================================
-NUMBERIN 💥 READING DOSSIER CARD
-=====================================================
-Subject / Phrase: {query_text}
-Reference Date:   {query_date.strftime('%Y-%m-%d')}
-Active Cipher:    {target_cipher} (Vibration: {active_name_val})
-Date Life Path:   {s_date_root}
-Unified Matrix:   Root {combined_resonance} ({knowledge_entry['archetype']})
-Solar Foundation: {s_sun}
-Lunar Alignment:  {s_moon['phase']} (Illumination: {s_moon['illumination']}%)
-Elemental Current:{knowledge_entry['element']}
-Key Vibrations:   {knowledge_entry['keyword']}
-
-CORE ESOTERIC READING:
-{knowledge_entry['reading']}
-=====================================================
-    """
-
-    st.markdown("---")
-    res_col1, res_col2 = st.columns([2, 1])
-    with res_col1:
-        st.markdown(f"### 🎴 Archetype Reading: Root {combined_resonance} — {knowledge_entry['archetype']}")
-        st.write(f"**Keywords:** *{knowledge_entry['keyword']}*  |  **Element:** `{knowledge_entry['element']}`")
-        st.info(f"**Reading Insight:** {knowledge_entry['reading']}")
-    
-    with res_col2:
-        st.markdown("### 💾 Export & Print")
+        # Download dossier
+        card_text = f"NUMBERIN READING CARD\nDate: {query}\nRoot: {root_val}\nArchetype: {entry['archetype']}\nTraits: {entry['keyword']}\nReading: {entry['reading']}"
         st.download_button(
-            label="📥 Download Reading Card (.txt)",
-            data=reading_content,
-            file_name=f"numberin_reading_{query_text.replace(' ', '_').lower()}.txt",
-            mime="text/plain"
+            "📥 Download Reading Card (.txt)",
+            data=card_text,
+            file_name=f"numberin_date_{query.replace('-', '_')}.txt"
         )
-        if st.button("🖨️ Open Print View"):
-            st.markdown(
-                f"""
-                <div style="border: 2px solid #888; border-radius: 8px; padding: 20px; background-color: #fcfcfc; color: #111; font-family: monospace;">
-                    <h2 style="margin: 0; color: #111;">💥 NUMBERIN DOSSIER CARD</h2>
-                    <hr/>
-                    <p><b>Target:</b> {query_text} | <b>Date:</b> {query_date}</p>
-                    <p><b>Active Root:</b> {active_name_val} | <b>Life Path:</b> {s_date_root} | <b>Harmonic Nexus:</b> Root {combined_resonance}</p>
-                    <p><b>Astrology:</b> Sun in {s_sun} | Moon in {s_moon['phase']} ({s_moon['illumination']}%)</p>
-                    <p><b>Archetype:</b> {knowledge_entry['archetype']} ({knowledge_entry['element']})</p>
-                    <p><b>Reading:</b> {knowledge_entry['reading']}</p>
-                </div>
-                <script>window.print();</script>
-                """,
-                unsafe_allow_html=True
-            )
+
+    # Case B: Name or Word Search
+    else:
+        pyth_val = calculate_name_vibration(query, "Pythagorean")
+        chald_val = calculate_name_vibration(query, "Chaldean")
+        entry = KNOWLEDGE_BASE.get(str(pyth_val), KNOWLEDGE_BASE["1"])
+
+        st.success(f"### ✨ Reading for: {query.title()}")
+        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1.metric("Primary Number", f"{pyth_val}")
+        col_m2.metric("Chaldean Vibration", f"{chald_val}")
+        col_m3.metric("Archetype", entry['archetype'])
+
+        st.markdown(f"**Your Archetype:** **{entry['archetype']}** (Element: `{entry['element']}`)")
+        st.markdown(f"**Traits & Energy:** {entry['keyword']}")
+        st.info(f"**Personal Meaning:**\n\n{entry['reading']}")
+
+        card_text = f"NUMBERIN READING CARD\nName/Word: {query}\nPrimary Number: {pyth_val}\nChaldean Number: {chald_val}\nArchetype: {entry['archetype']}\nTraits: {entry['keyword']}\nReading: {entry['reading']}"
+        st.download_button(
+            "📥 Download Reading Card (.txt)",
+            data=card_text,
+            file_name=f"numberin_reading_{query.lower().replace(' ', '_')}.txt"
+        )
 
 st.write("---")
 
 # ---------------------------------------------------------
-# WORKBENCH TABS
+# WORKBENCH MODULE TABS
 # ---------------------------------------------------------
 
 tab_milestones, tab_oracle, tab_compat, tab_patterns, tab_knowledge = st.tabs([
@@ -460,7 +452,7 @@ with tab_compat:
             p_date = st.date_input("Partner Natal Date", value=datetime.date(1995, 1, 1))
         with col_p2:
             p_time = st.time_input("Partner Birth Time", value=datetime.time(12, 0))
-            p_place = st.text_input("Partner Birth Place", value="", placeholder="City, Country...")
+            p_place = st.text_input("Partner Birthplace", value="", placeholder="City, Country...")
 
         p_dec_hour = p_time.hour + (p_time.minute / 60.0)
         p_root = calculate_vibrational_root(p_date.strftime("%Y%m%d"))
@@ -492,7 +484,7 @@ with tab_compat:
 # TAB 4: PATTERN & FREQUENCY ENGINE
 with tab_patterns:
     st.header("Pattern & Frequency Analysis")
-    st.caption("Translate arbitrary sequences, cipher phrases, or custom names into distribution patterns.")
+    st.caption("Translate arbitrary sequences, words, or custom names into distribution patterns.")
 
     user_text = st.text_input("Input Word, Cipher Phrase, or Sequence:", value="As Above So Below")
     
@@ -532,12 +524,12 @@ with tab_knowledge:
         st.text_area("Original Text Excerpt", book_content.strip(), height=200)
 
         st.markdown("#### 🔍 Oracle Pattern & Hidden Meaning Extraction")
-        search_query = st.text_input("Filter for Word, Symbol, or Verse Number in Text:", value="light")
+        search_kw = st.text_input("Filter for Word, Symbol, or Verse Number in Text:", value="light")
         
-        matching_lines = [line.strip() for line in book_content.split('\n') if search_query.lower() in line.lower() and line.strip()]
+        matching_lines = [line.strip() for line in book_content.split('\n') if search_kw.lower() in line.lower() and line.strip()]
 
         if matching_lines:
-            st.success(f"Found {len(matching_lines)} resonant passages containing '{search_query}':")
+            st.success(f"Found {len(matching_lines)} resonant passages containing '{search_kw}':")
             for idx, passage in enumerate(matching_lines):
                 line_pyth = calculate_name_vibration(passage, "Pythagorean")
                 line_chald = calculate_name_vibration(passage, "Chaldean")
@@ -546,7 +538,7 @@ with tab_knowledge:
                     passage_compat = evaluate_compatibility(user_lp, line_pyth)
                     st.info(f"**Observer Resonance with Verse:** {passage_compat['description']} (Index: {passage_compat['score']}%)")
         else:
-            st.warning(f"No direct lines found containing '{search_query}'. Try terms like 'heaven', 'moon', 'one', or 'sun'.")
+            st.warning(f"No direct lines found containing '{search_kw}'. Try terms like 'heaven', 'moon', 'one', or 'sun'.")
 
     elif know_section == "🔢 Vibrational Root Definitions":
         st.subheader("Canonical Archetypes & Geometric Roots")
