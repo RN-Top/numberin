@@ -148,10 +148,11 @@ KNOWLEDGE_BASE = {
 }
 
 # ==========================================
-# 2. CORE HELPER FUNCTIONS
+# 2. CORE HELPER FUNCTIONS & DEEP-TIME CALCS
 # ==========================================
 
 def reduce_number(n: int, preserve_master: bool = True) -> int:
+    n = abs(n)
     while n > 9:
         if preserve_master and n in (11, 22, 33):
             return n
@@ -159,20 +160,20 @@ def reduce_number(n: int, preserve_master: bool = True) -> int:
     return n
 
 def reduce_trace(n: int) -> list:
-    trace = [n]
-    curr = n
+    trace = [abs(n)]
+    curr = abs(n)
     while curr > 9 and curr not in (11, 22, 33):
         curr = sum(int(d) for d in str(curr))
         trace.append(curr)
     return trace
 
 def cycle_19(year: int) -> int:
-    return ((year + 1) % 19) or 19
+    return ((abs(year) + 1) % 19) or 19
 
-def life_path(birthdate: datetime.date) -> int:
-    m = reduce_number(birthdate.month)
-    d = reduce_number(birthdate.day)
-    y = reduce_number(birthdate.year)
+def life_path_components(year: int, month: int, day: int) -> int:
+    m = reduce_number(month)
+    d = reduce_number(day)
+    y = reduce_number(abs(year))
     return reduce_number(m + d + y)
 
 def name_profile(name: str):
@@ -195,10 +196,10 @@ def name_profile(name: str):
         "chaldean_sum": sum(c_vals)
     }
 
-def personal_cycles(birthdate: datetime.date, target_year: int):
-    m = reduce_number(birthdate.month)
-    d = reduce_number(birthdate.day)
-    py = reduce_number(target_year)
+def personal_cycles_components(month: int, day: int, target_year: int):
+    m = reduce_number(month)
+    d = reduce_number(day)
+    py = reduce_number(abs(target_year))
     personal_year = reduce_number(m + d + py)
     return {"personal_year": personal_year, "milestone": MILESTONES.get(personal_year, "")}
 
@@ -226,14 +227,19 @@ def angel_read(num_str: str) -> str:
             return f"Synchronicity Detected ({code}): {desc}"
     return "No primary triple repeating synchronicity found in the direct stream."
 
-def get_julian_date(d: datetime.date) -> float:
-    a = (14 - d.month) // 12
-    y = d.year + 4800 - a
-    m = d.month + 12 * a - 3
-    return d.day + (153 * m + 2) // 5 + 365 * y + y // 4 - y // 100 + y // 400 - 32045
+def get_astronomical_julian_date(year: int, month: int, day: int, is_bce: bool = False) -> float:
+    # Astronomical year numbering: 1 BCE = 0, 2 BCE = -1, etc.
+    astro_year = -(year - 1) if is_bce else year
+    if month <= 2:
+        astro_year -= 1
+        month += 12
+    a = math.floor(astro_year / 100)
+    b = 2 - a + math.floor(a / 4) if astro_year >= 1582 else 0
+    jd = math.floor(365.25 * (astro_year + 4716)) + math.floor(30.6001 * (month + 1)) + day + b - 1524.5
+    return jd
 
-def moon_phase(d: datetime.date) -> str:
-    jd = get_julian_date(d)
+def moon_phase_components(year: int, month: int, day: int, is_bce: bool = False) -> str:
+    jd = get_astronomical_julian_date(year, month, day, is_bce)
     cycles = (jd - 2451549.5) / 29.53058770576
     phase = cycles - math.floor(cycles)
     val = round(phase * 8) % 8
@@ -243,12 +249,8 @@ def moon_phase(d: datetime.date) -> str:
     ]
     return phases[val]
 
-def get_lunar_phase_details(d: datetime.date) -> dict:
-    ph = moon_phase(d)
-    return {"phase": ph, "numerical_root": PHASE_NUMEROLOGY.get(ph, 1)}
-
-def get_approx_sun_sign(d: datetime.date) -> str:
-    md = (d.month, d.day)
+def get_approx_sun_sign_components(month: int, day: int) -> str:
+    md = (month, day)
     if (3, 21) <= md <= (4, 19): return "Aries"
     elif (4, 20) <= md <= (5, 20): return "Taurus"
     elif (5, 21) <= md <= (6, 20): return "Gemini"
@@ -288,11 +290,22 @@ with st.sidebar:
 
     st.markdown("---")
     anchor_name = st.text_input("Anchor Name", value="Seeker")
-    anchor_date = st.date_input("Anchor Date", value=datetime.date.today())
     
-    lp_anchor = life_path(anchor_date)
-    sun_anchor = get_approx_sun_sign(anchor_date)
-    moon_anchor = moon_phase(anchor_date)
+    st.markdown("**Anchor Date**")
+    s_col1, s_col2, s_col3 = st.columns([1.2, 1, 1])
+    with s_col1:
+        s_year = st.number_input("Year", min_value=1, max_value=9999, value=datetime.date.today().year, key="s_yr")
+    with s_col2:
+        s_month = st.number_input("Month", min_value=1, max_value=12, value=datetime.date.today().month, key="s_mo")
+    with s_col3:
+        s_day = st.number_input("Day", min_value=1, max_value=31, value=datetime.date.today().day, key="s_dy")
+    
+    s_era = st.selectbox("Era", ["CE (AD)", "BCE (BC)"], index=0, key="s_era")
+    is_anchor_bce = (s_era == "BCE (BC)")
+    
+    lp_anchor = life_path_components(s_year, s_month, s_day)
+    sun_anchor = get_approx_sun_sign_components(s_month, s_day)
+    moon_anchor = moon_phase_components(s_year, s_month, s_day, is_anchor_bce)
     name_p = name_profile(anchor_name)
     
     st.markdown(f"**Life Path:** `{lp_anchor}`")
@@ -307,20 +320,23 @@ with st.sidebar:
 # ==========================================
 
 st.title("NUMBERIN")
-search_query = st.text_input("Enter any name, word, phrase, or date (YYYY-MM-DD) for instant classification:", "")
+search_query = st.text_input("Enter any name, word, phrase, or date (e.g. '33 CE', '4000 BCE', '1983-11-19'):", "")
 
 if search_query:
-    is_date = False
-    parsed_date = None
-    try:
-        parsed_date = datetime.datetime.strptime(search_query.strip(), "%Y-%m-%d").date()
-        is_date = True
-    except ValueError:
-        pass
+    parsed_date_match = re.match(r'^(\d+)[-/.](\d+)[-/.](\d+)(\s+(BCE|BC|CE|AD))?$', search_query.strip(), re.IGNORECASE)
+    year_only_match = re.match(r'^(\d+)\s*(BCE|BC|CE|AD)$', search_query.strip(), re.IGNORECASE)
     
-    if is_date and parsed_date:
-        lp = life_path(parsed_date)
-        st.info(f"**Date Input Detected**: Life Path `{lp}` | Sun Sign: `{get_approx_sun_sign(parsed_date)}` | Phase: `{moon_phase(parsed_date)}`")
+    if parsed_date_match:
+        y, m, d = int(parsed_date_match.group(1)), int(parsed_date_match.group(2)), int(parsed_date_match.group(3))
+        era = parsed_date_match.group(5)
+        is_bce_q = True if era and era.upper() in ["BCE", "BC"] else False
+        lp_q = life_path_components(y, m, d)
+        st.info(f"**Date Input Detected**: Life Path `{lp_q}` | Sun Sign: `{get_approx_sun_sign_components(m, d)}` | Phase: `{moon_phase_components(y, m, d, is_bce_q)}`")
+    elif year_only_match:
+        y = int(year_only_match.group(1))
+        era = year_only_match.group(2).upper()
+        root_y = reduce_number(y)
+        st.info(f"**Historical Epoch Detected**: Year `{y} {era}` | Root Cycle: `{root_y}` ({meaning(root_y)})")
     else:
         prof = name_profile(search_query)
         st.info(f"**Text Input Detected**: Expression `{prof['expression']}` | Soul Urge `{prof['soul_urge']}` | Personality `{prof['personality']}` | Pythagorean Sum `{prof['pyth_sum']}`")
@@ -339,38 +355,48 @@ tabs = st.tabs([
 ])
 
 # ----------------------------------------------------
-# TAB 1: ALCHEMY PHARMACY (Replaced)
+# TAB 1: ALCHEMY PHARMACY
 # ----------------------------------------------------
 with tabs[0]:
     st.markdown("### The Alchemy Pharmacy")
     st.markdown("> *The user is the alchemist; the app is the pharmacy. Bring your prima materia into the brass rings to extract the working tincture.*")
 
-    col_a, col_b = st.columns([1, 1])
+    col_a, col_b = st.columns([1.1, 1])
     with col_a:
         alch_name = st.text_input("Alchemist Name (Optional)", value=anchor_name)
-        alch_date = st.date_input("Alchemist Birthdate (Optional)", value=anchor_date)
+        
+        st.markdown("**Epoch / Birthdate (Any Historical or Future Era)**")
+        a_c1, a_c2, a_c3, a_c4 = st.columns([1.2, 1, 1, 1.2])
+        with a_c1:
+            a_year = st.number_input("Year", min_value=1, max_value=99999, value=s_year, key="a_yr")
+        with a_c2:
+            a_month = st.number_input("Month", min_value=1, max_value=12, value=s_month, key="a_mo")
+        with a_c3:
+            a_day = st.number_input("Day", min_value=1, max_value=31, value=s_day, key="a_dy")
+        with a_c4:
+            a_era = st.selectbox("Era", ["CE (AD)", "BCE (BC)"], index=0 if not is_anchor_bce else 1, key="a_era")
+
         seed_str = st.text_input("Operational Seed", value="7-7-7")
+        
     with col_b:
         prima_materia = st.text_area("Prima Materia (What are you transmuting? Issue, question, or feeling)", 
-                                     placeholder="Describe the raw circumstance, tension, or desire you bring to the bench today...")
+                                     placeholder="Describe the raw circumstance, tension, or desire you bring to the bench today...",
+                                     height=180)
 
     if st.button("Compound the Tincture", type="primary"):
-        # Mathematical derivation: collapse into Z/7Z
         name_val = name_profile(alch_name)["expression"] if alch_name else 0
-        lp_val = life_path(alch_date) if alch_date else 0
-        d_year = alch_date.timetuple().tm_yday if alch_date else datetime.date.today().timetuple().tm_yday
-        d_month = alch_date.day if alch_date else datetime.date.today().day
+        lp_val = life_path_components(a_year, a_month, a_day)
+        d_year = (a_month - 1) * 30 + a_day
         seed_digits = [int(c) for c in seed_str if c.isdigit()]
         seed_val = sum(seed_digits) if seed_digits else 21
 
-        total_alch = name_val + lp_val + d_year + d_month + seed_val
+        total_alch = name_val + lp_val + d_year + a_day + seed_val
         working_idx = total_alch % 7
         distraction_idx = (working_idx + 3) % 7
 
         working_meta = HEPTAGRAM_777[working_idx]
         distract_meta = HEPTAGRAM_777[distraction_idx]
 
-        # Brass Ring Visualizer
         st.markdown(f"""
         <div class="brass-card">
             <h4 style="text-align: center; color: #d4af37; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
@@ -382,7 +408,6 @@ with tabs[0]:
         </div>
         """, unsafe_allow_html=True)
 
-        # Synthesize Tincture Prose (Warm, personalized, human-grounded)
         p_clean = prima_materia.strip() if prima_materia else "the quiet stillness you carried in"
         
         tincture_prose = (
@@ -402,13 +427,13 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
         with st.expander("Examine the Bench Apparatus (Technical Breakdown)"):
+            st.markdown(f"- **Historical Horizon:** `{a_year} {a_era}, Month {a_month}, Day {a_day}`")
             st.markdown(f"- **Working Modulo:** `{total_alch} ≡ {working_idx} (mod 7)`")
             st.markdown(f"- **Core Metal Skeleton:** {working_meta['metal']} ({working_meta['planet']})")
             st.markdown(f"- **Distraction Axis (+3):** {distract_meta['metal']} ({distract_meta['planet']})")
-            st.markdown(f"- **Sum Components:** Expression ({name_val}) + Life Path ({lp_val}) + Day-of-Year ({d_year}) + Day-of-Month ({d_month}) + Seed Sum ({seed_val}) = {total_alch}")
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE (Replaced)
+# TAB 2: CORPUS KNOWLEDGE BASE
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("### The Full-Corpus Library Engine")
@@ -458,12 +483,9 @@ with tabs[1]:
         if query:
             q_clean = query.strip().lower()
             
-            # 1. Number pattern matching
             if "seven" in q_clean or " 7 " in q_clean or q_clean.endswith(" 7"):
                 matches = len(re.findall(r'\b(7|seven|seventh)\b', corpus_text, re.IGNORECASE))
                 st.markdown(f"**Direct Result:** The number seven appears **{matches:,} times** across the full manuscript.")
-            
-            # 2. Specific word counts
             elif "times" in q_clean or "find" in q_clean or "how many" in q_clean:
                 target_word = re.sub(r'^(find|how many times does|how many times|count|find every time it says)\s+', '', q_clean).strip().strip("'\"")
                 target_word = target_word.split()[0] if target_word else ""
@@ -472,8 +494,6 @@ with tabs[1]:
                     st.markdown(f"**Direct Result:** The word **'{target_word}'** appears **{occ:,} times** in this text.")
                 else:
                     st.markdown("Please name the specific word you would like to measure.")
-            
-            # 3. Most common words
             elif "most common" in q_clean or "shows up most" in q_clean:
                 stop_words = {"the", "and", "of", "to", "in", "that", "he", "shall", "unto", "for", "with", "a", "is", "his", "they", "be", "not", "it"}
                 filtered = [w for w in words_list if w not in stop_words and len(w) > 2]
@@ -481,13 +501,9 @@ with tabs[1]:
                 st.markdown("**Ten Most Frequent Significant Words:**")
                 for w, c in counts:
                     st.markdown(f"- **{w}**: {c:,} times")
-
-            # 4. Least common words
             elif "shows up least" in q_clean or "least common" in q_clean:
                 rare = [w for w, c in Counter(words_list).items() if c == 1][:10]
                 st.markdown(f"**Single-Occurrence Words (Hapax Legomena Sample):** {', '.join(rare)}")
-
-            # 5. Letter frequency
             elif "letter frequency" in q_clean or "letters" in q_clean:
                 letters_only = [c for c in corpus_text.upper() if 'A' <= c <= 'Z']
                 l_counts = Counter(letters_only).most_common(5)
@@ -495,37 +511,36 @@ with tabs[1]:
                 for l, count in l_counts:
                     pct = (count / len(letters_only)) * 100
                     st.markdown(f"- **{l}**: {count:,} times ({pct:.2f}%)")
-
-            # 6. Whole-corpus numerology root
             elif "root" in q_clean or "numerology" in q_clean:
                 root_sum = sum(ord(c) - 64 for c in corpus_text.upper() if 'A' <= c <= 'Z')
                 collapsed = reduce_number(root_sum)
                 st.markdown(f"**Corpus Grand Root:** `{collapsed}` — {meaning(collapsed)}")
-            
-            # Default / Fallback substring search
             else:
                 raw_find = len(re.findall(re.escape(query.strip()), corpus_text, re.IGNORECASE))
                 st.markdown(f"Found **{raw_find:,} occurrences** matching '{query.strip()}'.")
 
 # ----------------------------------------------------
-# TAB 3: MILESTONE TIMELINE LENS (Untouched)
+# TAB 3: MILESTONE TIMELINE LENS
 # ----------------------------------------------------
 with tabs[2]:
     st.markdown("### Milestone Timeline Lens")
-    st.markdown("Track the 9-year cyclic unfoldment from any birthdate.")
+    st.markdown("Track the 9-year cyclic unfoldment across any historical or future timeline.")
     
-    col_m1, col_m2 = st.columns(2)
-    with col_m1:
-        m_birth = st.date_input("Select Inception Date", value=anchor_date, key="milestone_bdate")
-    with col_m2:
-        m_years = st.slider("Timeline Horizon (Years)", min_value=1, max_value=27, value=9)
+    st.markdown("**Inception Date**")
+    m_c1, m_c2, m_c3 = st.columns(3)
+    with m_c1:
+        m_yr = st.number_input("Year", min_value=1, max_value=9999, value=s_year, key="m_y")
+    with m_c2:
+        m_mo = st.number_input("Month", min_value=1, max_value=12, value=s_month, key="m_m")
+    with m_c3:
+        m_dy = st.number_input("Day", min_value=1, max_value=31, value=s_day, key="m_d")
+    
+    m_years = st.slider("Timeline Horizon (Cycles)", min_value=1, max_value=81, value=9)
 
-    curr_year = datetime.date.today().year
     st.markdown("#### Projected Sequence")
-    
     milestone_records = []
-    for y in range(curr_year, curr_year + m_years):
-        res = personal_cycles(m_birth, y)
+    for y in range(m_yr, m_yr + m_years):
+        res = personal_cycles_components(m_mo, m_dy, y)
         milestone_records.append({
             "Calendar Year": y,
             "Personal Year": res["personal_year"],
@@ -534,7 +549,7 @@ with tabs[2]:
     st.table(milestone_records)
 
 # ----------------------------------------------------
-# TAB 4: DECAN ORACLE (Untouched)
+# TAB 4: DECAN ORACLE
 # ----------------------------------------------------
 with tabs[3]:
     st.markdown("### Decan Oracle")
@@ -552,20 +567,26 @@ with tabs[3]:
         st.markdown(f"**Third Decan**\n\n{decans[2]}")
 
 # ----------------------------------------------------
-# TAB 5: COMPATIBILITY MATRIX (Untouched)
+# TAB 5: COMPATIBILITY MATRIX
 # ----------------------------------------------------
 with tabs[4]:
     st.markdown("### Compatibility Matrix")
-    st.markdown("Compare two independent anchor dates or numbers to examine the resonance.")
+    st.markdown("Compare two independent anchor dates across any point in human history.")
 
     col_c1, col_c2 = st.columns(2)
     with col_c1:
-        p1_date = st.date_input("First Anchor Date", value=anchor_date, key="comp_d1")
-        lp1 = life_path(p1_date)
+        st.markdown("**First Anchor Date**")
+        cp1_y = st.number_input("Year", min_value=1, max_value=99999, value=s_year, key="cp1_y")
+        cp1_m = st.number_input("Month", min_value=1, max_value=12, value=s_month, key="cp1_m")
+        cp1_d = st.number_input("Day", min_value=1, max_value=31, value=s_day, key="cp1_d")
+        lp1 = life_path_components(cp1_y, cp1_m, cp1_d)
         st.markdown(f"Primary Life Path: `{lp1}`")
     with col_c2:
-        p2_date = st.date_input("Second Anchor Date", value=datetime.date(2000, 1, 1), key="comp_d2")
-        lp2 = life_path(p2_date)
+        st.markdown("**Second Anchor Date (e.g. 33 CE or 2050 CE)**")
+        cp2_y = st.number_input("Year", min_value=1, max_value=99999, value=33, key="cp2_y")
+        cp2_m = st.number_input("Month", min_value=1, max_value=12, value=4, key="cp2_m")
+        cp2_d = st.number_input("Day", min_value=1, max_value=31, value=3, key="cp2_d")
+        lp2 = life_path_components(cp2_y, cp2_m, cp2_d)
         st.markdown(f"Secondary Life Path: `{lp2}`")
 
     comp_result = evaluate_compatibility(lp1, lp2)
@@ -577,7 +598,7 @@ with tabs[4]:
     """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 6: PATTERN & FREQUENCY ENGINE (Untouched)
+# TAB 6: PATTERN & FREQUENCY ENGINE
 # ----------------------------------------------------
 with tabs[5]:
     st.markdown("### Pattern & Frequency Engine")
