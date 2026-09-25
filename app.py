@@ -2,8 +2,14 @@ import streamlit as st
 import datetime
 import math
 
+st.set_page_config(
+    page_title="Celestial & Decan Alignment Workbench",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # ---------------------------------------------------------
-# 1. CORE ASTRONOMICAL & NUMEROLOGICAL ENGINES
+# ASTRONOMICAL, JULIAN & NUMEROLOGY ENGINES
 # ---------------------------------------------------------
 
 def get_julian_date(year, month, day):
@@ -19,7 +25,6 @@ def get_julian_date(year, month, day):
 def get_lunar_phase_details(year, month, day):
     """Computes moon age, illumination, and traditional phase name."""
     jd = get_julian_date(year, month, day)
-    # Reference new moon: Jan 6, 2000 (JD 2451549.5)
     synodic_month = 29.53058867
     days_since_new = (jd - 2451549.5) % synodic_month
     phase_ratio = days_since_new / synodic_month
@@ -45,20 +50,20 @@ def get_lunar_phase_details(year, month, day):
     return {
         "moon_age_days": round(days_since_new, 1),
         "illumination": illumination,
-        "phase": phase_name
+        "phase": phase_name,
+        "phase_ratio": round(phase_ratio, 3)
     }
 
 def calculate_vibrational_root(date_str):
-    """Reduces any date to its core single-digit or master number root."""
+    """Reduces any date string to single-digit or master number root."""
     digits = [int(c) for c in date_str if c.isdigit()]
     total = sum(digits)
     while total > 9 and total not in [11, 22, 33]:
         total = sum(int(d) for d in str(total))
     return total
 
-def calculate_resonance(user_root, milestone_root):
-    """Calculates harmonic resonance between user and milestone."""
-    diff = abs(user_root - milestone_root)
+def calculate_resonance(user_root, target_root):
+    diff = abs(user_root - target_root)
     if diff == 0:
         return "Direct Harmonic Mirror (100% Alignment)"
     elif diff in [2, 4, 6]:
@@ -67,106 +72,155 @@ def calculate_resonance(user_root, milestone_root):
         return "Polar Catalyst Dynamic (Transformative Tension)"
 
 # ---------------------------------------------------------
-# 2. MILESTONES DATABASE
+# DATA: DECANS & ZODIAC ALIGNMENTS
+# ---------------------------------------------------------
+
+ZODIAC_DECANS = {
+    "Aries": [("Decan 1 (0°-10°)", "Mars"), ("Decan 2 (10°-20°)", "Sun"), ("Decan 3 (20°-30°)", "Venus")],
+    "Taurus": [("Decan 1 (0°-10°)", "Mercury"), ("Decan 2 (10°-20°)", "Moon"), ("Decan 3 (20°-30°)", "Saturn")],
+    "Gemini": [("Decan 1 (0°-10°)", "Jupiter"), ("Decan 2 (10°-20°)", "Mars"), ("Decan 3 (20°-30°)", "Sun")],
+    "Cancer": [("Decan 1 (0°-10°)", "Venus"), ("Decan 2 (10°-20°)", "Mercury"), ("Decan 3 (20°-30°)", "Moon")],
+    "Leo": [("Decan 1 (0°-10°)", "Saturn"), ("Decan 2 (10°-20°)", "Jupiter"), ("Decan 3 (20°-30°)", "Mars")],
+    "Virgo": [("Decan 1 (0°-10°)", "Sun"), ("Decan 2 (10°-20°)", "Venus"), ("Decan 3 (20°-30°)", "Mercury")],
+    "Libra": [("Decan 1 (0°-10°)", "Moon"), ("Decan 2 (10°-20°)", "Saturn"), ("Decan 3 (20°-30°)", "Jupiter")],
+    "Scorpio": [("Decan 1 (0°-10°)", "Mars"), ("Decan 2 (10°-20°)", "Sun"), ("Decan 3 (20°-30°)", "Venus")],
+    "Sagittarius": [("Decan 1 (0°-10°)", "Mercury"), ("Decan 2 (10°-20°)", "Moon"), ("Decan 3 (20°-30°)", "Saturn")],
+    "Capricorn": [("Decan 1 (0°-10°)", "Jupiter"), ("Decan 2 (10°-20°)", "Mars"), ("Decan 3 (20°-30°)", "Sun")],
+    "Aquarius": [("Decan 1 (0°-10°)", "Venus"), ("Decan 2 (10°-20°)", "Mercury"), ("Decan 3 (20°-30°)", "Moon")],
+    "Pisces": [("Decan 1 (0°-10°)", "Saturn"), ("Decan 2 (10°-20°)", "Jupiter"), ("Decan 3 (20°-30°)", "Mars")]
+}
+
+# ---------------------------------------------------------
+# DATA: HISTORICAL & COSMIC MILESTONES
 # ---------------------------------------------------------
 
 MILESTONES = {
     "Crucifixion Blood Moon (Passover)": {
-        "date_str": "0033-04-03",
-        "year": 33, "month": 4, "day": 3,
+        "date_str": "0033-04-03", "year": 33, "month": 4, "day": 3,
         "category": "Sacred History",
-        "astronomy": "Partial/Total Blood Red Lunar Eclipse at moonrise over Jerusalem (Passover 14 Nisan).",
-        "history": "According to astronomical records and biblical accounts, the moon rose eclipsed in the sign of Virgo, fulfilling ancient prophecies of the moon turning to blood during the passion."
-    },
-    "The Great Year Equinoctial Shift": {
-        "date_str": "2012-12-21",
-        "year": 2012, "month": 12, "day": 21,
-        "category": "Cosmic Precession",
-        "astronomy": "Winter Solstice Sun aligns with the Galactic Equator, closing the ~25,772-year Precession Cycle.",
-        "history": "Marks the end of a grand cosmic cycle recorded across Mayan, Egyptian, and Vedic calendars, initiating a realignment into the next World Age."
+        "astronomy": "Partial/Total Lunar Eclipse at moonrise over Jerusalem during Passover (14 Nisan).",
+        "details": "Fulfills scriptural depictions of celestial darkening; astronomical models verify an eclipse in the constellation Virgo."
     },
     "Annus Lucis / Traditional Epoch of Creation": {
-        "date_str": "-4004-10-23",
-        "year": -4004, "month": 10, "day": 23,
+        "date_str": "-4004-10-23", "year": -4004, "month": 10, "day": 23,
         "category": "Biblical & Hermetic",
-        "astronomy": "Autumnal Equinox New Moon conjunction as calculated by Archbishop Ussher and Hermetic chronologies.",
-        "history": "The theological point zero representing Adam and the breath of Genesis, frequently encoded as Year of Light (AL)."
+        "astronomy": "Conjunction marking the traditional creation timeline established in classical chronologies.",
+        "details": "Point zero for classical theological timelines, corresponding to the foundational genesis matrix."
     },
-    "The Fall / Cast to Earth (WW1 Outbreak)": {
-        "date_str": "1914-07-28",
-        "year": 1914, "month": 7, "day": 28,
-        "category": "Apocalyptic Prophecy",
-        "astronomy": "Waxing Crescent Moon in Virgo entering Libra; major solar eclipse followed on August 21, 1914.",
-        "history": "Highlighted in early 20th-century eschatological scholarship as the closure of the 'Times of the Gentiles' and the symbolic casting down of adversary forces into worldly warfare."
+    "The Outbreak of WW1 (1914 Milestone)": {
+        "date_str": "1914-07-28", "year": 1914, "month": 7, "day": 28,
+        "category": "Modern Eschatology",
+        "astronomy": "Waxing Crescent Moon moving from Virgo into Libra; total solar eclipse followed on August 21, 1914.",
+        "details": "Viewed in historic eschatological studies as the conclusion of the 'Times of the Gentiles' and the onset of global systemic shifts."
+    },
+    "Inauguration & Planetary Alignment": {
+        "date_str": "2017-01-20", "year": 2017, "month": 1, "day": 20,
+        "category": "Political Astrometry",
+        "astronomy": "Last Quarter Moon in Scorpio with wide planetary distribution across Mercury, Venus, Mars, and Jupiter.",
+        "details": "Marked by heightened astrological debate regarding structural shifts and systemic transformation."
     },
     "The Great Reset Declaration": {
-        "date_str": "2020-06-03",
-        "year": 2020, "month": 6, "day": 3,
-        "category": "Modern Transition",
-        "astronomy": "Waxing Gibbous Moon square Mars and Neptune; Venus retrograde inferior conjunction.",
-        "history": "Official public launch of the global restructuring initiative during global lockdowns, symbolizing the initiation of technocratic and financial realignment."
+        "date_str": "2020-06-03", "year": 2020, "month": 6, "day": 3,
+        "category": "Global Transition",
+        "astronomy": "Waxing Gibbous Moon in Scorpio square Neptune/Mars; Venus retrograde inferior conjunction.",
+        "details": "Public launch of comprehensive restructuring initiatives amid global disruption."
     },
-    "Inauguration & Planetary Hexagon Alignment": {
-        "date_str": "2017-01-20",
-        "year": 2017, "month": 1, "day": 20,
-        "category": "Political Astrometry",
-        "astronomy": "Last Quarter Moon in Scorpio; rare alignment and geometric distribution of Mercury, Venus, Mars, and Jupiter.",
-        "history": "The 58th Presidential Inauguration, accompanied by marked celestial alignments that triggered extensive astrological discussion regarding systemic disruption."
+    "The Great Year Equinoctial Precession": {
+        "date_str": "2012-12-21", "year": 2012, "month": 12, "day": 21,
+        "category": "Cosmic Precession",
+        "astronomy": "Winter Solstice Sun conjunction with Galactic Equator, closing the ~25,772-year cycle.",
+        "details": "Marks the transition into a new precessional age recorded across multiple ancient calendrical traditions."
     }
 }
 
 # ---------------------------------------------------------
-# 3. STREAMLIT INTERFACE
+# SIDEBAR: OBSERVER COORDINATES
 # ---------------------------------------------------------
 
-st.set_page_config(page_title="Chronos & Cosmos Lens", layout="wide")
-
-st.title("🌌 Chronos & Cosmos: Milestone Alignment Engine")
-st.caption("Inspect astronomical phases, celestial eclipses, and cipher resonance across time.")
-
 with st.sidebar:
-    st.header("👤 Observer Coordinates")
-    user_bday = st.date_input("Your Birth Date", value=datetime.date(1990, 1, 1))
-    user_root = calculate_vibrational_root(user_bday.strftime("%Y%m%d"))
-    user_moon = get_lunar_phase_details(user_bday.year, user_bday.month, user_bday.day)
+    st.header("👤 Observer Anchor")
+    user_birth_date = st.date_input("Natal / Inquiry Date", value=datetime.date(1990, 1, 1))
+    user_root = calculate_vibrational_root(user_birth_date.strftime("%Y%m%d"))
+    user_moon = get_lunar_phase_details(user_birth_date.year, user_birth_date.month, user_birth_date.day)
 
     st.markdown(f"**Life Path / Root Value:** `{user_root}`")
     st.markdown(f"**Natal Phase:** `{user_moon['phase']}`")
+    st.markdown(f"**Illumination:** `{user_moon['illumination']}%`")
     st.markdown("---")
-    st.write("Select a milestone to calculate alignment and historical astronomy.")
+    st.caption("Use these coordinates across the decan oracle and milestone timeline tabs.")
 
-# Milestone Selector
-event_key = st.selectbox("Choose a Significant Historical or Cosmic Milestone:", list(MILESTONES.keys()))
-event = MILESTONES[event_key]
+# ---------------------------------------------------------
+# WORKBENCH TABS
+# ---------------------------------------------------------
 
-# Milestone Astronomical & Numerology Calculations
-m_lunar = get_lunar_phase_details(event["year"], event["month"], event["day"])
-m_root = calculate_vibrational_root(event["date_str"])
-resonance = calculate_resonance(user_root, m_root)
+tab1, tab2, tab3 = st.tabs([
+    "🌌 Timeline Lens & Milestones",
+    "♈ Decan Oracle & Radial Spokes",
+    "🔢 Numerology & Phase Calculator"
+])
 
-# Layout Metrics
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Event Date", event["date_str"])
-col2.metric("Lunar Phase", m_lunar["phase"])
-col3.metric("Lunar Illumination", f"{m_lunar['illumination']}%")
-col4.metric("Vibrational Root", f"Root {m_root}")
+# TAB 1: HISTORICAL MILESTONES & ECLIPSES
+with tab1:
+    st.header("Chronos & Cosmos: Milestone Timeline")
+    st.caption("Cross-reference historical dates against celestial events, eclipses, and personal resonance.")
 
-st.markdown("---")
+    selected_event_name = st.selectbox("Select Historical / Cosmic Milestone:", list(MILESTONES.keys()))
+    event_data = MILESTONES[selected_event_name]
 
-# Presentation Columns
-left_col, right_col = st.columns([1.2, 1])
+    m_lunar = get_lunar_phase_details(event_data["year"], event_data["month"], event_data["day"])
+    m_root = calculate_vibrational_root(event_data["date_str"])
+    res = calculate_resonance(user_root, m_root)
 
-with left_col:
-    st.subheader("📜 Historical & Celestial Record")
-    st.markdown(f"**Classification:** *{event['category']}*")
-    st.info(f"**Astronomical Signature:**\n\n{event['astronomy']}")
-    st.write(event["history"])
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Date", event_data["date_str"])
+    c2.metric("Lunar Phase", m_lunar["phase"])
+    c3.metric("Illumination", f"{m_lunar['illumination']}%")
+    c4.metric("Vibrational Root", f"Root {m_root}")
 
-with right_col:
-    st.subheader("⚡ Personal Synchronicity & Reading")
-    st.markdown(f"**Your Root:** `{user_root}`  ↔  **Event Root:** `{m_root}`")
-    st.success(f"**Resonance Harmonic:**\n\n{resonance}")
-    st.markdown(f"""
-    * **Moon Phase Dynamics:** You were born under a **{user_moon['phase']}**, whereas this event manifested under a **{m_lunar['phase']}** with **{m_lunar['illumination']}%** illumination.
-    * **Cycle Integration:** This alignment reveals how your innate vibration acts as an echo or counterweight to this historic turning point.
-    """)
+    st.markdown("---")
+    col_left, col_right = st.columns([1.2, 1])
+
+    with col_left:
+        st.subheader("📜 Historical & Celestial Record")
+        st.markdown(f"**Category:** *{event_data['category']}*")
+        st.info(f"**Celestial Event:**\n\n{event_data['astronomy']}")
+        st.write(event_data["details"])
+
+    with col_right:
+        st.subheader("⚡ Personal Synchronicity")
+        st.markdown(f"**Your Root:** `{user_root}` ↔ **Event Root:** `{m_root}`")
+        st.success(f"**Resonance Dynamic:**\n\n{res}")
+        st.markdown(f"""
+        - **Natal Anchor:** {user_moon['phase']} ({user_moon['illumination']}%)
+        - **Milestone Phase:** {m_lunar['phase']} ({m_lunar['illumination']}%)
+        """)
+
+# TAB 2: ZODIAC SPOKES & DECAN ORACLE
+with tab2:
+    st.header("Decan Oracle & Zodiac Coordinates")
+    st.caption("Analyze 30-degree radial segments and their traditional planetary rulers.")
+
+    selected_sign = st.selectbox("Select Zodiac Sign:", list(ZODIAC_DECANS.keys()))
+    decans = ZODIAC_DECANS[selected_sign]
+
+    cols = st.columns(3)
+    for idx, (decan_range, ruler) in enumerate(decans):
+        with cols[idx]:
+            st.markdown(f"### {decan_range}")
+            st.markdown(f"**Ruler:** `{ruler}`")
+            if ruler == "Moon":
+                st.info("🌙 Lunar-ruled decan: associated with shifts, reflection, and cycles.")
+            else:
+                st.write(f"Governed by the energetic sphere of {ruler}.")
+
+# TAB 3: CUSTOM CALCULATOR
+with tab3:
+    st.header("Custom Date & Phase Calculator")
+    calc_date = st.date_input("Lookup Any Calendar Date", value=datetime.date.today())
+    calc_lunar = get_lunar_phase_details(calc_date.year, calc_date.month, calc_date.day)
+    calc_root = calculate_vibrational_root(calc_date.strftime("%Y%m%d"))
+
+    q1, q2, q3 = st.columns(3)
+    q1.metric("Selected Date", str(calc_date))
+    q2.metric("Moon Phase", calc_lunar["phase"])
+    q3.metric("Root Vibration", f"Root {calc_root}")
