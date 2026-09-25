@@ -1,4 +1,4 @@
-"""
+l"""
 VOYNICH MANUSCRIPT & NUMBERIN MASTER WORKBENCH
 Author: Voynich Decipherment Working Group & Numberin
 Zero external dependencies: Native Streamlit, Pandas, NumPy, pure SVG.
@@ -25,7 +25,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 1. CORE NUMEROLOGY & ASTRONOMICAL FUNCTIONS (DEFINED FIRST)
+# 1. CORE NUMEROLOGY & ASTRONOMICAL FUNCTIONS
 # ---------------------------------------------------------
 CHALDEAN_MAP = {
     'A': 1, 'I': 1, 'J': 1, 'Q': 1, 'Y': 1,
@@ -513,26 +513,26 @@ with tab_alembic:
 with tab_holdout:
     st.header("🎯 Blind Stem-Context Prediction Test (90.2% Accuracy)")
     st.markdown("""
-    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample[span_0](start_span)[span_0](end_span). 
-    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports[span_1](start_span)[span_1](end_span).
+    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample. 
+    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports.
     """)
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Scored Tokens", "437 Loci")[span_2](start_span)[span_2](end_span)
-    c2.metric("Successful Hits", "394 Hits")[span_3](start_span)[span_3](end_span)
-    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")[span_4](start_span)[span_4](end_span)
-    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")[span_5](start_span)[span_5](end_span)
+    c1.metric("Scored Tokens", "437 Loci")
+    c2.metric("Successful Hits", "394 Hits")
+    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")
+    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")
 
     sample_test_runs = [
-        {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_6](start_span)[span_6](end_span)
-        {"Folio": "f70v2", "Token": "ykeey", "Extracted Stem": "ykeey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_7](start_span)[span_7](end_span)
-        {"Folio": "f70v2", "Token": "tchy", "Extracted Stem": "tchy", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_8](start_span)[span_8](end_span)
-        {"Folio": "f70v2", "Token": "yteos", "Extracted Stem": "yteos", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},[span_9](start_span)[span_9](end_span)
-        {"Folio": "f70v2", "Token": "alain", "Extracted Stem": "alain", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},[span_10](start_span)[span_10](end_span)
-        {"Folio": "f70v2", "Token": "olar", "Extracted Stem": "lar", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},[span_11](start_span)[span_11](end_span)
-        {"Folio": "f70v2", "Token": "oteeam", "Extracted Stem": "eeam", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"},[span_12](start_span)[span_12](end_span)
-        {"Folio": "f71r", "Token": "aiin", "Extracted Stem": "aiin", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},[span_13](start_span)[span_13](end_span)
-        {"Folio": "f72r1", "Token": "qokar", "Extracted Stem": "kar", "Predicted Role": "heat", "Actual Context": "heat", "Verdict": "HIT"},[span_14](start_span)[span_14](end_span)
-        {"Folio": "f72v1", "Token": "ypaim", "Extracted Stem": "ypaim", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"}[span_15](start_span)[span_15](end_span)
+        {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "ykeey", "Extracted Stem": "ykeey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "tchy", "Extracted Stem": "tchy", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "yteos", "Extracted Stem": "yteos", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "alain", "Extracted Stem": "alain", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "olar", "Extracted Stem": "lar", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "oteeam", "Extracted Stem": "eeam", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"},
+        {"Folio": "f71r", "Token": "aiin", "Extracted Stem": "aiin", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},
+        {"Folio": "f72r1", "Token": "qokar", "Extracted Stem": "kar", "Predicted Role": "heat", "Actual Context": "heat", "Verdict": "HIT"},
+        {"Folio": "f72v1", "Token": "ypaim", "Extracted Stem": "ypaim", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"}
     ]
     st.dataframe(pd.DataFrame(sample_test_runs), use_container_width=True)
 
@@ -582,11 +582,11 @@ with tab_reader:
     st.header("📜 Dual-Dialect Interlinear Translation Stream")
     st.markdown("""
     Maps technical Voynich compounding frames into verified medieval distillation syntax across both 
-    **Venetian Trade Apothecary** and **Early New High German** registers[span_16](start_span)[span_16](end_span).
+    **Venetian Trade Apothecary** and **Early New High German** registers.
     """)
-    st.info("**f114v.21:** `qokedy otcheodaiin qokchdy` → *Heat the astronomical sector component; proceed into active boiling.*[span_17](start_span)[span_17](end_span)")
-    st.info("**f1r.6:** `okchoy otchol chocthy ydaraishy chdam` → *Tempered under warmth; composed by the author; vessel sealed.*[span_18](start_span)[span_18](end_span)")
-    st.info("**f116v.1:** `oror sheey` → *The Great Work is closed. System at rest. Finis.*[span_19](start_span)[span_19](end_span)")
+    st.info("**f114v.21:** `qokedy otcheodaiin qokchdy` → *Heat the astronomical sector component; proceed into active boiling.*")
+    st.info("**f1r.6:** `okchoy otchol chocthy ydaraishy chdam` → *Tempered under warmth; composed by the author; vessel sealed.*")
+    st.info("**f116v.1:** `oror sheey` → *The Great Work is closed. System at rest. Finis.*")
 
 # TAB 9: MASTER LEXICON
 with tab_lexicon:
