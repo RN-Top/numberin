@@ -7,6 +7,7 @@ import urllib.request
 import urllib.parse
 import json
 import os
+import unicodedata
 from collections import Counter
 
 # Page Configuration
@@ -48,13 +49,29 @@ st.markdown("""
         box-shadow: 0 0 25px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(212, 175, 55, 0.12);
     }
 
-    .sidebar-oracle-card {
-        background: rgba(26, 22, 16, 0.85);
+    .sidebar-card {
+        background: rgba(26, 22, 16, 0.88);
         border: 1px solid rgba(212, 175, 55, 0.4);
         border-radius: 8px;
         padding: 14px;
         margin-top: 12px;
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .solar-pillar {
+        background: linear-gradient(180deg, rgba(46, 32, 10, 0.92) 0%, rgba(18, 14, 8, 0.95) 100%);
+        border: 1px solid #ffd700;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 0 25px rgba(245, 197, 66, 0.3), inset 0 0 12px rgba(255, 215, 0, 0.15);
+    }
+
+    .lunar-pillar {
+        background: linear-gradient(180deg, rgba(22, 12, 42, 0.95) 0%, rgba(7, 4, 16, 0.98) 100%);
+        border: 1px solid #c0a0ff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 0 25px rgba(180, 140, 255, 0.35), inset 0 0 12px rgba(192, 160, 255, 0.18);
     }
 
     .ring-container {
@@ -154,7 +171,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 1. CONSTANTS & SYSTEM MAPPINGS
+# 1. CONSTANTS, SCRIPTS & GEMATRIA CIPHERS
 # ==========================================
 
 PYTHAGOREAN_MAP = {
@@ -169,6 +186,47 @@ CHALDEAN_MAP = {
     'S': 3, 'T': 4, 'U': 6, 'V': 6, 'W': 6, 'X': 5, 'Y': 1, 'Z': 7
 }
 
+HEBREW_ARAMAIC_MAP = {
+    'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
+    'י': 10, 'כ': 20, 'ך': 20, 'ל': 30, 'מ': 40, 'ם': 40, 'נ': 50, 'ן': 50,
+    'ס': 60, 'ע': 70, 'פ': 80, 'ף': 80, 'צ': 90, 'ץ': 90,
+    'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
+}
+
+GREEK_ISOPSEPHY_MAP = {
+    'Α': 1, 'α': 1, 'Β': 2, 'β': 2, 'Γ': 3, 'γ': 3, 'Δ': 4, 'δ': 4,
+    'Ε': 5, 'ε': 5, 'Ϝ': 6, 'ϛ': 6, 'Ζ': 7, 'ζ': 7, 'Η': 8, 'η': 8,
+    'Θ': 9, 'θ': 9, 'Ι': 10, 'ι': 10, 'Κ': 20, 'κ': 20, 'Λ': 30, 'λ': 30,
+    'Μ': 40, 'μ': 40, 'Ν': 50, 'ν': 50, 'Ξ': 60, 'ξ': 60, 'Ο': 70, 'ο': 70,
+    'Π': 80, 'π': 80, 'Ϟ': 90, 'ϟ': 90, 'Ρ': 100, 'ρ': 100, 'Σ': 200, 'σ': 200, 'ς': 200,
+    'Τ': 300, 'τ': 300, 'Υ': 400, 'υ': 400, 'Φ': 500, 'φ': 500, 'Χ': 600, 'χ': 600,
+    'Ψ': 700, 'ψ': 700, 'Ω': 800, 'ω': 800, 'Ϡ': 900, 'ϡ': 900
+}
+
+CYRILLIC_MAP = {
+    'А': 1, 'Б': 2, 'В': 2, 'Г': 3, 'Д': 4, 'Е': 5, 'Ё': 5, 'Ж': 7, 'З': 7,
+    'И': 8, 'Й': 8, 'І': 10, 'К': 20, 'Л': 30, 'М': 40, 'Н': 50, 'О': 70,
+    'П': 80, 'Р': 100, 'С': 200, 'Т': 300, 'У': 400, 'Ф': 500, 'Х': 600,
+    'Ѱ': 700, 'Ѡ': 800, 'Ц': 900, 'Ч': 90, 'Ш': 1, 'Щ': 2, 'Ъ': 3, 'Ы': 4,
+    'Ь': 5, 'Э': 6, 'Ю': 7, 'Я': 8
+}
+
+ARABIC_ABJAD_MAP = {
+    'ا': 1, 'ب': 2, 'ج': 3, 'د': 4, 'ه': 5, 'و': 6, 'ز': 7, 'ح': 8, 'ط': 9,
+    'ي': 10, 'ك': 20, 'ل': 30, 'م': 40, 'ن': 50, 'س': 60, 'ع': 70, 'ف': 80,
+    'ص': 90, 'ق': 100, 'ر': 200, 'ش': 300, 'ت': 400, 'ث': 500, 'خ': 600,
+    'ذ': 700, 'ض': 800, 'ظ': 900, 'غ': 1000
+}
+
+SCRIPT_VOWELS = {
+    "Latin": set("AEIOU"),
+    "Spanish": set("AEIOU"),
+    "Greek": set("ΑΕΗΙΟΥΩαεηιουω"),
+    "Cyrillic": set("АЕЁИОУЫЭЮЯ"),
+    "Hebrew/Aramaic": set("אהוי"),
+    "Arabic": set("اوي")
+}
+
 ANGEL = {
     "111": "Alignment and fresh creation. The door is unlatched.",
     "222": "Patience and balance. Do not force growth before the root takes.",
@@ -179,24 +237,6 @@ ANGEL = {
     "777": "Inner initiation. Awakening the hidden architecture behind appearances.",
     "888": "Infinite harvest. The return flow of spent energy arrives.",
     "999": "Culmination and release. Clearing ground for the subsequent phase."
-}
-
-KARMIC_NOTE = {
-    13: "Karmic Debt 13: Grounding effort, clearing resistance through focused construction.",
-    14: "Karmic Debt 14: Restoring balance amidst erratic motion and freedom.",
-    16: "Karmic Debt 16: The fall of brittle structures; awakening radical truth.",
-    19: "Karmic Debt 19: Independence, learning that self-reliance includes vulnerability."
-}
-
-PHASE_NUMEROLOGY = {
-    "New Moon": 1,
-    "Waxing Crescent": 2,
-    "First Quarter": 3,
-    "Waxing Gibbous": 4,
-    "Full Moon": 5,
-    "Waning Gibbous": 6,
-    "Last Quarter": 7,
-    "Waning Crescent": 8
 }
 
 MILESTONES = {
@@ -266,7 +306,6 @@ ORACLE_CARDS = {
     33: ("The Sacred Hearth", "Offer compassionate presence without self-sacrifice. Be the anchor, not the raft.")
 }
 
-# Offline Core Library Fallback Texts (Guarantees books open even if web is down)
 EMBEDDED_CANONICAL = {
     "Pistis Sophia (G.R.S. Mead)": """
     Chapter 1: It came to pass, when Jesus had risen from the dead, that he passed eleven years speaking with his disciples, and instructing them only up to the regions of the First Statutes and up to the regions of the First Mystery, that within the Veil.
@@ -306,12 +345,90 @@ GEO_FALLBACK = {
     "paris, france": (48.8566, 2.3522, "Paris, France"),
     "jerusalem": (31.7683, 35.2137, "Jerusalem"),
     "cairo, egypt": (30.0444, 31.2357, "Cairo, Egypt"),
-    "rome, italy": (41.9028, 12.4964, "Rome, Italy")
+    "rome, italy": (41.9028, 12.4964, "Rome, Italy"),
+    "moscow, russia": (55.7558, 37.6173, "Moscow, Russia"),
+    "athens, greece": (37.9838, 23.7275, "Athens, Greece"),
+    "madrid, spain": (40.4168, -3.7038, "Madrid, Spain")
 }
 
 # ==========================================
-# 2. CORE HELPER FUNCTIONS & GEOCODER
+# 2. UNIVERSAL MULTI-LANGUAGE GEMATRIA ENGINE
 # ==========================================
+
+def detect_script(text: str) -> str:
+    for char in text:
+        cp = ord(char)
+        if 0x0590 <= cp <= 0x05FF or 0xFB1D <= cp <= 0xFB4F:
+            return "Hebrew/Aramaic"
+        elif 0x0370 <= cp <= 0x03FF or 0x1F00 <= cp <= 0x1FFF:
+            return "Greek"
+        elif 0x0400 <= cp <= 0x04FF or 0x0500 <= cp <= 0x052F:
+            return "Cyrillic"
+        elif 0x0600 <= cp <= 0x06FF or 0x0750 <= cp <= 0x077F:
+            return "Arabic"
+    if any(c in text.upper() for c in ['Ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ü']):
+        return "Spanish"
+    return "Latin"
+
+def universal_char_value(char: str, script: str) -> int:
+    if script == "Hebrew/Aramaic":
+        return HEBREW_ARAMAIC_MAP.get(char, 0)
+    elif script == "Greek":
+        return GREEK_ISOPSEPHY_MAP.get(char, 0)
+    elif script == "Cyrillic":
+        return CYRILLIC_MAP.get(char.upper(), 0)
+    elif script == "Arabic":
+        return ARABIC_ABJAD_MAP.get(char, 0)
+    elif script == "Spanish":
+        if char == 'Ñ': return 14
+        base = unicodedata.normalize('NFKD', char).encode('ASCII', 'ignore').decode('utf-8')
+        return PYTHAGOREAN_MAP.get(base, 0)
+    else:
+        base = unicodedata.normalize('NFKD', char).encode('ASCII', 'ignore').decode('utf-8')
+        return PYTHAGOREAN_MAP.get(base.upper(), 0)
+
+def reduce_number(n: int, preserve_master: bool = True) -> int:
+    n = abs(int(n))
+    while n > 9:
+        if preserve_master and n in (11, 22, 33):
+            return n
+        n = sum(int(d) for d in str(n))
+    return n
+
+def name_profile(name: str):
+    if not name or not name.strip():
+        return {
+            "expression": 0, "soul_urge": 0, "personality": 0,
+            "pyth_sum": 0, "chaldean_sum": 0, "script": "Latin", "clean": ""
+        }
+    
+    script = detect_script(name)
+    vowels_set = SCRIPT_VOWELS.get(script, SCRIPT_VOWELS["Latin"])
+    chars = [c for c in name if not c.isspace() and not unicodedata.category(c).startswith('P')]
+    
+    total_vals = [universal_char_value(c, script) for c in chars]
+    v_vals = [universal_char_value(c, script) for c in chars if c.upper() in vowels_set or c in vowels_set]
+    co_vals = [universal_char_value(c, script) for c in chars if not (c.upper() in vowels_set or c in vowels_set)]
+    
+    total_sum = sum(total_vals)
+    v_sum = sum(v_vals)
+    co_sum = sum(co_vals)
+    
+    if script in ["Latin", "Spanish"]:
+        c_vals = [CHALDEAN_MAP.get(unicodedata.normalize('NFKD', c).encode('ASCII', 'ignore').decode('utf-8').upper(), 0) for c in chars]
+        chaldean_sum = sum(c_vals)
+    else:
+        chaldean_sum = total_sum
+
+    return {
+        "expression": reduce_number(total_sum),
+        "soul_urge": reduce_number(v_sum) if v_sum else 0,
+        "personality": reduce_number(co_sum) if co_sum else 0,
+        "pyth_sum": total_sum,
+        "chaldean_sum": chaldean_sum,
+        "script": script,
+        "clean": "".join(chars)
+    }
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def geocode_location(query_str: str):
@@ -341,43 +458,11 @@ def geocode_location(query_str: str):
     pseudo_lon = ((hash_val * 13) % 360) - 180
     return float(pseudo_lat), float(pseudo_lon), query_str.title()
 
-def reduce_number(n: int, preserve_master: bool = True) -> int:
-    n = abs(int(n))
-    while n > 9:
-        if preserve_master and n in (11, 22, 33):
-            return n
-        n = sum(int(d) for d in str(n))
-    return n
-
-def cycle_19(year: int) -> int:
-    return ((abs(year) + 1) % 19) or 19
-
 def life_path_components(year: int, month: int, day: int) -> int:
     m = reduce_number(month)
     d = reduce_number(day)
     y = reduce_number(abs(year))
     return reduce_number(m + d + y)
-
-def name_profile(name: str):
-    clean = re.sub(r'[^A-Z]', '', name.upper())
-    if not clean:
-        return {"expression": 0, "soul_urge": 0, "personality": 0, "pyth_sum": 0, "chaldean_sum": 0, "clean": ""}
-    
-    vowels = "AEIOU"
-    p_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean]
-    c_vals = [CHALDEAN_MAP.get(c, 0) for c in clean]
-    
-    v_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean if c in vowels]
-    co_vals = [PYTHAGOREAN_MAP.get(c, 0) for c in clean if c not in vowels]
-    
-    return {
-        "expression": reduce_number(sum(p_vals)),
-        "soul_urge": reduce_number(sum(v_vals)) if v_vals else 0,
-        "personality": reduce_number(sum(co_vals)) if co_vals else 0,
-        "pyth_sum": sum(p_vals),
-        "chaldean_sum": sum(c_vals),
-        "clean": clean
-    }
 
 def personal_cycles_components(month: int, day: int, target_year: int):
     m = reduce_number(month)
@@ -386,17 +471,19 @@ def personal_cycles_components(month: int, day: int, target_year: int):
     personal_year = reduce_number(m + d + py)
     return {"personal_year": personal_year, "milestone": MILESTONES.get(personal_year, "")}
 
-def run_latin_cipher(text: str) -> dict:
-    clean = re.sub(r'[^A-Z]', '', text.upper())
-    simple = sum(ord(c) - 64 for c in clean)
-    reverse = sum(27 - (ord(c) - 64) for c in clean)
-    return {"simple": simple, "reverse": reverse, "reduced": reduce_number(simple)}
+def run_universal_cipher(text: str) -> dict:
+    prof = name_profile(text)
+    script = prof["script"]
+    simple = prof["pyth_sum"]
+    reduced = prof["expression"]
+    return {"simple": simple, "reduced": reduced, "script": script}
 
 def script_readings(text: str) -> str:
-    clean = re.sub(r'[^A-Z]', '', text.upper())
+    prof = name_profile(text)
+    clean = prof["clean"]
     counts = Counter(clean)
     dominant = counts.most_common(1)[0] if counts else ("None", 0)
-    return f"Dominant letter frequency: '{dominant[0]}' occurring {dominant[1]} times. Total vibration: {len(clean)} characters."
+    return f"Active Tradition: **{prof['script']}** | Dominant Letter: '{dominant[0]}' ({dominant[1]}×) | Total Characters: {len(clean)}"
 
 def meaning(n: int) -> str:
     return KNOWLEDGE_BASE.get(n, "Resonant vibration awaiting direct definition.")
@@ -443,15 +530,40 @@ def get_approx_sun_sign_components(month: int, day: int) -> str:
     elif (1, 20) <= md <= (2, 18): return "Aquarius"
     else: return "Pisces"
 
-def evaluate_compatibility(lp1: int, lp2: int) -> str:
-    diff = abs(lp1 - lp2)
-    if diff == 0:
-        return "Resonant Unity: Shared primary frequency. Mutual mirror, instant familiarity."
-    elif diff in (2, 4):
-        return "Harmonic Accord: Complementary rhythm. The difference creates productive leverage."
-    elif diff in (1, 3):
-        return "Dynamic Spark: Productive tension. Growth requires deliberate accommodation."
-    return "Neutral Orbit: Independent wavelengths that interact without friction or fusion."
+def calculate_gods_calendar(year: int, month: int, day: int, is_bce: bool = False):
+    """
+    Eve's Primordial Calendar (God's Calendar)
+    Traces the 5,500-year lunar-solar alignment from creation to any epoch.
+    """
+    jd = get_astronomical_julian_date(year, month, day, is_bce)
+    
+    # Primordial Epoch Anchor: ~3761 BCE (5,786+ years back)
+    creation_jd = 347997.5
+    days_since_eden = jd - creation_jd
+    
+    # 29.530588 day synodic lunar month
+    total_lunar_months = days_since_eden / 29.53058770576
+    lunar_age_days = (total_lunar_months - math.floor(total_lunar_months)) * 29.530588
+    
+    # 19-Year Metonic Cycle
+    astro_year = -(year - 1) if is_bce else year
+    metonic_position = ((astro_year + 3760) % 19) + 1
+    
+    # Solar vs Lunar Drift: 365.2422 vs 354.367 (10.875 days/year)
+    drift_days = (abs(astro_year + 3760) * 10.875) % 365.24
+    
+    # Primordial Numerology Root of Year
+    primordial_year_num = abs(astro_year + 3760)
+    primordial_root = reduce_number(primordial_year_num)
+    
+    return {
+        "lunar_age": round(lunar_age_days, 1),
+        "metonic_cycle": metonic_position,
+        "primordial_year": primordial_year_num,
+        "primordial_root": primordial_root,
+        "solar_lunar_drift": round(drift_days, 1),
+        "days_since_eden": int(days_since_eden)
+    }
 
 def purify_corpus(raw_text: str) -> str:
     start_pos = 0
@@ -478,7 +590,9 @@ def extract_full_verses(corpus_text: str, query: str, max_results: int = 5):
         if len(verse) < 25 or "project gutenberg" in verse.lower():
             continue
         if q_pattern.search(verse):
-            verse_root = reduce_number(sum(ord(c) - 64 for c in verse.upper() if 'A' <= c <= 'Z'))
+            script = detect_script(verse)
+            verse_sum = sum(universal_char_value(c, script) for c in verse if not c.isspace())
+            verse_root = reduce_number(verse_sum)
             highlighted = q_pattern.sub(lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse)
             matches.append((highlighted, verse_root))
             if len(matches) >= max_results:
@@ -486,7 +600,7 @@ def extract_full_verses(corpus_text: str, query: str, max_results: int = 5):
     return matches
 
 # ==========================================
-# 3. SIDEBAR: AUDIO, NATAL ANCHOR & NUMEROLOGY ORACLE
+# 3. SIDEBAR: AUDIO, NATAL ANCHOR, ORACLE & GOD'S CALENDAR
 # ==========================================
 
 with st.sidebar:
@@ -519,21 +633,42 @@ with st.sidebar:
     name_p = name_profile(anchor_name)
     
     st.markdown(f"**Life Path:** `{lp_anchor}`")
-    st.markdown(f"**Expression:** `{name_p['expression']}`")
+    st.markdown(f"**Expression:** `{name_p['expression']}` ({name_p['script']})")
     st.markdown(f"**Sun Sign:** `{sun_anchor}`")
     st.markdown(f"**Moon Phase:** `{moon_anchor}`")
     
-    # NUMEROLOGY ORACLE IN SIDEBAR
+    # EVE'S CALENDAR / GOD'S CALENDAR
+    st.markdown("---")
+    st.markdown("<h3 style='color:#f5c542; font-size:1.15rem;'>🌙 EVE'S CALENDAR (GOD'S CLOCK)</h3>", unsafe_allow_html=True)
+    st.caption("Tracing 5,500+ years of primordial lunar-solar alignment.")
+    
+    gods_cal = calculate_gods_calendar(s_year, s_month, s_day, is_anchor_bce)
+    
+    st.markdown(f"""
+    <div class="sidebar-card">
+        <span style="color:#d4af37; font-size:0.75rem; font-weight:bold; letter-spacing:0.05em; font-family:'Cinzel', serif;">PRIMORDIAL HORIZON</span>
+        <div style="font-size:0.88rem; line-height:1.7; color:#f1f4f8; margin-top:6px;">
+            • <strong>Edenic Epoch Year:</strong> {gods_cal['primordial_year']:,} AM<br>
+            • <strong>Primordial Root:</strong> {gods_cal['primordial_root']} ({meaning(gods_cal['primordial_root'])})<br>
+            • <strong>Lunar Age:</strong> Day {gods_cal['lunar_age']} / 29.5<br>
+            • <strong>19-Yr Metonic Cycle:</strong> Year {gods_cal['metonic_cycle']} / 19<br>
+            • <strong>Solar-Lunar Offset:</strong> {gods_cal['solar_lunar_drift']} Days Drift<br>
+            • <strong>Days Since Inception:</strong> {gods_cal['days_since_eden']:,}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # NUMEROLOGY ORACLE
     st.markdown("---")
     st.markdown("<h3 style='color:#f5c542; font-size:1.15rem;'>🔮 NUMEROLOGY ORACLE</h3>", unsafe_allow_html=True)
-    st.caption("Cast a current query into the vibrational wheel.")
+    st.caption("Cast a multi-lingual query into the vibrational wheel.")
     
     oracle_query = st.text_input("Ask the Oracle a question:", placeholder="What current requires my focus today?", key="sb_oracle_q")
     
     if st.button("Consult the Oracle", key="sb_oracle_btn"):
         today = datetime.date.today()
-        q_sum = sum(ord(c) for c in oracle_query.upper() if 'A' <= c <= 'Z') if oracle_query else 0
-        draw_val = (lp_anchor + name_p['expression'] + q_sum + today.day + today.month)
+        q_prof = name_profile(oracle_query)
+        draw_val = (lp_anchor + name_p['expression'] + q_prof['pyth_sum'] + today.day + today.month)
         
         card_num = reduce_number(draw_val)
         card_title, card_directive = ORACLE_CARDS.get(card_num, ("The Threshold", "Hold steady and observe."))
@@ -542,14 +677,15 @@ with st.sidebar:
             "num": card_num,
             "title": card_title,
             "directive": card_directive,
-            "query": oracle_query
+            "query": oracle_query,
+            "script": q_prof['script']
         }
         
     if "sidebar_oracle_res" in st.session_state:
         sor = st.session_state["sidebar_oracle_res"]
         st.markdown(f"""
-        <div class="sidebar-oracle-card">
-            <span style="color:#d4af37; font-size:0.75rem; font-weight:bold; letter-spacing:0.05em; font-family:'Cinzel', serif;">ORACLE CAST #{sor['num']}</span>
+        <div class="sidebar-card">
+            <span style="color:#d4af37; font-size:0.75rem; font-weight:bold; letter-spacing:0.05em; font-family:'Cinzel', serif;">ORACLE CAST #{sor['num']} ({sor['script']})</span>
             <h4 style="color:#fff4cc; margin:4px 0 6px 0; font-size:1.05rem;">{sor['title']}</h4>
             <p style="font-size:0.86rem; line-height:1.5; color:#f1f4f8; margin-bottom:0;">
                 {sor['directive']}
@@ -561,11 +697,11 @@ with st.sidebar:
     st.caption("Universal Anchor pinned across all active reading chambers.")
 
 # ==========================================
-# 4. UNIVERSAL SEARCH / INPUT CLASSIFIER
+# 4. UNIVERSAL SEARCH / MULTI-SCRIPT CLASSIFIER
 # ==========================================
 
 st.markdown("<div class='brand-title'>NUMBERIN</div>", unsafe_allow_html=True)
-search_query = st.text_input("Enter any name, phrase, epoch, or date to discern its root:", "")
+search_query = st.text_input("Enter any name, phrase, epoch, or date across any language (Hebrew, Greek, Russian, Spanish, English):", "")
 
 if search_query:
     parsed_date_match = re.match(r'^(\d+)[-/.](\d+)[-/.](\d+)(\s+(BCE|BC|CE|AD))?$', search_query.strip(), re.IGNORECASE)
@@ -584,7 +720,7 @@ if search_query:
         st.info(f"**Historical Epoch Detected**: Year `{y} {era}` | Root Cycle: `{root_y}` ({meaning(root_y)})")
     else:
         prof = name_profile(search_query)
-        st.info(f"**Text Input Detected**: Expression `{prof['expression']}` | Soul Urge `{prof['soul_urge']}` | Personality `{prof['personality']}` | Pythagorean Sum `{prof['pyth_sum']}`")
+        st.info(f"**{prof['script']} Script Detected**: Expression Root `{prof['expression']}` | Soul Urge `{prof['soul_urge']}` | Personality `{prof['personality']}` | Total Gematria/Cipher Sum `{prof['pyth_sum']}`")
 
 # ==========================================
 # 5. ILLUMINATED CHAMBERS / TABS
@@ -595,7 +731,7 @@ tabs = st.tabs([
     "Corpus Knowledge Base", 
     "Spatiotemporal Frequency Map", 
     "Decan Oracle", 
-    "Compatibility Matrix", 
+    "The Crystal Sophia Mirror", 
     "Pattern & Frequency Engine"
 ])
 
@@ -608,7 +744,7 @@ with tabs[0]:
 
     col_a, col_b = st.columns([1.1, 1])
     with col_a:
-        alch_name = st.text_input("Alchemist Name (Optional)", value=anchor_name)
+        alch_name = st.text_input("Alchemist Name (Any Language / Script)", value=anchor_name)
         
         st.markdown("**Epoch / Birthdate (Any Historical or Future Era)**")
         a_c1, a_c2, a_c3, a_c4 = st.columns([1.2, 1, 1, 1.2])
@@ -624,12 +760,13 @@ with tabs[0]:
         seed_str = st.text_input("Operational Seed", value="7-7-7")
         
     with col_b:
-        prima_materia = st.text_area("Prima Materia (What are you transmuting? Issue, question, or feeling)", 
+        prima_materia = st.text_area("Prima Materia (Issue, prayer, or circumstance in any tongue)", 
                                      placeholder="Describe the raw circumstance, tension, or desire you bring to the bench today...",
                                      height=180)
 
     if st.button("Compound the Tincture", type="primary"):
-        name_val = name_profile(alch_name)["expression"] if alch_name else 0
+        alch_prof = name_profile(alch_name)
+        name_val = alch_prof["expression"] if alch_name else 0
         lp_val = life_path_components(a_year, a_month, a_day)
         d_year = (a_month - 1) * 30 + a_day
         seed_digits = [int(c) for c in seed_str if c.isdigit()]
@@ -662,7 +799,8 @@ with tabs[0]:
             "a_year": a_year,
             "a_era": a_era,
             "a_month": a_month,
-            "a_day": a_day
+            "a_day": a_day,
+            "script": alch_prof["script"]
         }
 
     if "tincture_data" in st.session_state:
@@ -672,7 +810,7 @@ with tabs[0]:
 
         st.markdown(f"""
         <div class="brass-panel">
-            <h4 style="text-align: center; color: #f5c542; margin-bottom: 5px;">The Three Pivot Rings Locked</h4>
+            <h4 style="text-align: center; color: #f5c542; margin-bottom: 5px;">The Three Pivot Rings Locked ({td['script']} Mode)</h4>
             <div class="ring-container">
                 <div class="ring-badge">Outer Ring<br><small>{wm['day']}</small></div>
                 <div class="ring-badge">Middle Pivot<br><small>{wm['planet']}</small></div>
@@ -689,13 +827,14 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
         with st.expander("Examine the Bench Apparatus (Technical Breakdown)"):
+            st.markdown(f"- **Linguistic Tradition:** `{td['script']}`")
             st.markdown(f"- **Historical Horizon:** `{td['a_year']} {td['a_era']}, Month {td['a_month']}, Day {td['a_day']}`")
             st.markdown(f"- **Working Modulo:** `{td['total_alch']} ≡ {td['working_idx']} (mod 7)`")
             st.markdown(f"- **Core Metal Skeleton:** {wm['metal']} ({wm['planet']})")
             st.markdown(f"- **Distraction Axis (+3):** {dm['metal']} ({dm['planet']})")
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE (Permanent Fallbacks Added)
+# TAB 2: CORPUS KNOWLEDGE BASE (Multi-Lingual Gematria)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>The Full-Corpus Library Engine</h3>", unsafe_allow_html=True)
@@ -732,7 +871,6 @@ with tabs[1]:
 
     @st.cache_data(show_spinner=False)
     def fetch_full_text(source_name: str, urls) -> str:
-        # 1. Local file path check
         local_path = LOCAL_FILE_FALLBACKS.get(source_name)
         if local_path and os.path.exists(local_path):
             try:
@@ -741,7 +879,6 @@ with tabs[1]:
             except Exception:
                 pass
 
-        # 2. Try web mirror
         if isinstance(urls, str):
             urls = [urls]
         for url in urls:
@@ -758,7 +895,6 @@ with tabs[1]:
             except Exception:
                 continue
 
-        # 3. Direct Embedded Canonical Core Fallback
         if source_name in EMBEDDED_CANONICAL:
             return EMBEDDED_CANONICAL[source_name].strip()
 
@@ -779,15 +915,15 @@ with tabs[1]:
             corpus_text = fetch_full_text(corpus_source, CORPUS_MIRRORS[corpus_source])
 
     if corpus_text:
-        words_list = re.findall(r'\b[A-Za-z]+\b', corpus_text.lower())
+        words_list = re.findall(r'\b\w+\b', corpus_text.lower(), re.UNICODE)
         total_words = len(words_list)
         total_chars = len(corpus_text)
         
         st.caption(f"Canonical Volume: **{total_words:,} words** | **{total_chars:,} characters** (Boilerplate Purged)")
 
         st.markdown("#### Canonical Plain-Language Inquiry")
-        query = st.text_input("Ask a question, enter a number, or search a word/verse:", 
-                              placeholder="e.g. 'archon', 'light', 'seven', 'most common words', 'pistis'")
+        query = st.text_input("Ask a question, enter a number, or search a word/verse in any language:", 
+                              placeholder="e.g. 'archon', 'light', 'sophia', 'logos', 'shalom'")
 
         if query:
             q_clean = query.strip().lower()
@@ -846,7 +982,7 @@ with tabs[1]:
 
             # 4. LETTER FREQUENCIES
             elif "letter frequency" in q_clean or "letters" in q_clean:
-                letters_only = [c for c in corpus_text.upper() if 'A' <= c <= 'Z']
+                letters_only = [c for c in corpus_text.upper() if c.isalnum() and not c.isdigit()]
                 l_counts = Counter(letters_only).most_common(7)
                 st.markdown("#### Primary Letter Frequencies:")
                 for l, count in l_counts:
@@ -855,7 +991,8 @@ with tabs[1]:
 
             # 5. WHOLE-CORPUS NUMEROLOGY ROOT
             elif "root" in q_clean or "numerology" in q_clean:
-                root_sum = sum(ord(c) - 64 for c in corpus_text.upper() if 'A' <= c <= 'Z')
+                script = detect_script(corpus_text[:2000])
+                root_sum = sum(universal_char_value(c, script) for c in corpus_text if not c.isspace())
                 collapsed = reduce_number(root_sum)
                 st.markdown(f"**Corpus Grand Root:** `{collapsed}` — {meaning(collapsed)}")
 
@@ -891,7 +1028,7 @@ with tabs[2]:
     
     with col_map_in1:
         st.markdown("**1. Temporal Origin (Date & Minute)**")
-        map_name = st.text_input("Vessel Name", value=anchor_name, key="st_name")
+        map_name = st.text_input("Vessel Name (Any Script)", value=anchor_name, key="st_name")
         tc1, tc2, tc3, tc4 = st.columns([1.2, 1, 1, 1.2])
         with tc1:
             st_yr = st.number_input("Year", min_value=1, max_value=9999, value=s_year, key="st_yr")
@@ -959,7 +1096,7 @@ with tabs[2]:
     peak_window = f"{peak_start_hour:02d}:15 – {(peak_start_hour + 1) % 24:02d}:00"
 
     # ==========================================
-    # TRI-RING CYMATIC VECTOR VISUALIZER (SVG via Components)
+    # TRI-RING CYMATIC VECTOR VISUALIZER (SVG)
     # ==========================================
     center_x, center_y = 260, 260
     r_outer = 220
@@ -1078,7 +1215,7 @@ with tabs[2]:
     # Master Charter Synthesis
     st.markdown(f"""
     <div class="tincture-box">
-        <strong style="color: #f5c542; font-family: 'Cinzel', serif;">Spiritual Vector Directive for {map_name} (Age {eval_age}):</strong><br><br>
+        <strong style="color: #f5c542; font-family: 'Cinzel', serif;">Spiritual Vector Directive for {map_name} ({st_prof['script']}, Age {eval_age}):</strong><br><br>
         Your geometry is grounded in <strong>Life Path {st_lp}</strong> operating through the outward tone of <strong>Expression {st_expr}</strong>. 
         Under the active horizon of <strong>Personal Year {st_py}</strong>, your primary energetic leak stems from {('the unanchored void of frequency ' + str(void_pillars[0]) if void_pillars else 'over-saturation in pillar ' + str(saturated_pillars[0]) if saturated_pillars else 'internal friction between urge and expression')}. 
         <strong>Where to Push:</strong> Stop seeking passive harmony in domains requiring rigorous boundary containment. Align your heaviest strategic maneuvers with your daily circadian window ({peak_window}) to move with the sky instead of swimming upstream.
@@ -1113,51 +1250,267 @@ with tabs[3]:
     """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 5: COMPATIBILITY MATRIX (Illuminated)
+# TAB 5: THE CRYSTAL SOPHIA MIRROR (High Contrast Flower of Life & Tree of Knowledge)
 # ----------------------------------------------------
 with tabs[4]:
-    st.markdown("<h3 style='color:#f5c542;'>Compatibility Matrix</h3>", unsafe_allow_html=True)
-    st.markdown("Compare two independent anchor dates across any point in human history.")
+    st.markdown("<h3 style='color:#f5c542;'>The Crystal Sophia Mirror</h3>", unsafe_allow_html=True)
+    st.markdown("> *The sacred hourglass suspended in the Flower of Life matrix, rooted into the subterranean Tree of Knowledge: Extreme Solar Inflow contrasted against Deep Abyssal Lunar Waters.*")
 
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-        st.markdown("**First Anchor Date**")
-        cp1_y = st.number_input("Year", min_value=1, max_value=99999, value=s_year, key="cp1_y")
-        cp1_m = st.number_input("Month", min_value=1, max_value=12, value=s_month, key="cp1_m")
-        cp1_d = st.number_input("Day", min_value=1, max_value=31, value=s_day, key="cp1_d")
-        lp1 = life_path_components(cp1_y, cp1_m, cp1_d)
-        st.markdown(f"Primary Life Path: `{lp1}`")
-    with col_c2:
-        st.markdown("**Second Anchor Date**")
-        cp2_y = st.number_input("Year", min_value=1, max_value=99999, value=33, key="cp2_y")
-        cp2_m = st.number_input("Month", min_value=1, max_value=12, value=4, key="cp2_m")
-        cp2_d = st.number_input("Day", min_value=1, max_value=31, value=3, key="cp2_d")
-        lp2 = life_path_components(cp2_y, cp2_m, cp2_d)
-        st.markdown(f"Secondary Life Path: `{lp2}`")
+    col_m1, col_m2 = st.columns(2)
+    
+    with col_m1:
+        st.markdown("""
+        <div class="solar-pillar">
+            <h4 style="color:#ffd700; margin-top:0;">☀️ Solar Masculine Vessel (The Inflow)</h4>
+            <small style="color:#f5c542;">Electric projection • Ascending fire/air • The outward word</small>
+        </div>
+        """, unsafe_allow_html=True)
+        m1_name = st.text_input("Vessel Name", placeholder="e.g. Seeker, Michael, Logos", key="m1_name")
+        c1, c2, c3, c4 = st.columns([1.2, 1, 1, 1.2])
+        with c1:
+            m1_yr = st.number_input("Year", min_value=1, max_value=9999, value=1990, key="m1_yr")
+        with c2:
+            m1_mo = st.number_input("Month", min_value=1, max_value=12, value=1, key="m1_mo")
+        with c3:
+            m1_dy = st.number_input("Day", min_value=1, max_value=31, value=1, key="m1_dy")
+        with c4:
+            m1_time = st.time_input("Hour / Minute", value=datetime.time(12, 0), key="m1_time")
 
-    comp_result = evaluate_compatibility(lp1, lp2)
+        m1_city = st.text_input("Birth Location (City, State / Country)", placeholder="e.g. Naples, FL or Jerusalem", key="m1_city")
+        m1_lat, m1_lon, m1_res = geocode_location(m1_city) if m1_city.strip() else (26.14, -81.79, "Solar Ground")
+        if m1_city.strip():
+            st.caption(f"📍 Resolved: `{m1_res}` ({m1_lat:.2f}°, {m1_lon:.2f}°)")
+
+    with col_m2:
+        st.markdown("""
+        <div class="lunar-pillar">
+            <h4 style="color:#c0a0ff; margin-top:0;">🌙 Lunar Feminine Mirror (The Well)</h4>
+            <small style="color:#c0a0ff;">Magnetic containment • Descending water/earth • The unspoken depths</small>
+        </div>
+        """, unsafe_allow_html=True)
+        mirror_mode = st.radio("Mirror Configuration", ["Living Counter-Vessel (Person)", "Sophia Shadow Inversion (Automated Twin)"], horizontal=True)
+
+        if mirror_mode == "Living Counter-Vessel (Person)":
+            m2_name = st.text_input("Counter-Vessel Name", placeholder="e.g. Partner, Child, or Catalyst", key="m2_name")
+            c1b, c2b, c3b, c4b = st.columns([1.2, 1, 1, 1.2])
+            with c1b:
+                m2_yr = st.number_input("Year", min_value=1, max_value=9999, value=1992, key="m2_yr")
+            with c2b:
+                m2_mo = st.number_input("Month", min_value=1, max_value=12, value=6, key="m2_mo")
+            with c3b:
+                m2_dy = st.number_input("Day", min_value=1, max_value=31, value=21, key="m2_dy")
+            with c4b:
+                m2_time = st.time_input("Hour / Minute", value=datetime.time(0, 0), key="m2_time")
+
+            m2_city = st.text_input("Counter Location (City, State / Country)", placeholder="e.g. London, UK or Athens, Greece", key="m2_city")
+            m2_lat, m2_lon, m2_res = geocode_location(m2_city) if m2_city.strip() else (51.50, -0.12, "Lunar Ground")
+            if m2_city.strip():
+                st.caption(f"📍 Resolved: `{m2_res}` ({m2_lat:.2f}°, {m2_lon:.2f}°)")
+        else:
+            m2_name = f"Inverse {m1_name}" if m1_name else "Shadow Twin"
+            m2_yr = m1_yr
+            m2_mo = 13 - m1_mo
+            m2_dy = 32 - m1_dy if m1_dy <= 31 else 1
+            m2_time = datetime.time((m1_time.hour + 12) % 24, (m1_time.minute + 30) % 60)
+            m2_lat = -m1_lat
+            m2_lon = (m1_lon + 180) % 360 - 180
+            m2_res = f"Antipodal Earth Ground ({m2_lat:.2f}°, {m2_lon:.2f}°)"
+            st.info(f"✨ **Automated Shadow Twin Initialized**: Polar Inversion at `{m2_res}` | Midnight Solar Phase")
+
+    # Mirror Calculations
+    lp1 = life_path_components(m1_yr, m1_mo, m1_dy)
+    prof1 = name_profile(m1_name)
+    expr1 = prof1["expression"] if prof1["expression"] > 0 else 1
+    pitch1 = reduce_number(round(abs(m1_lat) + abs(m1_lon)))
+
+    lp2 = life_path_components(m2_yr, m2_mo, m2_dy)
+    prof2 = name_profile(m2_name)
+    expr2 = prof2["expression"] if prof2["expression"] > 0 else 9
+    pitch2 = reduce_number(round(abs(m2_lat) + abs(m2_lon)))
+
+    diff_lp = abs(lp1 - lp2)
+    diff_expr = abs(expr1 - expr2)
+    is_balanced = (diff_lp in (0, 2, 4, 8) and diff_expr in (0, 2, 4))
+    harmonic_ratio = 1.0 - (min(diff_lp + diff_expr, 10) / 10.0)
+
+    # Flower of life geometry
+    fol_r = 46
+    cx_fol, cy_fol = 280, 260
+    centers = [(cx_fol, cy_fol)]
+    for angle_deg in range(0, 360, 60):
+        rad = math.radians(angle_deg)
+        centers.append((cx_fol + fol_r * math.cos(rad), cy_fol + fol_r * math.sin(rad)))
+    for angle_deg in range(0, 360, 30):
+        rad = math.radians(angle_deg)
+        dist = fol_r * (math.sqrt(3) if angle_deg % 60 != 0 else 2.0)
+        centers.append((cx_fol + dist * math.cos(rad), cy_fol + dist * math.sin(rad)))
+
+    fol_svg = "".join([
+        f'<circle cx="{c[0]:.1f}" cy="{c[1]:.1f}" r="{fol_r}" fill="none" stroke="rgba(212,175,55,0.12)" stroke-width="1"/>'
+        for c in centers
+    ])
+
+    neck_width = 8 + int(harmonic_ratio * 36)
+    neck_left = cx_fol - neck_width
+    neck_right = cx_fol + neck_width
+
+    top_apex_y = 40
+    top_rim_y = 110
+    top_left_x = cx_fol - 145
+    top_right_x = cx_fol + 145
+
+    bot_rim_y = 410
+    bot_apex_y = 480
+    bot_left_x = cx_fol - 145
+    bot_right_x = cx_fol + 145
+
+    neck_glow = "#ffffff" if is_balanced else "#f5c542"
+    vesica_opacity = 0.55 if is_balanced else 0.18
+
+    sophia_svg = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin:0; background:transparent; display:flex; justify-content:center; align-items:center;">
+    <svg width="560" height="580" viewBox="0 0 560 580" xmlns="http://www.w3.org/2000/svg" style="background:radial-gradient(circle at 50% 20%, #201505 0%, #070312 80%); border:1px solid rgba(212,175,55,0.4); border-radius:14px; box-shadow:0 0 40px rgba(0,0,0,0.95);">
+        
+        <!-- 1. The Flower of Life Sacred Matrix (Background) -->
+        <g id="flower-of-life-matrix">
+            <circle cx="{cx_fol}" cy="{cy_fol}" r="225" fill="none" stroke="rgba(212,175,55,0.2)" stroke-width="1.5" stroke-dasharray="4,4"/>
+            {fol_svg}
+        </g>
+
+        <!-- 2. Central Vesica Piscis (The Sophia Aperture / The Neck) -->
+        <ellipse cx="{cx_fol}" cy="{cy_fol}" rx="{neck_width + 14}" ry="38" fill="rgba(255,255,255,{vesica_opacity})" stroke="{neck_glow}" stroke-width="2.5" style="filter: drop-shadow(0 0 16px {neck_glow});"/>
+        <circle cx="{cx_fol}" cy="{cy_fol}" r="6" fill="#ffffff" stroke="{neck_glow}" stroke-width="2"/>
+
+        <!-- 3. Upper Chalice (Solar Masculine / Electric Incandescent Gold) -->
+        <polygon points="{cx_fol},{top_apex_y} {top_left_x},{top_rim_y} {neck_left},{cy_fol - 14} {neck_right},{cy_fol - 14} {top_right_x},{top_rim_y}" fill="rgba(255,200,50,0.28)" stroke="#ffd700" stroke-width="3" style="filter: drop-shadow(0 0 16px rgba(255,215,0,0.75));"/>
+        
+        <!-- Solar Diamond Facet Lines -->
+        <line x1="{cx_fol}" y1="{top_apex_y}" x2="{cx_fol}" y2="{cy_fol - 14}" stroke="#fff4cc" stroke-width="2"/>
+        <line x1="{top_left_x}" y1="{top_rim_y}" x2="{top_right_x}" y2="{top_rim_y}" stroke="rgba(255,215,0,0.6)" stroke-width="1.5"/>
+        <line x1="{top_left_x}" y1="{top_rim_y}" x2="{cx_fol}" y2="{cy_fol - 14}" stroke="rgba(255,215,0,0.45)" stroke-width="1.2"/>
+        <line x1="{top_right_x}" y1="{top_rim_y}" x2="{cx_fol}" y2="{cy_fol - 14}" stroke="rgba(255,215,0,0.45)" stroke-width="1.2"/>
+
+        <!-- Upper Node Markers -->
+        <circle cx="{cx_fol}" cy="{top_apex_y}" r="7" fill="#ffffff" stroke="#ffd700" stroke-width="2.5"/>
+        <text x="{cx_fol}" y="{top_apex_y - 12}" fill="#fff4cc" font-size="11" font-weight="700" text-anchor="middle" font-family="Cinzel">SOLAR APEX ({lp1})</text>
+        <circle cx="{top_left_x}" cy="{top_rim_y}" r="5" fill="#ffd700"/>
+        <circle cx="{top_right_x}" cy="{top_rim_y}" r="5" fill="#ffd700"/>
+        <text x="{top_left_x - 10}" y="{top_rim_y + 4}" fill="#ffd700" font-size="10" font-weight="700" text-anchor="end" font-family="Cinzel">TONE {expr1}</text>
+        <text x="{top_right_x + 10}" y="{top_rim_y + 4}" fill="#ffd700" font-size="10" font-weight="700" text-anchor="start" font-family="Cinzel">PITCH {pitch1}</text>
+
+        <!-- 4. Lower Chalice (Lunar Feminine / Abyssal Obsidian & Violet) -->
+        <polygon points="{neck_left},{cy_fol + 14} {neck_right},{cy_fol + 14} {bot_right_x},{bot_rim_y} {cx_fol},{bot_apex_y} {bot_left_x},{bot_rim_y}" fill="rgba(120,60,240,0.32)" stroke="#c0a0ff" stroke-width="3" style="filter: drop-shadow(0 0 16px rgba(192,160,255,0.7));"/>
+
+        <!-- Lunar Diamond Facet Lines -->
+        <line x1="{cx_fol}" y1="{cy_fol + 14}" x2="{cx_fol}" y2="{bot_apex_y}" stroke="#e6d5ff" stroke-width="2"/>
+        <line x1="{bot_left_x}" y1="{bot_rim_y}" x2="{bot_right_x}" y2="{bot_rim_y}" stroke="rgba(192,160,255,0.6)" stroke-width="1.5"/>
+        <line x1="{bot_left_x}" y1="{bot_rim_y}" x2="{cx_fol}" y2="{cy_fol + 14}" stroke="rgba(192,160,255,0.45)" stroke-width="1.2"/>
+        <line x1="{bot_right_x}" y1="{bot_rim_y}" x2="{cx_fol}" y2="{cy_fol + 14}" stroke="rgba(192,160,255,0.45)" stroke-width="1.2"/>
+
+        <!-- Lower Node Markers -->
+        <circle cx="{cx_fol}" cy="{bot_apex_y}" r="7" fill="#ffffff" stroke="#c0a0ff" stroke-width="2.5"/>
+        <text x="{cx_fol}" y="{bot_apex_y + 20}" fill="#e6d5ff" font-size="11" font-weight="700" text-anchor="middle" font-family="Cinzel">LUNAR NADIR ({lp2})</text>
+        <circle cx="{bot_left_x}" cy="{bot_rim_y}" r="5" fill="#c0a0ff"/>
+        <circle cx="{bot_right_x}" cy="{bot_rim_y}" r="5" fill="#c0a0ff"/>
+        <text x="{bot_left_x - 10}" y="{bot_rim_y + 4}" fill="#c0a0ff" font-size="10" font-weight="700" text-anchor="end" font-family="Cinzel">TONE {expr2}</text>
+        <text x="{bot_right_x + 10}" y="{bot_rim_y + 4}" fill="#c0a0ff" font-size="10" font-weight="700" text-anchor="start" font-family="Cinzel">PITCH {pitch2}</text>
+
+        <!-- 5. Subterranean Tree of Knowledge Roots (Bottom Foundation) -->
+        <g id="tree-of-knowledge-roots" stroke="#8a60cc" stroke-width="1.4" opacity="0.6" fill="none">
+            <path d="M {cx_fol} {bot_apex_y} Q {cx_fol - 25} {bot_apex_y + 35}, {cx_fol - 50} {bot_apex_y + 55}"/>
+            <path d="M {cx_fol} {bot_apex_y} Q {cx_fol + 25} {bot_apex_y + 35}, {cx_fol + 50} {bot_apex_y + 55}"/>
+            <path d="M {cx_fol} {bot_apex_y} Q {cx_fol - 8} {bot_apex_y + 40}, {cx_fol - 15} {bot_apex_y + 65}"/>
+            <path d="M {cx_fol} {bot_apex_y} Q {cx_fol + 8} {bot_apex_y + 40}, {cx_fol + 15} {bot_apex_y + 65}"/>
+            <circle cx="{cx_fol - 50}" cy="{bot_apex_y + 55}" r="3" fill="#8a60cc"/>
+            <circle cx="{cx_fol + 50}" cy="{bot_apex_y + 55}" r="3" fill="#8a60cc"/>
+            <circle cx="{cx_fol - 15}" cy="{bot_apex_y + 65}" r="3" fill="#8a60cc"/>
+            <circle cx="{cx_fol + 15}" cy="{bot_apex_y + 65}" r="3" fill="#8a60cc"/>
+        </g>
+        <text x="{cx_fol}" y="{bot_apex_y + 80}" fill="#9d76e8" font-size="9" font-weight="700" text-anchor="middle" font-family="Cinzel">ROOTS OF GNOSIS</text>
+
+        <!-- Central Axis Ray (The Axis Mundi) -->
+        <line x1="{cx_fol}" y1="{top_apex_y}" x2="{cx_fol}" y2="{bot_apex_y}" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="2,3"/>
+
+        <!-- Center Inscription -->
+        <text x="{cx_fol}" y="{cy_fol + 4}" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle" font-family="Cinzel">BINDU</text>
+    </svg>
+    </body>
+    </html>
+    """
+
+    components.html(sophia_svg, height=600)
+
+    # ==========================================
+    # SOPHIA MIRROR DIAGNOSTIC HUD
+    # ==========================================
+    h_c1, h_c2, h_c3 = st.columns(3)
+
+    with h_c1:
+        st.markdown(f"""
+        <div class="brass-panel" style="padding: 18px;">
+            <div class="verse-badge">THE CRUCIBLE POLARITY</div>
+            <h3 style="color:#fff4cc; margin: 4px 0;">Vector: {('Symmetrical Lock' if is_balanced else 'Dynamic Shear')}</h3>
+            <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                Solar Root <strong>{lp1}</strong> meets Lunar Root <strong>{lp2}</strong>.<br>
+                {('Opposing currents have locked into structural equilibrium. Sheer contrast provides high creative torque without tearing the perimeter.' if is_balanced else 'High magnetic tension between the two vessels. One side must consciously yield containment to avoid voltage blowout.')}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with h_c2:
+        st.markdown(f"""
+        <div class="brass-panel" style="padding: 18px;">
+            <div class="verse-badge">THE BINDU THRESHOLD (NECK)</div>
+            <h3 style="color:#fff4cc; margin: 4px 0;">Aperture: {int(harmonic_ratio * 100)}% Open</h3>
+            <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                Bridging Frequency: <strong>{reduce_number(lp1 + lp2)}</strong>.<br>
+                This single number is the eye of the needle. When conversations or decisions pass through this tone, the tension dissolves.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with h_c3:
+        st.markdown(f"""
+        <div class="brass-panel" style="padding: 18px;">
+            <div class="verse-badge">GEOMAGNETIC DISPLACEMENT</div>
+            <h3 style="color:#fff4cc; margin: 4px 0;">Delta: {abs(pitch1 - pitch2)} Pitch</h3>
+            <p style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                Solar Soil vibrates to <strong>Pitch {pitch1}</strong>; Lunar Soil vibrates to <strong>Pitch {pitch2}</strong>.<br>
+                Physical distance and terrain create the space required for the alchemical distillation to cool.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Master Mirror Synthesis
+    v1_display = m1_name if m1_name.strip() else "Solar Vessel"
+    v2_display = m2_name if m2_name.strip() else "Lunar Vessel"
     st.markdown(f"""
-    <div class="brass-panel">
-        <h4 style="color:#f5c542; margin-top:0;">Synthesis Verdict</h4>
-        <p style="font-size: 1.05rem; line-height: 1.7;">{comp_result}</p>
+    <div class="tincture-box">
+        <strong style="color: #f5c542; font-family: 'Cinzel', serif;">The Sophia Mirror Verdict for {v1_display} and {v2_display}:</strong><br><br>
+        This union does not seek passive sameness; it is calibrated for <strong>the alchemy of fierce contrast</strong>. 
+        The Solar Vessel projects through <strong>Tone {expr1}</strong>, while the Lunar Mirror operates from the deep reserve of <strong>Tone {expr2}</strong>. 
+        <strong>Operational Directive:</strong> Do not attempt to force the lower chalice to think like the upper cone. The secret of the Crystal Sophia is that the center stays motionless while the poles counter-rotate. Respect the narrow threshold ({reduce_number(lp1 + lp2)}) as holy ground where translation takes precedence over conquest.
     </div>
     """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 6: PATTERN & FREQUENCY ENGINE
+# TAB 6: PATTERN & FREQUENCY ENGINE (Multi-Script Ciphers)
 # ----------------------------------------------------
 with tabs[5]:
-    st.markdown("<h3 style='color:#f5c542;'>Pattern & Frequency Engine</h3>", unsafe_allow_html=True)
-    st.markdown("Latin ciphers, angelic repetitions, and character frequency distributions.")
+    st.markdown("<h3 style='color:#f5c542;'>Universal Pattern & Multi-Lingual Frequency Engine</h3>", unsafe_allow_html=True)
+    st.markdown("Automatic script detection for Hebrew Gematria, Greek Isopsephy, Cyrillic, Arabic Abjad, Spanish, and Latin.")
 
-    cipher_input = st.text_input("Stream Analysis Field", value="The Hidden Light")
+    cipher_input = st.text_input("Universal Analysis Field (Type in English, Russian, Greek, Hebrew, Spanish, etc.):", value="The Hidden Light")
     if cipher_input:
-        c_res = run_latin_cipher(cipher_input)
+        c_res = run_universal_cipher(cipher_input)
         col_p1, col_p2, col_p3 = st.columns(3)
-        col_p1.metric("Simple Cipher", c_res["simple"])
-        col_p2.metric("Reverse Cipher", c_res["reverse"])
+        col_p1.metric(f"Tradition Sum ({c_res['script']})", c_res["simple"])
+        col_p2.metric("Script Lineage", c_res["script"])
         col_p3.metric("Reduced Root", c_res["reduced"])
 
         st.markdown(f"**Angel Synchronicity Check:** {angel_read(str(c_res['simple']))}")
-        st.markdown(f"**Frequency Scan:** {script_readings(cipher_input)}")
+        st.markdown(f"**Script Lineage & Character Scan:** {script_readings(cipher_input)}")
         st.markdown(f"**Root Interpretation:** {meaning(c_res['reduced'])}")
