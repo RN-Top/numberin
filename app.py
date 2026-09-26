@@ -1,8 +1,12 @@
 """
-VOYNICH MANUSCRIPT & NUMBERIN MASTER SUITE (FULL UNIFIED CONTAINER)
-Zero-dependency architecture: Native Streamlit, Pandas, NumPy, Plotly, pure SVG.
-Preserves all mathematical decoders, 30,000 BCE Eve's God Calendar, 7-7-7 Alchemical Alembic,
-Descriptive Syzygy Frequency Maps, Spot Pies, and the complete 220+ Folio Codex Ingestion.
+NUMBERIN & VOYNICH MASTER SUITE (ZERO-DEPENDENCY CONTAINER)
+Zero external graphical dependencies: Native Streamlit, Pandas, NumPy, pure SVG.
+Preserves:
+- 30,000 BCE Eve's God Calendar
+- 3-Dot Frequency Presets (432, 528, 963 Hz)
+- 7-7-7 Alchemical Alembic (Personable Living Readings)
+- Pure SVG Concentric Syzygy Rota Map
+- Complete Codex Ingestion across all 220+ Folios
 """
 
 import os
@@ -13,12 +17,11 @@ import urllib.request
 from collections import Counter
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
-# -----------------------------------------------------------------------------
-# APPLICATION CONFIGURATION
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# APPLICATION SETUP
+# ---------------------------------------------------------
 st.set_page_config(
     page_title="Numberin & Voynich Master Workbench 💥",
     page_icon="💥",
@@ -26,9 +29,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# -----------------------------------------------------------------------------
-# NUMEROLOGY, CHRONOLOGY & DEEP ASTRONOMICAL ENGINES
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# 1. CORE NUMEROLOGY & DEEP ASTRONOMICAL ENGINES
+# ---------------------------------------------------------
 CHALDEAN_MAP = {
     'A': 1, 'I': 1, 'J': 1, 'Q': 1, 'Y': 1,
     'B': 2, 'K': 2, 'R': 2,
@@ -105,7 +108,6 @@ def get_deep_calendar_reading(target_year: int, month: int, day: int, base_year:
     elapsed_moons = abs(round(total_moons))
     great_years = round(abs(diff_years) / 25772.0, 3)
 
-    # Chaldean planetary day/ruler index
     try:
         dt = datetime.date(abs(target_year), month, day)
         dow = dt.weekday()
@@ -128,9 +130,9 @@ def get_deep_calendar_reading(target_year: int, month: int, day: int, base_year:
         "year_root": year_vib
     }
 
-# -----------------------------------------------------------------------------
-# REPOSITORIES: 7-7-7 ALCHEMY & SACRED SEVENS
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# 2. 7-7-7 ALCHEMY & APPARATUS ROLES
+# ---------------------------------------------------------
 HEPTAGRAM_777 = {
     0: {"day": "Monday", "planet": "Moon ☽", "metal": "Silver", "essence": "Fluidity, Subconscious Memory, Receptivity", "tincture": "The White Elixir (Albedo)"},
     1: {"day": "Tuesday", "planet": "Mars ♂", "metal": "Iron", "essence": "Kinetic Will, Fire, Courage to Sever What Decays", "tincture": "The Martial Tincture"},
@@ -139,16 +141,6 @@ HEPTAGRAM_777 = {
     4: {"day": "Friday", "planet": "Venus ♀", "metal": "Copper", "essence": "Sacred Affinity, Harmonizing Heart, Healing Beauty", "tincture": "The Emerald Tincture"},
     5: {"day": "Saturday", "planet": "Saturn ♄", "metal": "Lead", "essence": "Sacred Boundary, Humility, Patience of the Root", "tincture": "The Black Foundation"},
     6: {"day": "Sunday", "planet": "Sun ☉", "metal": "Gold", "essence": "Luminous Spirit, Radiant Wholeness, Solar Vitality", "tincture": "The Aurum Potabile (Living Gold)"}
-}
-
-ROLE_COLORS = {
-    "heat": "#FF0000",
-    "medium": "#00FFFF",
-    "outlet": "#FFA500",
-    "reflux": "#800080",
-    "retain": "#008000",
-    "drain": "#000000",
-    "unmapped": "#808080"
 }
 
 def tag_token_role(token: str) -> str:
@@ -169,14 +161,13 @@ def tag_token_role(token: str) -> str:
         return "reflux"
     return "unmapped"
 
-# -----------------------------------------------------------------------------
-# SIDEBAR: 3 FREQUENCY PRESETS, AUDIO & 30,000 BCE EVE'S GOD CALENDAR
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# 3. SIDEBAR: 3-DOT FREQUENCIES & EVE'S GOD CALENDAR
+# ---------------------------------------------------------
 with st.sidebar:
     st.title("💥 Numberin Suite")
     st.caption("Harmonic Tunings & Deep Celestial Chronology")
 
-    # 1. THREE-DOT FREQUENCY PRESET
     st.markdown("### 🎛️ Sacred Frequency Preset")
     freq_preset = st.radio(
         "Harmonic Wave Anchor:",
@@ -192,9 +183,8 @@ with st.sidebar:
 
     st.write("---")
 
-    # 2. EVE'S GOD CALENDAR (-30,000 BCE TO +5,000 CE)
     st.markdown("### 🌙 Eve's Cosmic Calendar (God's Rota)")
-    st.caption("Deep Astronomical Calculator: Dawn of the Great Precession (-30,000 BCE) to Future Ephemerides (+5,000 CE)")
+    st.caption("Deep Chronology: Ancient Foundations (-30,000 BCE) to Future Ephemerides (+5,000 CE)")
 
     cal_year = st.number_input("Year (Deep Chronology)", min_value=-30000, max_value=5000, value=2026, step=1)
     col_m, col_d = st.columns(2)
@@ -209,17 +199,17 @@ with st.sidebar:
     st.markdown(f"**Luminosity:** `{deep_cal['illumination']}% Illumination`")
     st.markdown(f"**Governing Celestial Sphere:** `{deep_cal['governing_ruler']}`")
     st.markdown(f"**Annual Vibration:** `Root {deep_cal['year_root']}`")
-    st.markdown(f"**Elapsed Moons:** `{deep_cal['total_moons']:,} cycles`")
+    st.markdown(f"**Elapsed Moons:** `{deep_cal['total_moons']:,} lunations`")
     st.markdown(f"**Equivalent Solar Distance:** `{abs(deep_cal['diff_years']):,} years`")
     st.markdown(f"**Great Precession Cycles (~26,000y):** `{deep_cal['great_years']} Great Years`")
     st.markdown(f"**Julian Day:** `{deep_cal['jd']}`")
 
     st.write("---")
-    uploaded_corpus = st.file_uploader("Upload ZL3b-n.txt / Master Corpus (If offline)", type=["txt", "csv"])
+    uploaded_corpus = st.file_uploader("Upload ZL3b-n.txt / Corpus CSV (If offline)", type=["txt", "csv"])
 
-# -----------------------------------------------------------------------------
-# FULL-BOOK HYDRATION & REPOSITORY PARSER (ALL QUIRES)
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# 4. FULL MANUSCRIPT HYDRATION ENGINE
+# ---------------------------------------------------------
 @st.cache_data(show_spinner="Hydrating full manuscript across all 220+ folios...")
 def load_entire_manuscript(uploaded_file=None):
     raw_text = None
@@ -241,7 +231,7 @@ def load_entire_manuscript(uploaded_file=None):
             pass
 
     if not raw_text:
-        return pd.DataFrame(columns=["folio", "line_num", "locus", "token", "clean", "carrier", "role", "state"])
+        return pd.DataFrame(columns=["folio", "line_num", "locus", "token", "carrier", "role", "state"])
 
     records = []
     line_regex = re.compile(r"<f(\d+[rv]\d?)\.([0-9A-Za-z]+),?([^>]+)?>\s*(.*)")
@@ -270,7 +260,6 @@ def load_entire_manuscript(uploaded_file=None):
                     "line_num": line_idx,
                     "locus": locus,
                     "token": clean_tok,
-                    "clean": clean_tok,
                     "carrier": carrier if carrier else clean_tok,
                     "role": role,
                     "state": state
@@ -279,29 +268,72 @@ def load_entire_manuscript(uploaded_file=None):
 
 corpus_df = load_entire_manuscript(uploaded_corpus)
 
-# -----------------------------------------------------------------------------
-# MAIN WORKBENCH: THE UNIFIED TABS
-# -----------------------------------------------------------------------------
-(
-    tab_alchemy, tab_map, tab_books, tab_syzygy,
-    tab_holdout, tab_pies, tab_export
-) = st.tabs([
+# ---------------------------------------------------------
+# 5. PURE SVG ROTA & SYZYGY GENERATOR (ZERO-DEPENDENCY)
+# ---------------------------------------------------------
+def render_pure_svg_syzygy_rota(f1_deg: float, f2_deg: float, num_spokes: int, show_syzygy: bool, is_locked: bool) -> str:
+    cx, cy, r_max = 250, 250, 210
+    svg = [f'<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="background:#04060d; border-radius:12px;">']
+
+    # Concentric Bands
+    radii = [r_max * 0.35, r_max * 0.70, r_max]
+    band_names = ["Center Medallion", "Inner Decan Band (@Lz)", "Outer Prose (@Cc)"]
+    for r, name in zip(radii, band_names):
+        dash = 'stroke-dasharray="4,4"' if r < r_max else ''
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="rgba(0, 243, 255, 0.25)" stroke-width="1.5" {dash}/>')
+
+    # Radial Spokes
+    spoke_angles = np.linspace(0, 360, num_spokes, endpoint=False)
+    for ang in spoke_angles:
+        rad = math.radians(ang)
+        x2 = cx + r_max * math.cos(rad)
+        y2 = cy + r_max * math.sin(rad)
+        svg.append(f'<line x1="{cx}" y1="{cy}" x2="{x2}" y2="{y2}" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1"/>')
+
+    # Carrier Nodes
+    ra1 = math.radians(f1_deg)
+    xa1 = cx + (r_max * 0.85) * math.cos(ra1)
+    ya1 = cy + (r_max * 0.85) * math.sin(ra1)
+
+    ra2 = math.radians(f2_deg)
+    xa2 = cx + (r_max * 0.85) * math.cos(ra2)
+    ya2 = cy + (r_max * 0.85) * math.sin(ra2)
+
+    # Syzygy Opposition Beam
+    if show_syzygy:
+        beam_color = "#ffea00" if is_locked else "rgba(255, 234, 0, 0.3)"
+        beam_width = "3.5" if is_locked else "1.5"
+        dash_beam = '' if is_locked else 'stroke-dasharray="3,3"'
+        svg.append(f'<line x1="{xa1}" y1="{ya1}" x2="{xa2}" y2="{ya2}" stroke="{beam_color}" stroke-width="{beam_width}" {dash_beam}/>')
+
+    # F1 Marker (Cyan Diamond)
+    svg.append(f'<polygon points="{xa1},{ya1-8} {xa1+8},{ya1} {xa1},{ya1+8} {xa1-8},{ya1}" fill="#00f3ff"/>')
+    svg.append(f'<text x="{xa1+12}" y="{ya1+4}" fill="#00f3ff" font-size="12" font-family="sans-serif">F1 ({f1_deg}°)</text>')
+
+    # F2 Marker (Magenta Diamond)
+    svg.append(f'<polygon points="{xa2},{ya2-8} {xa2+8},{ya2} {xa2},{ya2+8} {xa2-8},{ya2}" fill="#ff0055"/>')
+    svg.append(f'<text x="{xa2+12}" y="{ya2+4}" fill="#ff0055" font-size="12" font-family="sans-serif">F2 ({f2_deg}°)</text>')
+
+    svg.append('</svg>')
+    return "".join(svg)
+
+# ---------------------------------------------------------
+# 6. UNIFIED MAIN WORKBENCH
+# ---------------------------------------------------------
+tab_alchemy, tab_map, tab_books, tab_proof = st.tabs([
     "⚗️ Spiritual Alchemy (The Living Alembic)",
     "🌌 Descriptive Frequency & Syzygy Map",
     "📖 The Books of Knowledge (Full Codex Reader)",
-    "⚖️ Dual-Mirror Resonance Engine",
-    "🎯 90.2% Blind Proof",
-    "📂 Spot Pies & Physical Loci",
-    "💾 Export Corpora"
+    "🎯 90.2% Blind Proof"
 ])
 
-# =============================================================================
-# TAB 1: SPIRITUAL ALCHEMY (GENUINE, PERSONABLE, BALANCED)
-# =============================================================================
+# =========================================================
+# TAB 1: SPIRITUAL ALCHEMY
+# =========================================================
 with tab_alchemy:
     st.subheader("⚗️ The Living Alembic: Balancing Flesh and Spirit")
     st.markdown("""
-    In spiritual alchemy, we do not view this codex as cold chemistry or a machine puzzle. 
+    In spiritual alchemy, we do not view this manuscript as a dry chemistry book or a mechanical puzzle. 
     It is the record of how **the Body (the Flesh)** and **the Breath (the Spirit)** work together to transform a life.
     
     * **The Flesh (Sophia / The Body):** The copper still, the dark earth, the crushed botanical roots, and the water baths. This is your tangible foundation—your physical health, discipline, and daily reality.
@@ -315,14 +347,10 @@ with tab_alchemy:
         st.markdown("#### 1. Ingest Your Subject Into the Cucurbit")
         subject_input = st.text_input("Name, Intention, or Question to Distill:", value="Awakening the Soul")
 
-        st.caption("Calibrate the Distillation Date:")
         c_y, c_m_a, c_d_a = st.columns(3)
-        with c_y:
-            op_year = st.number_input("Distillation Year", min_value=-30000, max_value=5000, value=cal_year, step=1, key="op_y")
-        with c_m_a:
-            op_month = st.number_input("Month", min_value=1, max_value=12, value=cal_month, step=1, key="op_m")
-        with c_d_a:
-            op_day = st.number_input("Day", min_value=1, max_value=31, value=cal_day, step=1, key="op_d")
+        with c_y: op_year = st.number_input("Distillation Year", min_value=-30000, max_value=5000, value=cal_year, step=1, key="op_y")
+        with c_m_a: op_month = st.number_input("Month", min_value=1, max_value=12, value=cal_month, step=1, key="op_m")
+        with c_d_a: op_day = st.number_input("Day", min_value=1, max_value=31, value=cal_day, step=1, key="op_d")
 
         try:
             target_dt = datetime.date(abs(op_year), op_month, op_day)
@@ -356,7 +384,6 @@ with tab_alchemy:
 
     if nexus_root in (1, 5, 9):
         stage_name = "Nigredo (The Dark Soil / Calcination)"
-        stage_tincture = current_hept["tincture"]
         personal_reading = (
             "Right now, the fire is burning away everything that isn't truly yours. Nigredo can feel heavy, "
             "like walking in the dark or watching old habits and identities fall apart. Don't fight it. "
@@ -366,7 +393,6 @@ with tab_alchemy:
         )
     elif nexus_root in (2, 6):
         stage_name = "Albedo (The White Work / Lunar Purification)"
-        stage_tincture = "The White Lily Elixir"
         personal_reading = (
             "The storm has settled and the steam is condensing into still, clear water. Albedo is the phase "
             "of emotional washing, quiet reflection, and forgiveness. You are regaining clarity and peace. "
@@ -375,7 +401,6 @@ with tab_alchemy:
         )
     elif nexus_root in (3, 7):
         stage_name = "Citrinitas (The Golden Dawn / Awakening)"
-        stage_tincture = "The Solar Amber Tincture"
         personal_reading = (
             "The morning sun is touching the vessel. Citrinitas is the awakening of true wisdom—it is that moment "
             "where you don't just understand things in your head, but you feel the truth alive in your bones. "
@@ -384,7 +409,6 @@ with tab_alchemy:
         )
     else:
         stage_name = "Rubedo (The Red Work / The Living Stone)"
-        stage_tincture = "The Philosopher's Stone / Aurum Potabile"
         personal_reading = (
             "This is the sacred marriage: your spirit and your physical life are walking together in total alignment. "
             "In Rubedo, you don't have to leave the world to be spiritual, and you don't have to sacrifice your soul to live in reality. "
@@ -393,20 +417,19 @@ with tab_alchemy:
         )
 
     st.success(f"### Current Phase: **{stage_name}**")
-    st.markdown(f"**Resulting Living Tincture:** `{stage_tincture}`")
+    st.markdown(f"**Resulting Living Tincture:** `{current_hept['tincture']}`")
     st.write(personal_reading)
 
-# =============================================================================
-# TAB 2: DESCRIPTIVE FREQUENCY & SYZYGY MAP (NO CIRCLE OF DOTS)
-# =============================================================================
+# =========================================================
+# TAB 2: PURE SVG DESCRIPTIVE SYZYGY MAP
+# =========================================================
 with tab_map:
     st.subheader("Descriptive Celestial Rota & Real-Time Syzygy Engine")
-    st.caption("Concentric decan rings, spoke rays, syzygy opposition axes, and reading exports.")
+    st.caption("Native vector rendering with concentric bands, radiating decan spokes, and opposition rays.")
 
-    c_map_ctrl, c_map_view = st.columns([1, 2.2])
+    c_map_ctrl, c_map_view = st.columns([1, 1.8])
 
     with c_map_ctrl:
-        st.markdown("#### Dial Calibration")
         f1_angle = st.slider("Frequency / Carrier A Heading (°)", 0, 360, 45, step=5)
         f2_angle = st.slider("Frequency / Carrier B Heading (°)", 0, 360, 225, step=5)
         num_spokes = st.selectbox("Radial Spoke Layout", [12, 24, 36], index=2)
@@ -417,7 +440,6 @@ with tab_map:
         resonance = round(math.cos(math.radians(delta / 2)) ** 2 * 100, 2)
 
         st.write("---")
-        st.markdown("#### Live Syzygy Reading")
         st.metric("Phase Difference (Δθ)", f"{delta}°")
         st.metric("Harmonic Resonance", f"{resonance}%", delta="SYZYGY ACTIVE ⚡" if is_syzygy_locked else "Off-Axis")
 
@@ -438,79 +460,12 @@ with tab_map:
         )
 
     with c_map_view:
-        fig = go.Figure()
+        svg_code = render_pure_svg_syzygy_rota(f1_angle, f2_angle, num_spokes, show_syzygy, is_syzygy_locked)
+        st.markdown(svg_code, unsafe_allow_html=True)
 
-        # Concentric Bands
-        for r_val, band_name in zip([1.0, 1.8, 2.6], ["Center Medallion", "Decan Band (@Lz)", "Concentric Prose (@Cc)"]):
-            t_pts = np.linspace(0, 2 * np.pi, 250)
-            fig.add_trace(go.Scatter(
-                x=r_val * np.cos(t_pts),
-                y=r_val * np.sin(t_pts),
-                mode='lines',
-                line=dict(color='rgba(0, 243, 255, 0.25)', width=1.5, dash='dash' if r_val < 2.6 else 'solid'),
-                hoverinfo='none',
-                showlegend=False
-            ))
-
-        # Radial Spokes
-        spoke_rads = np.linspace(0, 360, num_spokes, endpoint=False)
-        for sp in spoke_rads:
-            r_ang = math.radians(sp)
-            fig.add_trace(go.Scatter(
-                x=[0, 2.6 * math.cos(r_ang)],
-                y=[0, 2.6 * math.sin(r_ang)],
-                mode='lines',
-                line=dict(color='rgba(255, 255, 255, 0.1)', width=1),
-                hoverinfo='none',
-                showlegend=False
-            ))
-
-        # Carrier Node A
-        ra = math.radians(f1_angle)
-        xa, ya = 2.2 * math.cos(ra), 2.2 * math.sin(ra)
-        fig.add_trace(go.Scatter(
-            x=[xa], y=[ya],
-            mode='markers+text',
-            marker=dict(size=14, color='#00f3ff', symbol='diamond'),
-            text=[f"F1 ({f1_angle}°)<br>otcheod"],
-            textposition="top right",
-            name="Carrier A"
-        ))
-
-        # Carrier Node B
-        rb = math.radians(f2_angle)
-        xb, yb = 2.2 * math.cos(rb), 2.2 * math.sin(rb)
-        fig.add_trace(go.Scatter(
-            x=[xb], y=[yb],
-            mode='markers+text',
-            marker=dict(size=14, color='#ff0055', symbol='diamond'),
-            text=[f"F2 ({f2_angle}°)<br>qopair"],
-            textposition="bottom left",
-            name="Carrier B"
-        ))
-
-        # Syzygy Opposition Beam
-        if show_syzygy:
-            fig.add_trace(go.Scatter(
-                x=[xa, xb], y=[ya, yb],
-                mode='lines',
-                line=dict(color='#ffea00' if is_syzygy_locked else 'rgba(255, 234, 0, 0.3)', width=3 if is_syzygy_locked else 1, dash='dot'),
-                name="Syzygy Axis"
-            ))
-
-        fig.update_layout(
-            paper_bgcolor="#04060d",
-            plot_bgcolor="#04060d",
-            xaxis=dict(visible=False, range=[-3.2, 3.2]),
-            yaxis=dict(visible=False, range=[-3.2, 3.2], scaleanchor="x", scaleratio=1),
-            margin=dict(l=15, r=15, t=30, b=15),
-            legend=dict(font=dict(color="#ffffff"), orientation="h", yanchor="bottom", y=1.02)
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-# =============================================================================
-# TAB 3: THE BOOKS OF KNOWLEDGE (FULL CODEX DECIPHERER)
-# =============================================================================
+# =========================================================
+# TAB 3: THE BOOKS OF KNOWLEDGE
+# =========================================================
 with tab_books:
     st.subheader("The Books of Knowledge — Complete Foliation Ledger")
 
@@ -548,116 +503,31 @@ with tab_books:
             })
         st.dataframe(pd.DataFrame(book_rows), use_container_width=True)
 
-# =============================================================================
-# TAB 4: DUAL-MIRROR RESONANCE ENGINE
-# =============================================================================
-with tab_syzygy:
-    st.subheader("Dual-Mirror Syzygy Interference Matrix")
-    st.markdown("Interferometric resonance modeling between paired frequencies $f_1$ and $f_2$.")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        f_in_1 = st.number_input("Frequency 1 (Hz)", value=432.0, step=1.0)
-    with c2:
-        f_in_2 = st.number_input("Frequency 2 (Hz)", value=528.0, step=1.0)
-
-    harm_ratio = f_in_1 / f_in_2 if f_in_2 != 0 else 0
-    st.markdown(f"**Harmonic Interval Ratio ($f_1 / f_2$):** `{round(harm_ratio, 4)}`")
-
-    t = np.linspace(0, 4 * np.pi, 500)
-    y1 = np.sin(t * (f_in_1 / 100))
-    y2 = np.sin(t * (f_in_2 / 100))
-    y_sum = y1 + y2
-
-    wave_fig = go.Figure()
-    wave_fig.add_trace(go.Scatter(x=t, y=y1, mode='lines', name=f'{f_in_1} Hz Carrier', line=dict(color='#00f3ff', width=1)))
-    wave_fig.add_trace(go.Scatter(x=t, y=y2, mode='lines', name=f'{f_in_2} Hz Mirror', line=dict(color='#ff0055', width=1)))
-    wave_fig.add_trace(go.Scatter(x=t, y=y_sum, mode='lines', name='Composite Resonance Envelope', line=dict(color='#ffffff', width=2.5)))
-
-    wave_fig.update_layout(
-        paper_bgcolor="#04060d",
-        plot_bgcolor="#04060d",
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis=dict(showgrid=False, zeroline=False, color="#ffffff"),
-        yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.1)", zeroline=False, color="#ffffff"),
-        legend=dict(font=dict(color="#ffffff"), orientation="h", y=1.1)
-    )
-    st.plotly_chart(wave_fig, use_container_width=True)
-
-# =============================================================================
-# TAB 5: 90.2% BLIND PROOF
-# =============================================================================
-with tab_holdout:
+# =========================================================
+# TAB 4: 90.2% BLIND PROOF
+# =========================================================
+with tab_proof:
     st.header("🎯 Blind Stem-Context Prediction Test (90.2% Accuracy)")
     st.markdown("""
-    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample. 
-    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports.
+    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample[span_12](start_span)[span_12](end_span). 
+    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports[span_13](start_span)[span_13](end_span).
     """)
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Scored Tokens", "437 Loci")
-    c2.metric("Successful Hits", "394 Hits")
-    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")
-    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")
+    c1.metric("Scored Tokens", "437 Loci")[span_14](start_span)[span_14](end_span)
+    c2.metric("Successful Hits", "394 Hits")[span_15](start_span)[span_15](end_span)
+    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")[span_16](start_span)[span_16](end_span)
+    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")[span_17](start_span)[span_17](end_span)
 
     sample_test_runs = [
-        {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
-        {"Folio": "f70v2", "Token": "ykeey", "Extracted Stem": "ykeey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
-        {"Folio": "f70v2", "Token": "tchy", "Extracted Stem": "tchy", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
-        {"Folio": "f70v2", "Token": "yteos", "Extracted Stem": "yteos", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},
-        {"Folio": "f70v2", "Token": "alain", "Extracted Stem": "alain", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},
-        {"Folio": "f70v2", "Token": "olar", "Extracted Stem": "lar", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},
-        {"Folio": "f70v2", "Token": "oteeam", "Extracted Stem": "eeam", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"},
-        {"Folio": "f71r", "Token": "aiin", "Extracted Stem": "aiin", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},
-        {"Folio": "f72r1", "Token": "qokar", "Extracted Stem": "kar", "Predicted Role": "heat", "Actual Context": "heat", "Verdict": "HIT"},
-        {"Folio": "f72v1", "Token": "ypaim", "Extracted Stem": "ypaim", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"}
+        {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_18](start_span)[span_18](end_span)
+        {"Folio": "f70v2", "Token": "ykeey", "Extracted Stem": "ykeey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_19](start_span)[span_19](end_span)
+        {"Folio": "f70v2", "Token": "tchy", "Extracted Stem": "tchy", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_20](start_span)[span_20](end_span)
+        {"Folio": "f70v2", "Token": "yteos", "Extracted Stem": "yteos", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},[span_21](start_span)[span_21](end_span)
+        {"Folio": "f70v2", "Token": "alain", "Extracted Stem": "alain", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},[span_22](start_span)[span_22](end_span)
+        {"Folio": "f70v2", "Token": "olar", "Extracted Stem": "lar", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},[span_23](start_span)[span_23](end_span)
+        {"Folio": "f70v2", "Token": "oteeam", "Extracted Stem": "eeam", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"},[span_24](start_span)[span_24](end_span)
+        {"Folio": "f71r", "Token": "aiin", "Extracted Stem": "aiin", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},[span_25](start_span)[span_25](end_span)
+        {"Folio": "f72r1", "Token": "qokar", "Extracted Stem": "kar", "Predicted Role": "heat", "Actual Context": "heat", "Verdict": "HIT"},[span_26](start_span)[span_26](end_span)
+        {"Folio": "f72v1", "Token": "ypaim", "Extracted Stem": "ypaim", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"}[span_27](start_span)[span_27](end_span)
     ]
     st.dataframe(pd.DataFrame(sample_test_runs), use_container_width=True)
-
-# =============================================================================
-# TAB 6: SPOT PIES & PHYSICAL LOCI
-# =============================================================================
-with tab_pies:
-    st.header("📂 Three-Spot Fold Test: Physical Locus Architecture")
-    front_df = corpus_df[corpus_df["folio"] == "f1r"]
-    center_df = corpus_df[corpus_df["folio"].str.contains("85|86|ros", na=False)]
-    back_df = corpus_df[corpus_df["folio"] == "f116v"]
-
-    def make_pie_trace(sub_df, title_name):
-        r_counts = sub_df["role"].value_counts().to_dict() if len(sub_df) > 0 else {}
-        labels = list(r_counts.keys())
-        values = list(r_counts.values())
-        colors = [ROLE_COLORS.get(l, "#808080") for l in labels]
-        return go.Pie(labels=labels, values=values, marker=dict(colors=colors), hole=0.4, name=title_name)
-
-    c_p1, c_p2, c_p3 = st.columns(3)
-    with c_p1:
-        st.markdown("### 1. FRONT: `f1r`")
-        fig_f = go.Figure(data=[make_pie_trace(front_df, "f1r")])
-        fig_f.update_layout(paper_bgcolor="#04060d", margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-        st.plotly_chart(fig_f, use_container_width=True)
-    with c_p2:
-        st.markdown("### 2. CENTER: Rosettes")
-        fig_c = go.Figure(data=[make_pie_trace(center_df, "Rosettes")])
-        fig_c.update_layout(paper_bgcolor="#04060d", margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-        st.plotly_chart(fig_c, use_container_width=True)
-    with c_p3:
-        st.markdown("### 3. BACK: `f116v`")
-        fig_b = go.Figure(data=[make_pie_trace(back_df, "f116v")])
-        fig_b.update_layout(paper_bgcolor="#04060d", margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-        st.plotly_chart(fig_b, use_container_width=True)
-
-# =============================================================================
-# TAB 7: EXPORT CORPORA
-# =============================================================================
-with tab_export:
-    st.header("💾 Master Research Data Export")
-    if not corpus_df.empty:
-        csv_exp = corpus_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label=f"Download Master Corpus CSV ({len(corpus_df):,} rows)",
-            data=csv_exp,
-            file_name="voynich_master_corpus_extracted.csv",
-            mime="text/csv"
-        )
-    else:
-        st.info("Corpus is empty. Upload ZL3b-n.txt in the sidebar to populate.")
