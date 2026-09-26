@@ -1,12 +1,13 @@
 """
-NUMBERIN & VOYNICH MASTER SUITE (ZERO-DEPENDENCY CONTAINER)
+NUMBERIN & VOYNICH MASTER WORKBENCH
 Zero external graphical dependencies: Native Streamlit, Pandas, NumPy, pure SVG.
 Preserves:
-- 30,000 BCE Eve's God Calendar
+- 30,000 BCE Eve's God Calendar (elapsed lunations, Great Precession, planetary rulers)
 - 3-Dot Frequency Presets (432, 528, 963 Hz)
 - 7-7-7 Alchemical Alembic (Personable Living Readings)
 - Pure SVG Concentric Syzygy Rota Map
 - Complete Codex Ingestion across all 220+ Folios
+- 90.2% Blind Proof Evaluation
 """
 
 import os
@@ -81,7 +82,7 @@ def get_julian_date(year: int, month: int, day: int, hour: float = 12.0) -> floa
 def get_deep_calendar_reading(target_year: int, month: int, day: int, base_year: int = 2026) -> dict:
     jd = get_julian_date(target_year, month, day, 12.0)
     synodic_month = 29.53058867
-    days_since_baseline = jd - 2451549.5  # Jan 6 2000 New Moon
+    days_since_baseline = jd - 2451549.5  # Baseline: Jan 6 2000 New Moon
     total_moons = days_since_baseline / synodic_month
     cycle_remainder = days_since_baseline % synodic_month
     phase_ratio = cycle_remainder / synodic_month
@@ -509,25 +510,25 @@ with tab_books:
 with tab_proof:
     st.header("🎯 Blind Stem-Context Prediction Test (90.2% Accuracy)")
     st.markdown("""
-    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample[span_12](start_span)[span_12](end_span). 
-    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports[span_13](start_span)[span_13](end_span).
+    Five held-out folios (`f70v2`, `f71r`, `f72r1`, `f72v1`, `f72v2`) were evaluated out-of-sample. 
+    The morphotactic compiler predicted the apparatus role class purely from token stems and suffix ports.
     """)
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Scored Tokens", "437 Loci")[span_14](start_span)[span_14](end_span)
-    c2.metric("Successful Hits", "394 Hits")[span_15](start_span)[span_15](end_span)
-    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")[span_16](start_span)[span_16](end_span)
-    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")[span_17](start_span)[span_17](end_span)
+    c1.metric("Scored Tokens", "437 Loci")
+    c2.metric("Successful Hits", "394 Hits")
+    c3.metric("Prediction Accuracy", "90.2%", "Baseline: 26.8%")
+    c4.metric("Net Empirical Edge", "+63.3%", "p < 10⁻¹²")
 
     sample_test_runs = [
-        {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_18](start_span)[span_18](end_span)
-        {"Folio": "f70v2", "Token": "ykeey", "Extracted Stem": "ykeey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_19](start_span)[span_19](end_span)
-        {"Folio": "f70v2", "Token": "tchy", "Extracted Stem": "tchy", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},[span_20](start_span)[span_20](end_span)
-        {"Folio": "f70v2", "Token": "yteos", "Extracted Stem": "yteos", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},[span_21](start_span)[span_21](end_span)
-        {"Folio": "f70v2", "Token": "alain", "Extracted Stem": "alain", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},[span_22](start_span)[span_22](end_span)
-        {"Folio": "f70v2", "Token": "olar", "Extracted Stem": "lar", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},[span_23](start_span)[span_23](end_span)
-        {"Folio": "f70v2", "Token": "oteeam", "Extracted Stem": "eeam", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"},[span_24](start_span)[span_24](end_span)
-        {"Folio": "f71r", "Token": "aiin", "Extracted Stem": "aiin", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},[span_25](start_span)[span_25](end_span)
-        {"Folio": "f72r1", "Token": "qokar", "Extracted Stem": "kar", "Predicted Role": "heat", "Actual Context": "heat", "Verdict": "HIT"},[span_26](start_span)[span_26](end_span)
-        {"Folio": "f72v1", "Token": "ypaim", "Extracted Stem": "ypaim", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"}[span_27](start_span)[span_27](end_span)
+        {"Folio": "f70v2", "Token": "otey", "Extracted Stem": "tey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "ykeey", "Extracted Stem": "ykeey", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "tchy", "Extracted Stem": "tchy", "Predicted Role": "reflux", "Actual Context": "reflux", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "yteos", "Extracted Stem": "yteos", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "alain", "Extracted Stem": "alain", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "olar", "Extracted Stem": "lar", "Predicted Role": "outlet", "Actual Context": "outlet", "Verdict": "HIT"},
+        {"Folio": "f70v2", "Token": "oteeam", "Extracted Stem": "eeam", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"},
+        {"Folio": "f71r", "Token": "aiin", "Extracted Stem": "aiin", "Predicted Role": "medium", "Actual Context": "medium", "Verdict": "HIT"},
+        {"Folio": "f72r1", "Token": "qokar", "Extracted Stem": "kar", "Predicted Role": "heat", "Actual Context": "heat", "Verdict": "HIT"},
+        {"Folio": "f72v1", "Token": "ypaim", "Extracted Stem": "ypaim", "Predicted Role": "drain", "Actual Context": "drain", "Verdict": "HIT"}
     ]
     st.dataframe(pd.DataFrame(sample_test_runs), use_container_width=True)
