@@ -153,6 +153,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+MIN_DATE = datetime.date(1, 1, 1)
+MAX_DATE = datetime.date(9999, 12, 31)
+
 # ==========================================
 # 1. CONSTANTS, SCRIPTS & CIPHERS
 # ==========================================
@@ -527,7 +530,7 @@ st.markdown("<div class='brand-title'>NUMBERIN</div>", unsafe_allow_html=True)
 search_query = st.text_input("Enter any name, phrase, epoch, or date across any language (Hebrew, Greek, Russian, Spanish, English):", "")
 
 # ==========================================
-# 5. ALL MODULES WITH FULL FILE EXPORT
+# 5. ALL MODULES WITH EXTENDED DATE RANGES
 # ==========================================
 
 tabs = st.tabs([
@@ -550,7 +553,7 @@ with tabs[0]:
     col_a, col_b = st.columns([1.1, 1])
     with col_a:
         alch_name = st.text_input("Alchemist Name", value="Seeker")
-        alch_date = st.date_input("Epoch / Birthdate", value=datetime.date(1983, 11, 19), key="alch_d")
+        alch_date = st.date_input("Epoch / Birthdate", value=datetime.date(1983, 11, 19), min_value=MIN_DATE, max_value=MAX_DATE, key="alch_d")
         seed_str = st.text_input("Operational Seed", value="7-7-7")
         
     with col_b:
@@ -728,7 +731,7 @@ with tabs[2]:
 
     t_col1, t_col2 = st.columns(2)
     with t_col1:
-        f_bday = st.date_input("Birth Date for Cycle Anchor", value=datetime.date(1983, 11, 19), key="fc_bday")
+        f_bday = st.date_input("Birth Date for Cycle Anchor", value=datetime.date(1983, 11, 19), min_value=MIN_DATE, max_value=MAX_DATE, key="fc_bday")
     with t_col2:
         horizon_years = st.slider("Timeline Horizon (Years)", min_value=1, max_value=18, value=9)
 
@@ -783,7 +786,7 @@ with tabs[3]:
     st.download_button("💾 Save Decan Oracle Reading (.txt)", data=decan_txt, file_name=f"decan_oracle_{sel_sign}.txt", mime="text/plain", key="dl_decan")
 
 # ----------------------------------------------------
-# TAB 5: COMPATIBILITY MATRIX
+# TAB 5: COMPATIBILITY MATRIX (No Red Validation Errors)
 # ----------------------------------------------------
 with tabs[4]:
     st.markdown("<h3 style='color:#f5c542;'>Compatibility Matrix</h3>", unsafe_allow_html=True)
@@ -791,11 +794,11 @@ with tabs[4]:
 
     cp_c1, cp_c2 = st.columns(2)
     with cp_c1:
-        d1 = st.date_input("First Anchor Date", value=datetime.date(1983, 11, 19), key="cmp_d1")
+        d1 = st.date_input("First Anchor Date", value=datetime.date(1983, 11, 19), min_value=MIN_DATE, max_value=MAX_DATE, key="cmp_d1")
         lp1 = life_path_from_date(d1)
         st.markdown(f"**Primary Life Path:** `{lp1}`")
     with cp_c2:
-        d2 = st.date_input("Second Anchor Date", value=datetime.date.today(), key="cmp_d2")
+        d2 = st.date_input("Second Anchor Date", value=datetime.date(1993, 2, 18), min_value=MIN_DATE, max_value=MAX_DATE, key="cmp_d2")
         lp2 = life_path_from_date(d2)
         st.markdown(f"**Secondary Life Path:** `{lp2}`")
 
@@ -831,7 +834,7 @@ with tabs[5]:
     col_ind1, col_ind2 = st.columns([1.1, 1])
     with col_ind1:
         ind_name = st.text_input("Vessel Name", value="Seeker", key="ind_name")
-        ind_date = st.date_input("Birth Date", value=datetime.date(1983, 11, 19), key="ind_date")
+        ind_date = st.date_input("Birth Date", value=datetime.date(1983, 11, 19), min_value=MIN_DATE, max_value=MAX_DATE, key="ind_date")
         ind_time = st.time_input("Birth Minute", value=datetime.time(12, 0), key="ind_time")
         ind_city = st.text_input("Current Residence / Ground (City, State / Country)", value="Naples, Florida", key="ind_city")
         ind_lat, ind_lon, ind_res = 26.14, -81.79, "Naples, Florida, USA"
@@ -904,7 +907,7 @@ Active Resonance Polygon: Nodes {active_seq1}
         </div>
         """, unsafe_allow_html=True)
         sm1_name = st.text_input("Solar Vessel Name", value=ind_name, key="sm1_n")
-        sm1_date = st.date_input("Solar Birth Date", value=ind_date, key="sm1_d")
+        sm1_date = st.date_input("Solar Birth Date", value=ind_date, min_value=MIN_DATE, max_value=MAX_DATE, key="sm1_d")
         sm1_time = st.time_input("Solar Birth Time", value=datetime.time(12, 0), key="sm1_t")
         sm1_city = st.text_input("Solar Ground (City/State)", value="Naples, Florida", key="sm1_c")
 
@@ -916,7 +919,7 @@ Active Resonance Polygon: Nodes {active_seq1}
         </div>
         """, unsafe_allow_html=True)
         sm2_name = st.text_input("Lunar Vessel Name", value="Sophia Mirror", key="sm2_n")
-        sm2_date = st.date_input("Lunar Birth Date", value=datetime.date(1986, 6, 21), key="sm2_d")
+        sm2_date = st.date_input("Lunar Birth Date", value=datetime.date(1986, 6, 21), min_value=MIN_DATE, max_value=MAX_DATE, key="sm2_d")
         sm2_time = st.time_input("Lunar Birth Time", value=datetime.time(0, 0), key="sm2_t")
         sm2_city = st.text_input("Lunar Ground (City/State)", value="Jerusalem", key="sm2_c")
 
