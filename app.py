@@ -341,7 +341,7 @@ CORPUS_METADATA = {
     ]
 }
 
-# Extensive, verified canonical texts ensuring true scripture verses always display
+# Extensive, verified canonical verse sets
 LOCAL_CANON_RESERVES = {
     "King James Bible (Complete)": """
 Genesis 1:1 In the beginning God created the heaven and the earth.
@@ -441,7 +441,7 @@ def is_valid_canonical_text(book_name: str, text: str) -> bool:
         return False
     t_lower = text.lower()
     
-    # Check for unwanted secular Gutenberg texts
+    # Filter out mismatched secular Gutenberg texts
     invalid_markers = ["oregon historical society", "wyeth", "dublin", "haig", "boston", "parliament"]
     if any(m in t_lower for m in invalid_markers):
         return False
@@ -483,6 +483,20 @@ def load_full_corpus_text(book_name: str) -> str:
             continue
 
     return LOCAL_CANON_RESERVES.get(book_name, "").strip()
+
+def split_into_verses(text: str):
+    # Regex splitting on verse, logion, chapter, numbered headers, or clean sentence terminals
+    raw_units = re.split(r'(?:\r?\n\s*(?:[A-Za-z0-9\s]+ \d+:\d+|Logion \d+|Chapter \d+|\d+\.)\s*)|(?<=[.!?])\s+(?=[A-Z0-9])', text)
+    clean_verses = []
+    seen = set()
+    for unit in raw_units:
+        v = unit.strip()
+        # Keep crisp, individual verse length (discard tiny headers or huge multi-paragraph blocks)
+        if 20 <= len(v) <= 350:
+            if v not in seen and not v.lower().startswith("project gutenberg"):
+                seen.add(v)
+                clean_verses.append(v)
+    return clean_verses
 
 def detect_script(text: str) -> str:
     for char in text:
@@ -790,7 +804,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Full Verses & Upload)
+# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Precise Verses)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>Books of Knowledge Corpus</h3>", unsafe_allow_html=True)
@@ -830,16 +844,12 @@ with tabs[1]:
                 target = target.split()[0] if target else q_clean
                 pattern = rf'\b{re.escape(target)}\b'
 
-            # Preserve complete verse blocks by splitting on paragraph blocks or single lines
-            raw_entries = [p.strip() for p in re.split(r'\n{2,}|\r\n\r\n', corp_text) if p.strip()]
-            if len(raw_entries) <= 1:
-                raw_entries = [p.strip() for p in corp_text.splitlines() if p.strip()]
+            # Parse into distinct, individual verse units
+            raw_entries = split_into_verses(corp_text)
 
             matches_list = []
             
             for verse in raw_entries:
-                if len(verse) < 15 or "project gutenberg" in verse.lower():
-                    continue
                 if re.search(pattern, verse, re.IGNORECASE):
                     script = detect_script(verse)
                     v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
@@ -847,17 +857,17 @@ with tabs[1]:
                     matches_list.append((verse, highlighted, v_root))
 
             total_found = len(matches_list)
-            st.markdown(f"**Direct Result:** Found **{total_found:,} matching scriptures/passages** in this corpus.")
+            st.markdown(f"**Direct Result:** Found **{total_found:,} matching verses** in this corpus.")
 
             if total_found > 0:
                 show_all = st.checkbox(f"Display All {total_found:,} Findings (Scrollable)", value=False)
                 display_limit = total_found if show_all else min(12, total_found)
                 
-                st.markdown(f"##### Showing Passages 1 to {display_limit}:")
+                st.markdown(f"##### Showing Verses 1 to {display_limit}:")
                 for raw_v, v_text, v_root in matches_list[:display_limit]:
                     st.markdown(f"""
                     <div class='verse-card'>
-                        <span class='verse-badge'>CANONICAL PASSAGE</span><span class='gematria-pill'>Passage Root: {v_root} ({meaning(v_root)})</span><br>
+                        <span class='verse-badge'>CANONICAL VERSE</span><span class='gematria-pill'>Verse Root: {v_root} ({meaning(v_root)})</span><br>
                         {v_text}
                     </div>
                     """, unsafe_allow_html=True)
