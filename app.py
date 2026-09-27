@@ -329,19 +329,19 @@ CORPUS_METADATA = {
         "https://raw.githubusercontent.com/ancient-texts/enoch/main/enoch.txt"
     ],
     "Pistis Sophia (G.R.S. Mead)": [
-        "https://www.gutenberg.org/cache/epub/34907/pg34907.txt",
-        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/pistis_sophia.txt"
+        "https://www.gutenberg.org/cache/epub/45847/pg45847.txt",
+        "https://raw.githubusercontent.com/ancient-texts/pistis-sophia/main/pistis_sophia.txt"
     ],
     "The Nag Hammadi Library (Complete Codices)": [
-        "https://raw.githubusercontent.com/TheGnosticGospel/Nag-Hammadi-Library/main/complete_texts.txt",
-        "https://raw.githubusercontent.com/sacred-texts/gnostic/main/nag_hammadi.txt"
+        "https://raw.githubusercontent.com/ancient-texts/nag-hammadi/main/nag_hammadi.txt",
+        "https://raw.githubusercontent.com/TheGnosticGospel/Nag-Hammadi-Library/main/complete_texts.txt"
     ],
     "The Kybalion (Three Initiates)": [
         "https://www.gutenberg.org/cache/epub/14264/pg14264.txt"
     ]
 }
 
-# Extensive canonical reserves guaranteeing 65,000+ to 85,000+ words
+# Extensive canonical reserves guaranteeing thousands of words and full verses
 LOCAL_CANON_RESERVES = {
     "King James Bible (Complete)": """
 Genesis 1:1 In the beginning God created the heaven and the earth.
@@ -997,7 +997,7 @@ with tabs[5]:
     ]
 
     tree_paths_svg = "".join([
-        f'<line x1="{tree_nodes[p[0]][0]:.1f}" y1="{tree_nodes[p[0]][1]:.1f}" x2="{tree_nodes[p[1]][0]:.1f}" y2="{tree_nodes[p[1]][1]:.1f}" stroke="rgba(245,197,66,0.14)" stroke-dasharray="3,3"/>'
+        f'<line x1="{tree_nodes[p[0]][0]:.1f}" y1="{tree_nodes[p[0]][1]:.1f}" x2="{tree_nodes[p[1]][0]:.1f}" y2="{tree_nodes[p[1]][1]:.1f}" stroke="rgba(245,197,66,0.14)" stroke-width="1.5" stroke-dasharray="3,3"/>'
         for p in tree_paths
     ])
 
