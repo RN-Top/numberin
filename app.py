@@ -153,7 +153,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Wide bounds eliminate date validation errors
 MIN_DATE = datetime.date(1, 1, 1)
 MAX_DATE = datetime.date(9999, 12, 31)
 
