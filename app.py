@@ -407,7 +407,7 @@ Pistis Sophia Chapter 100: Mary Magdalene came forward and said: Lord, thy light
     "The Kybalion (Three Initiates)": """
 The Kybalion Chapter 1: The lips of wisdom are closed, except to the ears of Understanding. Where fall the footsteps of the Master, the ears of those ready for his Teaching open wide.
 The Kybalion Chapter 2: The Seven Hermetic Principles, upon which the entire Hermetic Philosophy is based, are: The Principle of Mentalism, The Principle of Correspondence, The Principle of Vibration, The Principle of Polarity, The Principle of Rhythm, The Principle of Cause and Effect, The Principle of Gender.
-The Kybalion - Mentalism: THE ALL IS MIND; The Universe is Mental. This Principle explains that all the objective reality is spirit, which in itself is unknowable and undefinable, but which may be considered as a universal, living, infinite mind.
+The Kybalion - Mentalism: THE ALL IS MIND; The Universe is Mental. This Principle explains that all the objective reality is spirit, which in itself is unknowable and undefinable, but practical manifestation of existence is mental in nature.
 The Kybalion - Correspondence: As above, so below; as below, so above. This Principle embodies the truth that there is always a Correspondence between the laws and phenomena of the various planes of Being and Life.
 The Kybalion - Vibration: Nothing rests; everything moves; everything vibrates. This Principle explains that the differences between different manifestations of Matter, Energy, Mind, and even Spirit, result largely from varying rates of Vibration.
 The Kybalion - Polarity: Everything is Dual; everything has poles; everything has its pair of opposites; like and unlike are the same; opposites are identical in nature, but different in degree.
@@ -919,7 +919,7 @@ Synthesis Verdict:
     st.session_state["saved_compat_txt"] = compat_txt
 
 # ----------------------------------------------------
-# TAB 6: DUAL FREQUENCY MAPS (Explicit Variable Scope)
+# TAB 6: DUAL FREQUENCY MAPS (Sophia Mirror Plain-Language)
 # ----------------------------------------------------
 with tabs[5]:
     st.markdown("<h3 style='color:#f5c542;'>Spatiotemporal Frequency & The Crystal Sophia Mirror</h3>", unsafe_allow_html=True)
@@ -981,7 +981,7 @@ with tabs[5]:
     ]
 
     tree_paths_svg = "".join([
-        f'<line x1="{tree_nodes[p[0]][0]:.1f}" y1="{tree_nodes[p[0]][1]:.1f}" x2="{tree_nodes[p[1]][0]:.1f}" y2="{tree_nodes[p[1]][1]:.1f}" stroke="rgba(245,197,66,0.14)" stroke-dasharray="3,3"/>'
+        f'<line x1="{tree_nodes[p[0]][0]:.1f}" y1="{tree_nodes[p[0]][1]:.1f}" x2="{tree_nodes[p[1]][0]:.1f}" y2="{tree_nodes[p[1]][1]:.1f}" stroke="rgba(245,197,66,0.14)" stroke-width="1.5" stroke-dasharray="3,3"/>'
         for p in tree_paths
     ])
 
@@ -1124,31 +1124,105 @@ with tabs[5]:
     """
     components.html(sophia_mirror_svg, height=660)
 
+    # ----------------------------------------------------
+    # DOWN-TO-EARTH, DETAILED SOPHIA MIRROR VERDICTS
+    # ----------------------------------------------------
+    s1_label = sm1_name.strip() or "Solar Partner"
+    s2_label = sm2_name.strip() or "Lunar Partner"
+
+    # 1. Plain-English Polarity Dynamics
     if s_diff == 0:
-        synastry_reading = f"Identical Root {slp1}. You share an identical optical wavelength. Communication is instantaneous, yet because you share identical blind spots, neither entity naturally offers the brakes when the vehicle speeds toward an edge."
+        polarity_headline = f"Twin Wavelength (Zero Friction, Shared Blind Spots)"
+        polarity_desc = (
+            f"{s1_label} and {s2_label} think, process, and react to life on virtually the same frequency (both Life Path {slp1}). "
+            f"You don't have to explain your baseline instincts to each other—there's an unspoken shorthand and natural comfort from day one. "
+            f"The trap: when you both agree on an impulsive choice or a pessimistic mood, there is no natural counterbalance to hit the brakes. "
+            f"One of you will intentionally have to step up and play devil's advocate when important life decisions arise."
+        )
     elif s_diff in (1, 3, 5):
-        synastry_reading = f"Dynamic Shear (Delta {s_diff}). The Solar engine pushes toward outward speed and manifest structure, while the Lunar well demands introversion and silent incubation. This tension is not broken; it is the exact kinetic torque needed to build."
+        polarity_headline = f"Dynamic Sparks & Creative Torque (Opposites That Build)"
+        polarity_desc = (
+            f"{s1_label} (Life Path {slp1}) tends to move in direct bursts—pushing to solve problems immediately and get things moving in the physical world. "
+            f"{s2_label} (Life Path {slp2}) operates like an anchor—needing space to digest things emotionally and reflect before making a move. "
+            f"This creates natural friction, but it's constructive tension. When you stop trying to make the other person react the way you do, "
+            f"{s1_label} supplies the drive and momentum while {s2_label} makes sure you don't run off a cliff."
+        )
     else:
-        synastry_reading = f"Harmonic Accord (Delta {s_diff}). Symmetrical lock across the cardinal axis. What one vessel exhausts, the opposite reservoir replenishes."
+        polarity_headline = f"Harmonic Balance (Natural Yin and Yang)"
+        polarity_desc = (
+            f"You two naturally complement each other without having to force it (Life Paths {slp1} & {slp2}). "
+            f"Where one person tends to run out of steam, the other quietly picks up the slack. "
+            f"Conversations flow easily because you see the same picture from two distinct, helpful angles. "
+            f"It's a low-stress connection, provided neither takes the other's consistency for granted."
+        )
 
-    verdict_text = f"""The Sophia Mirror Verdict for {(sm1_name.strip() or 'Solar Vessel')} & {(sm2_name.strip() or 'Lunar Vessel')}:
+    # 2. The Practical Bridge (The Eye of the Needle)
+    bridge_action_map = {
+        1: "Focusing on personal independence and backing each other's solo ambitions without micromanaging.",
+        2: "Slowing down, listening without getting defensive, and validating how the other person feels before offering solutions.",
+        3: "Talking it out openly, keeping a sense of humor alive, and refusing to sweep annoyances under the rug.",
+        4: "Creating practical routines, clear boundaries, and predictable agreements around time, money, and responsibilities.",
+        5: "Giving each other breathing room, changing scenery, and not letting boredom or rigidity box the relationship in.",
+        6: "Tending to home harmony, mutual caretaking, and making sure neither person feels like they're doing all the emotional chores.",
+        7: "Giving each other quiet solo time to think, read, and recharge without taking the silence personally.",
+        8: "Teaming up on tangible goals, career ambitions, and building financial/material security together as equals.",
+        9: "Letting go of old grudges, practicing quick forgiveness, and keeping the big picture in mind when small annoyances flare up.",
+        11: "Trusting your gut feelings about each other and discussing deeper values rather than superficial disagreements.",
+        22: "Building something lasting and tangible together—treating the connection like an enduring master project.",
+        33: "Offering unconditional grace and supporting each other through stressful seasons with genuine empathy."
+    }
+    bridge_advice = bridge_action_map.get(bridging_threshold, "Finding common ground through honest, grounded communication.")
 
-1. Polarity Dynamics:
-{synastry_reading}
+    # 3. Everyday Operating Styles
+    style_meanings = {
+        1: "independent, direct, and focused on initiating",
+        2: "receptive, cooperative, and tuned in to subtleties",
+        3: "expressive, social, vocal, and creative",
+        4: "structured, disciplined, cautious, and methodical",
+        5: "adaptable, quick-thinking, restless, and spontaneous",
+        6: "nurturing, protective, and focused on home & duty",
+        7: "introspective, analytical, quiet, and truth-seeking",
+        8: "ambitious, strategic, results-driven, and authoritative",
+        9: "broad-minded, empathetic, and idealistic",
+        11: "highly intuitive, vision-driven, and inspirational",
+        22: "master-building, highly capable, and legacy-oriented",
+        33: "deeply caring, mentoring, and heart-centered"
+    }
+    s1_style = style_meanings.get(sexpr1, "individual and expressive")
+    s2_style = style_meanings.get(sexpr2, "reflective and receptive")
 
-2. The Eye of the Needle (Aperture Threshold {bridging_threshold}):
-The bindu point at the neck between the two cones opens at Frequency {bridging_threshold} ({meaning(bridging_threshold)}). This is the only ground where arguments dissolve—when disputes arise, center decisions around this exact frequency.
+    verdict_text = f"""The Sophia Mirror Breakdown for {s1_label} & {s2_label}:
 
-3. Crystalline Torque:
-{(sm1_name.strip() or 'Solar Vessel')} projects outward through Tone {sexpr1}, while {(sm2_name.strip() or 'Lunar Vessel')} contains and distills through Tone {sexpr2}. Respect the stark contrast: the upper cone cannot exist without the weight of the subterranean roots.
+1. Everyday Chemistry ({polarity_headline}):
+{polarity_desc}
+
+2. How to Meet in the Middle (The Golden Ratio Bridge • Root {bridging_threshold}):
+Whenever tension, miscommunication, or disagreements happen, the quickest path back into alignment is:
+→ {bridge_advice}
+
+3. Day-to-Day Operating Styles:
+• {s1_label} instinctively approaches situations in a way that is {s1_style} (Tone {sexpr1}).
+• {s2_label} naturally navigates the world in a way that is {s2_style} (Tone {sexpr2}).
+When you respect that you're built with different default tools, you stop taking differences personally and start using them as a team.
 """
 
     st.markdown(f"""
     <div class="tincture-box">
-        <strong style="color: #f5c542; font-family: 'Cinzel', serif;">The Sophia Mirror Verdict:</strong><br><br>
-        <strong>1. Polarity Dynamics:</strong> {synastry_reading}<br>
-        <strong>2. The Eye of the Needle (Aperture Threshold {bridging_threshold}):</strong> The bindu point at the neck between the two cones opens at Frequency {bridging_threshold} ({meaning(bridging_threshold)}).<br>
-        <strong>3. Crystalline Torque:</strong> Tone {sexpr1} contrasted against Tone {sexpr2}.
+        <h4 style="color: #f5c542; margin-top: 0; font-family: 'Cinzel', serif;">Practical Mirror Synthesis:</h4>
+        <p style="font-size: 1.05rem; line-height: 1.7; color: #fdfaf0;">
+            <strong>1. Everyday Chemistry — {polarity_headline}:</strong><br>
+            {polarity_desc}
+        </p>
+        <p style="font-size: 1.05rem; line-height: 1.7; color: #fdfaf0;">
+            <strong>2. How to Meet in the Middle (Root {bridging_threshold}):</strong><br>
+            Whenever miscommunication happens, your shared reset button is: <em>{bridge_advice}</em>
+        </p>
+        <p style="font-size: 1.05rem; line-height: 1.7; color: #fdfaf0;">
+            <strong>3. How You Each Navigate Life:</strong><br>
+            • <strong>{s1_label}:</strong> Operates best when {s1_style} (Tone {sexpr1}).<br>
+            • <strong>{s2_label}:</strong> Operates best when {s2_style} (Tone {sexpr2}).<br>
+            Recognizing these default communication styles keeps petty friction from turning into real conflict.
+        </p>
     </div>
     """, unsafe_allow_html=True)
     st.session_state["saved_sophia_txt"] = verdict_text
