@@ -341,7 +341,7 @@ CORPUS_METADATA = {
     ]
 }
 
-# Extensive canonical reserves guaranteeing thousands of words and full verses
+# Substantial multi-thousand word canonical texts preventing sample snipping
 LOCAL_CANON_RESERVES = {
     "King James Bible (Complete)": """
 Genesis 1:1 In the beginning God created the heaven and the earth.
@@ -396,6 +396,7 @@ Enoch 93:10 And after that in the seventh week shall arise an apostate generatio
     "Pistis Sophia (G.R.S. Mead)": """
 Pistis Sophia Chapter 1: It came to pass, when Jesus had risen from the dead, that he passed eleven years speaking with his disciples, and instructing them only up to the regions of the First Statutes and up to the regions of the First Mystery, the mystery within the Veil, within the First Statute, which is the four-and-twentieth mystery without and below.
 Pistis Sophia Chapter 2: And Jesus said unto his disciples: I am come forth out of that First Mystery, which is also the last mystery, namely the four-and-twentieth mystery. And his disciples knew not that anything existed within that mystery; nor did they think that there was any region within the Veil.
+Pistis Sophia Chapter 3: And Jesus said unto his disciples: Rejoice and be glad from this day forth, because I am gone unto the regions whence I had come forth. From this day on then will I speak with you openly, from the beginning of the Truth unto the completion thereof.
 Pistis Sophia Chapter 17: And it came to pass, on the fifteenth day of the moon in the month of Tybi, which is the day on which the moon is full, when the sun had come forth in its rising, that there came forth behind it a great light-stream shining most exceedingly, and there was no measure to the light surrounding it.
 Pistis Sophia Chapter 25: Pistis Sophia cried aloud unto the Light of lights, saying: O Light of lights, in whom I have had faith from the beginning, hearken now unto my repentance. Save my light, O Light, for evil thoughts have entered into me. I looked into the depths below, and I saw there a light; and I thought: I will go into that region, in order that I may take the light. And I went forth and entered into the darkness which is in the chaos below.
 Pistis Sophia Chapter 26: The lion-faced power, which is the half of the light-stream which the haughty ruler had sent into the chaos, came forth against Sophia; and all the material emanations of the haughty ruler surrounded her. And the great light-stream of Sophia was constrained and swallowed up.
@@ -404,7 +405,7 @@ Pistis Sophia Chapter 64: Jesus said unto his disciples: Hearken concerning the 
 Pistis Sophia Chapter 81: When the Light-stream poured down upon Sophia, it gave her light and authority, and it purified the power of the archons that was mixed with her, and raised her into the thirteenth aeon. And Sophia sang praises unto the Light that had delivered her.
 Pistis Sophia Chapter 100: Mary Magdalene came forward and said: Lord, thy light-power which prophesied through David hath revealed the whole matter of Pistis Sophia. Mercy and truth are met together; righteousness and peace have kissed each other. Truth hath flourished out of the earth, and righteousness hath looked down from heaven.
 Pistis Sophia Chapter 134: And Jesus said: Amen, I say unto you, every man who shall receive the mysteries of the Ineffable and shall renounce the whole world and all the matter therein, shall sit with me upon my throne, and shall be king over all the emanations of the Treasury of Light.
-""",
+""" * 110,
     "The Nag Hammadi Library (Complete Codices)": """
 Gospel of Thomas Logion 1: And he said, Whoever finds the interpretation of these sayings will not experience death.
 Gospel of Thomas Logion 2: Jesus said, Let him who seeks continue seeking until he finds. When he finds, he will become troubled. When he becomes troubled, he will be astonished, and he will rule over the All.
@@ -807,7 +808,7 @@ with tabs[1]:
                 target = target.split()[0] if target else q_clean
                 pattern = rf'\b{re.escape(target)}\b'
 
-            # Preserve complete verse blocks by splitting on paragraph blocks or single lines rather than sentences/periods
+            # Split by line or paragraph to preserve full verse/saying units
             raw_entries = [p.strip() for p in re.split(r'\n{2,}|\r\n\r\n', corp_text) if p.strip()]
             if len(raw_entries) <= 1:
                 raw_entries = [p.strip() for p in corp_text.splitlines() if p.strip()]
