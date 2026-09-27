@@ -3,6 +3,10 @@ import streamlit.components.v1 as components
 import datetime
 import math
 import re
+import urllib.request
+import urllib.parse
+import json
+import os
 import unicodedata
 from collections import Counter
 
@@ -10,7 +14,7 @@ from collections import Counter
 st.set_page_config(page_title="Numberin", page_icon="✨", layout="wide")
 
 # ==========================================
-# LUMINOUS BRASS & DOCUMENT STYLING
+# LUMINOUS BRASS & SACRED GEOMETRY STYLING
 # ==========================================
 st.markdown("""
 <style>
@@ -148,19 +152,19 @@ st.markdown("""
         margin-left: 8px;
     }
 
-    /* Print & Export Document Layout */
     @media print {
+        header, footer, [data-testid="stSidebar"], .stTabs [role="tablist"] {
+            display: none !important;
+        }
         body, .stApp {
             background: #ffffff !important;
             color: #000000 !important;
         }
-        header, footer, [data-testid="stSidebar"], [data-testid="stTabs"] {
-            display: none !important;
-        }
-        .printable-dossier {
-            display: block !important;
+        .brass-panel, .tincture-box, .verse-card {
+            background: #ffffff !important;
             color: #000000 !important;
-            padding: 20px;
+            border: 1px solid #444444 !important;
+            box-shadow: none !important;
         }
     }
 </style>
@@ -168,18 +172,6 @@ st.markdown("""
 
 MIN_DATE = datetime.date(1, 1, 1)
 MAX_DATE = datetime.date(9999, 12, 31)
-
-# Session State Initialization for Master Dossier Aggregation
-if "dossier" not in st.session_state:
-    st.session_state["dossier"] = {
-        "seeker_name": "",
-        "primary_birth": None,
-        "alchemy": {},
-        "compatibility": {},
-        "sophia_mirror": {},
-        "timeline": [],
-        "decan": {}
-    }
 
 # ==========================================
 # 1. CONSTANTS, SCRIPTS & CIPHERS
@@ -191,19 +183,146 @@ PYTHAGOREAN_MAP = {
     'S': 1, 'T': 2, 'U': 3, 'V': 4, 'W': 5, 'X': 6, 'Y': 7, 'Z': 8
 }
 
-CHALDEAN_MAP = {
-    'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 8, 'G': 3, 'H': 5, 'I': 1,
-    'J': 1, 'K': 2, 'L': 3, 'M': 4, 'N': 5, 'O': 7, 'P': 8, 'Q': 1, 'R': 2,
-    'S': 3,A dedicated **Grand Synthesis Codex** module at the end of the tabs solves this cleanly. 
+HEBREW_ARAMAIC_MAP = {
+    'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
+    'י': 10, 'כ': 20, 'ך': 20, 'ל': 30, 'מ': 40, 'ם': 40, 'נ': 50, 'ן': 50,
+    'ס': 60, 'ע': 70, 'פ': 80, 'ף': 80, 'צ': 90, 'ץ': 90,
+    'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
+}
 
-Instead of forcing users to download six separate text files or capture half-cut phone screenshots, this final tab aggregates every calculated reading into a unified dossier with two native export modes:
-1. **One-Touch Print / Save to PDF:** A styled printable dossier with clean margins, black-and-gold styling, and page-break rules (so taking a phone screenshot or hitting `Save as PDF` captures everything without cutoffs).
-2. **Complete Master Reading Export (`.txt`):** A single comprehensive report combining natal anchors, alchemy tinctures, cycle milestones, decan directives, compatibility verdicts, and Sophia mirror coordinates.
+GREEK_ISOPSEPHY_MAP = {
+    'Α': 1, 'α': 1, 'Β': 2, 'β': 2, 'Γ': 3, 'γ': 3, 'Δ': 4, 'δ': 4,
+    'Ε': 5, 'ε': 5, 'Ϝ': 6, 'ϛ': 6, 'Ζ': 7, 'ζ': 7, 'Η': 8, 'η': 8,
+    'Θ': 9, 'θ': 9, 'Ι': 10, 'ι': 10, 'Κ': 20, 'κ': 20, 'Λ': 30, 'λ': 30,
+    'Μ': 40, 'μ': 40, 'Ν': 50, 'ν': 50, 'Ξ': 60, 'ξ': 60, 'Ο': 70, 'ο': 70,
+    'Π': 80, 'π': 80, 'Ϟ': 90, 'ϟ': 90, 'Ρ': 100, 'ρ': 100, 'Σ': 200, 'σ': 200, 'ς': 200,
+    'Τ': 300, 'τ': 300, 'Υ': 400, 'υ': 400, 'Φ': 500, 'φ': 500, 'Χ': 600, 'χ': 600,
+    'Ψ': 700, 'ψ': 700, 'Ω': 800, 'ω': 800, 'Ϡ': 900, 'ϡ': 900
+}
 
-Below is the complete, drop-in replacement for **`app.py`** with all requested fixes:
-* **All personal defaults removed:** All date pickers, names, and city fields now default to neutral/empty values (`""` or today's date), requiring users to enter their own information.
-* **Corpus Knowledge Base fixed:** The 175-word fallback has been replaced with embedded canonical passages across all five traditions so every search returns full, real results immediately.
-* **New Final Tab:** Added **"Grand Synthesis Dossier"** with instant PDF print and Master `.txt` download options.
+CYRILLIC_MAP = {
+    'А': 1, 'Б': 2, 'В': 2, 'Г': 3, 'Д': 4, 'Е': 5, 'Ё': 5, 'Ж': 7, 'З': 7,
+    'И': 8, 'Й': 8, 'І': 10, 'К': 20, 'Л': 30, 'М': 40, 'Н': 50, 'О': 70,
+    'П': 80, 'Р': 100, 'С': 200, 'Т': 300, 'У': 400, 'Ф': 500, 'Х': 600,
+    'Ѱ': 700, 'Ѡ': 800, 'Ц': 900, 'Ч': 90, 'Ш': 1, 'Щ': 2, 'Ъ': 3, 'Ы': 4,
+    'Ь': 5, 'Э': 6, 'Ю': 7, 'Я': 8
+}
+
+SCRIPT_VOWELS = {
+    "Latin": set("AEIOU"),
+    "Spanish": set("AEIOU"),
+    "Greek": set("ΑΕΗΙΟΥΩαεηιουω"),
+    "Cyrillic": set("АЕЁИОУЫЭЮЯ"),
+    "Hebrew/Aramaic": set("אהוי")
+}
+
+MILESTONES = {
+    1: "Inception, radical sovereignty, planting raw impulses.",
+    2: "Partnership, reflection, subtle relational alignment.",
+    3: "Expression, social crystallization, testing creative tone.",
+    4: "Form-building, boundaries, establishing bedrock security.",
+    5: "Disruption, voyage, untying old moorings.",
+    6: "Sanctuary, duty, reconciliation of domestic and heart matters.",
+    7: "Solitude, study, looking behind the veil.",
+    8: "Power, balance of ledger, physical abundance.",
+    9: "Pruning, closure, honoring what has run its course."
+}
+
+DECAN_ORACLE_CARDS = {
+    "Aries": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Mars", "card": "Two of Wands", "oracle": "The spark ignites without permission. Seize the threshold of action before deliberation extinguishes the fire."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Sun", "card": "Three of Wands", "oracle": "The sovereign horizon opens. What was begun in impulse now demands patient watchfulness over the open water."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Jupiter", "card": "Four of Wands", "oracle": "Harmonic sanctum. The initial conflict resolves into shelter, celebration, and anchored territory."}
+    ],
+    "Taurus": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Mercury", "card": "Five of Pentacles", "oracle": "Material scarcity tests spiritual resolve. Turn away from the storm; the inner vault remains untouched."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Moon", "card": "Six of Pentacles", "oracle": "Reciprocal flow. Balance the ledger of giving and receiving without attaching pride to either hand."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Saturn", "card": "Seven of Pentacles", "oracle": "The slow harvest. Lean upon the staff and let time ripen what frantic hands would only bruise."}
+    ],
+    "Gemini": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Jupiter", "card": "Eight of Swords", "oracle": "Self-imposed perimeter. The blindfold is woven of past assumptions; step through the unfastened cords."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Mars", "card": "Nine of Swords", "oracle": "Nocturnal crucible. The mind wars against shadows of its own creation; sunrise clears the specters."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Sun", "card": "Ten of Swords", "oracle": "Total culmination and severance. The old cycle cannot be revived; turn your back and greet the horizon."}
+    ],
+    "Cancer": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Venus", "card": "Two of Cups", "oracle": "Sacred syzygy. Complementary vessels pour into the same stream; honor the reflection in the other."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Mercury", "card": "Three of Cups", "oracle": "Abundant communion. Joy shared among kindred spirits replenishes the depleted reserves of the soul."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Moon", "card": "Four of Cups", "oracle": "Apathy at the brimming fountain. Close the external eye; the true gift is offered from the unseen realm."}
+    ],
+    "Leo": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Saturn", "card": "Five of Wands", "oracle": "Creative friction and competing wills. Do not resent the struggle; iron sharpens iron in the arena."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Jupiter", "card": "Six of Wands", "oracle": "Public vindication and laurel crown. Ride the crest of victory with humility, for tides must turn."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Mars", "card": "Seven of Wands", "oracle": "Sovereignty defended on the high ground. Stand firm against the clamor; your position is unassailable."}
+    ],
+    "Virgo": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Sun", "card": "Eight of Pentacles", "oracle": "Patient craftsmanship. Hammer each detail upon the anvil of devotion until work transforms into prayer."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Venus", "card": "Nine of Pentacles", "oracle": "Solitary sanctuary and refined harvest. Enjoy the walled garden cultivated by your own hands."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Mercury", "card": "Ten of Pentacles", "oracle": "Ancestral foundation and enduring legacy. Build not for this season, but for generations yet unborn."}
+    ],
+    "Libra": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Moon", "card": "Two of Swords", "oracle": "Deliberate stillness at the crossroads. Refuse hasty decree; let truth reveal itself in quiet balance."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Saturn", "card": "Three of Swords", "oracle": "Sorrow piercing the heart of illusion. The wound is where the light of radical discernment breaks through."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Jupiter", "card": "Four of Swords", "oracle": "Sanctuary of rest. Lay down the armor and withdraw the mind into the silent stone chamber."}
+    ],
+    "Scorpio": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Mars", "card": "Five of Cups", "oracle": "Grief over spilt wine. Mourn what has drained away, then turn around to claim the two vessels still standing."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Sun", "card": "Six of Cups", "oracle": "Memory of the golden innocence. Drink from the ancestral wellspring to heal present weariness."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Venus", "card": "Seven of Cups", "oracle": "Phantasmagoria and siren mirages. Cast aside intoxicating fantasies to grasp the one diamond of substance."}
+    ],
+    "Sagittarius": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Mercury", "card": "Eight of Wands", "oracle": "Swift arrows through the celestial vault. Directives manifest rapidly; align the intent before release."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Moon", "card": "Nine of Wands", "oracle": "The weary sentinel. You have endured fierce barrages; hold the palisade one final hour."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Saturn", "card": "Ten of Wands", "oracle": "Overburdened pilgrim. Release the unessential timber before your spine bends under false responsibility."}
+    ],
+    "Capricorn": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Jupiter", "card": "Two of Pentacles", "oracle": "Dancing upon the oceanic surge. Juggle the shifting demands of life with effortless grace."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Mars", "card": "Three of Pentacles", "oracle": "Master architecture. Combine wisdom, skill, and patron stone to erect the enduring cathedral."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Sun", "card": "Four of Pentacles", "oracle": "Clutching gold against the chest. Security becomes a prison when fear prevents the circulation of gifts."}
+    ],
+    "Aquarius": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Venus", "card": "Five of Swords", "oracle": "Pyrrhic triumph. Walking away with the spoils is hollow if mutual honor was sacrificed in the skirmish."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Mercury", "card": "Six of Swords", "oracle": "Ferrying across troubled waters toward quiet shores. The burden travels with you, but the tempest recedes."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Moon", "card": "Seven of Swords", "oracle": "The stealthy maneuver. Conventional confrontation fails; employ wit, strategy, and silent evasion."}
+    ],
+    "Pisces": [
+        {"face": "1st Decan (0°-10°)", "ruler": "Saturn", "card": "Eight of Cups", "oracle": "Solemn departure. Abandon the half-filled vessels under cover of night to seek the higher mountain peak."},
+        {"face": "2nd Decan (10°-20°)", "ruler": "Jupiter", "card": "Nine of Cups", "oracle": "The wish fulfilled. Rest before your brimming banquet with deep thanksgiving and radiant contentment."},
+        {"face": "3rd Decan (20°-30°)", "ruler": "Mars", "card": "Ten of Cups", "oracle": "The celestial rainbow arc. Love grounded in earthly harmony completes the long cycle of exile."}
+    ]
+}
+
+HEPTAGRAM_777 = {
+    0: {"day": "Sunday", "planet": "Sun", "metal": "Gold", "virtue": "Radiant clarity, vitality, sovereignty", "shadow": "Vanity, exhaustion, blindness from overexposure"},
+    1: {"day": "Monday", "planet": "Moon", "metal": "Silver", "virtue": "Intuition, reception, emotional flux", "shadow": "Illusion, moodiness, clinging to passing tide"},
+    2: {"day": "Tuesday", "planet": "Mars", "metal": "Iron", "virtue": "Severance, boundary, direct action", "shadow": "Reactive anger, premature conflict, friction"},
+    3: {"day": "Wednesday", "planet": "Mercury", "metal": "Quicksilver", "virtue": "Transmission, synthesis, fluid speech", "shadow": "Scattered focus, clever deceit, anxiety"},
+    4: {"day": "Thursday", "planet": "Jupiter", "metal": "Tin", "virtue": "Expansion, grace, generous vision", "shadow": "Overextension, dogma, unearned certainty"},
+    5: {"day": "Friday", "planet": "Venus", "metal": "Copper", "virtue": "Attraction, harmony, artistic devotion", "shadow": "Indolence, compromise of values, codependence"},
+    6: {"day": "Saturday", "planet": "Saturn", "metal": "Lead", "virtue": "Endurance, containment, time's weight", "shadow": "Bitterness, rigidity, oppressive paralysis"}
+}
+
+KNOWLEDGE_BASE = {
+    1: "The Monad: Seed, identity, initial thrust into being.",
+    2: "The Dyad: Mirror, division, relation, receptivity.",
+    3: "The Triad: Completion of space, spark of expression.",
+    4: "The Tetrad: Foundation, the four corners, matter anchored.",
+    5: "The Pentad: The breath within matter, motion, fifth element.",
+    6: "The Hexad: Equilibrium, creation woven into form.",
+    7: "The Heptad: The sacred rest, the inner sanctum, threshold of mystery.",
+    8: "The Ogdoad: Periodic return, rhythm, material mastery.",
+    9: "The Ennead: Horizon, the final chamber before renewal.",
+    11: "Master 11: The illumination antenna, lightning over the waters.",
+    22: "Master 22: The master architect, anchoring spiritual blueprints to earth.",
+    33: "Master 33: The compassionate hearth, sacrificial preservation of truth."
+}
+
+FALLBACK_CORPUS_TEXT = """
+In the beginning was the Word, and the Word was with God, and the Word was God.
+The same was in the beginning with God.
+All things were made by him; and without him was not any thing made that was made.
+In him was life; andThe error happened because conversational explanation text was accidentally copied into `app.py`. The line starting with `* **All personal defaults removed:**` was markdown text from the chat, and Python choked on the apostrophe in `today's date`.
+
+The code block below contains **only valid Python code**. In your GitHub editor, clear `app.py` completely and paste this exact content:
 
 ```python
 import streamlit as st
@@ -211,10 +330,6 @@ import streamlit.components.v1 as components
 import datetime
 import math
 import re
-import urllib.request
-import urllib.parse
-import json
-import os
 import unicodedata
 from collections import Counter
 
@@ -222,7 +337,7 @@ from collections import Counter
 st.set_page_config(page_title="Numberin", page_icon="✨", layout="wide")
 
 # ==========================================
-# LUMINOUS BRASS & SACRED GEOMETRY STYLING
+# LUMINOUS BRASS & DOCUMENT STYLING
 # ==========================================
 st.markdown("""
 <style>
@@ -524,7 +639,7 @@ KNOWLEDGE_BASE = {
     33: "Master 33: The compassionate hearth, sacrificial preservation of truth."
 }
 
-# Rich canonical passages so searches like 'God', 'Light', '7' return real results
+# Complete fallback corpus across multiple traditions
 FALLBACK_CORPUS_TEXT = """
 In the beginning was the Word, and the Word was with God, and the Word was God.
 The same was in the beginning with God.
@@ -639,7 +754,7 @@ def moon_astronomy_details(year: int, month: int, day: int, is_bce: bool = False
 
 def calculate_gods_calendar(year: int, month: int, day: int, is_bce: bool = False):
     jd = get_astronomical_julian_date(year, month, day, is_bce)
-    creation_jd = -287002.5 # 5500 BCE Epoch
+    creation_jd = -287002.5
     days_since_eden = jd - creation_jd
     total_lunar_months = days_since_eden / 29.53058770576
     lunar_age_days = (total_lunar_months - math.floor(total_lunar_months)) * 29.530588
@@ -1284,7 +1399,6 @@ with tabs[7]:
     st.markdown("<h3 style='color:#f5c542;'>Grand Synthesis Dossier</h3>", unsafe_allow_html=True)
     st.markdown("> *Consolidate and export your comprehensive reading across all active chambers.*")
 
-    # Generate Unified Master Dossier Text
     master_dossier = f"""=======================================================
                NUMBERIN — THE GRAND SYNTHESIS CODEX
          Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
@@ -1349,7 +1463,6 @@ with tabs[7]:
             type="primary"
         )
     with col_exp2:
-        # Browser-native print trigger to create clean PDF/photo
         components.html("""
         <button onclick="window.print()" style="
             background: linear-gradient(145deg, #d4af37, #997a15);
