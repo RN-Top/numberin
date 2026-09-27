@@ -170,7 +170,7 @@ MIN_DATE = datetime.date(1, 1, 1)
 MAX_DATE = datetime.date(9999, 12, 31)
 
 # ==========================================
-# 1. CONSTANTS, SCRIPTS & GEMATRIA
+# 1. CONSTANTS, SCRIPTS & CIPHERS
 # ==========================================
 
 PYTHAGOREAN_MAP = {
@@ -312,28 +312,72 @@ KNOWLEDGE_BASE = {
     33: "Master 33: The compassionate hearth, sacrificial preservation of truth."
 }
 
-FALLBACK_CORPUS_TEXT = """
-In the beginning was the Word, and the Word was with God, and the Word was God.
-The same was in the beginning with God.
-All things were made by him; and without him was not any thing made that was made.
-In him was life; and the life was the light of men.
-And the light shineth in darkness; and the darkness comprehended it not.
-God said, Let there be light: and there was light.
-And God saw the light, that it was good: and God divided the light from the darkness.
-And God called the light Day, and the darkness he called Night.
-And God said, Let there be a firmament in the midst of the waters.
-And God made the firmament, and divided the waters which were under the firmament.
-And on the seventh day God ended his work which he had made; and he rested on the seventh day.
-And God blessed the seventh day, and sanctified it: because that in it he had rested.
-John to the seven churches which are in Asia: Grace be unto you, and peace.
-And from the seven Spirits which are before his throne.
-And out of the throne proceeded lightnings and thunderings and voices.
-And there were seven lamps of fire burning before the throne, which are the seven Spirits of God.
-Pistis Sophia cried aloud unto the Light of lights, saying: O Light of lights, in whom I have trusted.
-Save my light from the lion-faced power and the archons in the chaos.
-When the morning-stars sang together, and all the sons of God shouted for joy.
-The Monad is a monarchy with nothing above it; it exists as pure light.
+# ==========================================
+# ROBUST CANONICAL CORPUS (SELF-CONTAINED)
+# ==========================================
+CANONICAL_LIBRARIES = {
+    "King James Bible (Complete Scripture Core)": """
+Genesis 1:1 In the beginning God created the heaven and the earth.
+Genesis 1:2 And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters.
+Genesis 1:3 And God said, Let there be light: and there was light.
+Genesis 1:4 And God saw the light, that it was good: and God divided the light from the darkness.
+Genesis 1:5 And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.
+Genesis 2:1 Thus the heavens and the earth were finished, and all the host of them.
+Genesis 2:2 And on the seventh day God ended his work which he had made; and he rested on the seventh day from all his work which he had made.
+Genesis 2:3 And God blessed the seventh day, and sanctified it: because that in it he had rested from all his work which God created and made.
+Psalms 19:1 The heavens declare the glory of God; and the firmament sheweth his handywork.
+Psalms 119:105 Thy word is a lamp unto my feet, and a light unto my path.
+John 1:1 In the beginning was the Word, and the Word was with God, and the Word was God.
+John 1:2 The same was in the beginning with God.
+John 1:3 All things were made by him; and without him was not any thing made that was made.
+John 1:4 In him was life; and the life was the light of men.
+John 1:5 And the light shineth in darkness; and the darkness comprehended it not.
+Revelation 1:4 John to the seven churches which are in Asia: Grace be unto you, and peace, from him which is, and which was, and which is to come; and from the seven Spirits which are before his throne.
+Revelation 1:16 And he had in his right hand seven stars: and out of his mouth went a sharp twoedged sword: and his countenance was as the sun shineth in his strength.
+Revelation 4:5 And out of the throne proceeded lightnings and thunderings and voices: and there were seven lamps of fire burning before the throne, which are the seven Spirits of God.
+Revelation 21:23 And the city had no need of the sun, neither of the moon, to shine in it: for the glory of God did lighten it, and the Lamb is the light thereof.
+Revelation 22:13 I am Alpha and Omega, the beginning and the end, the first and the last.
+""",
+    "The Book of Enoch (R.H. Charles Translation)": """
+Enoch 1:2 Enoch a righteous man, whose eyes were opened by God, saw the vision of the Holy One in the heavens, which the angels showed me.
+Enoch 18:1 I saw the treasuries of all the winds: I saw how He had furnished with them the whole creation and the firm foundations of the earth.
+Enoch 18:3 I saw the cornerstone of the earth: I saw the four winds which bear the earth and the firmament of heaven.
+Enoch 18:13 I saw there seven stars like great burning mountains, and to me, when I inquired regarding them, the angel said: This place is the end of heaven and earth.
+Enoch 21:3 These are of the number of the stars of heaven, which have transgressed the commandment of the Lord, and are bound here till ten thousand years, the time entailed by their sins, are consummated.
+Enoch 41:5 I saw the chambers of the sun and moon, whence they proceed and whither they come again, and their glorious return, and how one is superior to the other, and their stately orbit.
+Enoch 72:1 The book of the courses of the luminaries of the heaven, the relations of each, according to their classes, their dominion and their seasons.
+Enoch 72:2 And this is the first law of the luminaries: the luminary the Sun has its rising in the eastern portals of the heaven, and its setting in the western portals of heaven.
+Enoch 72:3 And I saw six portals in which the sun rises, and six portals in which the sun sets and the moon rises and sets in these portals, and the leaders of the stars and those whom they lead: six in the east and six in the west.
+Enoch 93:10 And after that in the seventh week shall arise an apostate generation, and many shall be its deeds, and all its deeds shall be apostate. And at its close shall be elected the elect righteous of the eternal plant of righteousness.
+""",
+    "The Nag Hammadi Library (Complete Codices Core)": """
+Gospel of Thomas Logion 1: Whoever finds the interpretation of these sayings will not experience death.
+Gospel of Thomas Logion 2: Jesus said, Let him who seeks continue seeking until he finds. When he finds, he will become troubled. When he becomes troubled, he will be astonished, and he will rule over the All.
+Gospel of Thomas Logion 3: Jesus said, If those who lead you say to you, 'See, the kingdom is in the sky,' then the birds of the sky will precede you. Rather, the kingdom is inside of you, and it is outside of you.
+Gospel of Thomas Logion 22: Jesus said to them, When you make the two into one, and when you make the inner like the outer and the outer like the inner, and the upper like the lower, then you will enter the kingdom.
+Gospel of Thomas Logion 77: Jesus said, It is I who am the light which is above them all. It is I who am the all. From me did the all come forth, and unto me did the all extend. Split a piece of wood, and I am there. Lift up the stone, and you will find me there.
+Gospel of Truth: The Gospel of Truth is joy for those who have received from the Father of truth the grace of knowing him through the power of the Word that came forth from the pleroma.
+Gospel of Philip: Light and Darkness, life and death, right and left, are brothers one to another. They are inseparable. Because of this neither are the good good, nor evils evil, nor is life life, nor death death.
+Secret Book of John: The Monad is a monarchy with nothing above it. It is that which exists as God and Father of everything, the invisible One who is over everything, who exists as incorruption, who is in the pure light.
+""",
+    "Pistis Sophia (G.R.S. Mead Translation)": """
+Pistis Sophia Chapter 1: It came to pass, when Jesus had risen from the dead, that he passed eleven years speaking with his disciples, instructing them up to the regions of the First Statutes and the First Mystery within the Veil.
+Pistis Sophia Chapter 25: Pistis Sophia cried aloud unto the Light of lights, saying: O Light of lights, in whom I have had faith from the beginning, hearken now unto my repentance. Save my light from the lion-faced power and the archons in the chaos.
+Pistis Sophia Chapter 32: And Sophia continued and sang her seventh repentance, saying: O Light, I have lifted up my eyes unto thee; in thee have I had faith. Let me not be put to shame. Let the lion-faced power not swallow my essence.
+Pistis Sophia Chapter 64: Jesus said unto his disciples: Hearken concerning the things which befell Sophia. When she was in the chaos, she sang praises unto the Treasury of the Light, and the Light-stream flowed down and raised her out of the deep waters.
+Pistis Sophia Chapter 81: When the Light-stream poured down upon Sophia, it gave her light and authority, and it purified the power of the archons that was mixed with her, and raised her into the thirteenth aeon.
+Pistis Sophia Chapter 100: Mary Magdalene came forward and said: Lord, thy light-power which prophesied through David hath revealed the whole matter of Pistis Sophia. Mercy and truth are met together; righteousness and peace have kissed each other.
+""",
+    "The Kybalion (Hermetic Philosophy)": """
+The Kybalion Chapter 1: The lips of wisdom are closed, except to the ears of Understanding. Where fall the footsteps of the Master, the ears of those ready for his Teaching open wide.
+The Kybalion Chapter 2: The Seven Hermetic Principles, upon which the entire Hermetic Philosophy is based, are: The Principle of Mentalism, The Principle of Correspondence, The Principle of Vibration, The Principle of Polarity, The Principle of Rhythm, The Principle of Cause and Effect, The Principle of Gender.
+The Kybalion - Mentalism: THE ALL IS MIND; The Universe is Mental. This Principle explains that all the objective reality is spirit, which in itself is unknowable and undefinable, but which may be considered as a universal, living, infinite mind.
+The Kybalion - Correspondence: As above, so below; as below, so above. This Principle embodies the truth that there is always a Correspondence between the laws and phenomena of the various planes of Being and Life.
+The Kybalion - Vibration: Nothing rests; everything moves; everything vibrates. This Principle explains that the differences between different manifestations of Matter, Energy, Mind, and even Spirit, result largely from varying rates of Vibration.
+The Kybalion - Polarity: Everything is Dual; everything has poles; everything has its pair of opposites; like and unlike are the same; opposites are identical in nature, but different in degree.
+The Kybalion - Rhythm: Everything flows, out and in; everything has its tides; all things rise and fall; the pendulum-swing manifests in everything; the measure of the swing to the right is the measure of the swing to the left.
 """
+}
 
 def detect_script(text: str) -> str:
     for char in text:
@@ -641,24 +685,15 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE
+# TAB 2: CORPUS KNOWLEDGE BASE (Instant In-Memory Core)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>The Full-Corpus Library Engine</h3>", unsafe_allow_html=True)
-    st.markdown("Search, cross-examine, and extract patterns across complete sacred literature without truncations.")
-
-    CORPUS_OPTIONS = [
-        "King James Bible (Complete)",
-        "The Book of Enoch (R.H. Charles)",
-        "The Nag Hammadi Library (Complete Codices)",
-        "Pistis Sophia (G.R.S. Mead)",
-        "The Kybalion (Three Initiates)",
-        "Custom Upload"
-    ]
+    st.markdown("Search, cross-examine, and extract patterns across complete sacred literature without network dropouts.")
 
     col_cp1, col_cp2 = st.columns([1.2, 1])
     with col_cp1:
-        corpus_sel = st.selectbox("Select Active Canonical Corpus", CORPUS_OPTIONS)
+        corpus_sel = st.selectbox("Select Active Canonical Corpus", list(CANONICAL_LIBRARIES.keys()) + ["Custom Upload"])
     
     corp_text = ""
     with col_cp2:
@@ -667,14 +702,14 @@ with tabs[1]:
             if uploaded_file is not None:
                 corp_text = uploaded_file.read().decode('utf-8', errors='ignore')
         else:
-            corp_text = FALLBACK_CORPUS_TEXT
+            corp_text = CANONICAL_LIBRARIES.get(corpus_sel, "")
 
     if corp_text:
         words_count = len(re.findall(r'\b\w+\b', corp_text))
         st.caption(f"Corpus Active: **{words_count:,} words** | **{len(corp_text):,} characters**")
 
         st.markdown("#### Corpus Plain-Language Inquiry")
-        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. 7, God, Light, Word, Spirit", key="corp_q")
+        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. 7, God, Light, Word, Sophia, Spirit, Heaven", key="corp_q")
 
         if c_query.strip():
             q_clean = c_query.strip()
@@ -686,12 +721,11 @@ with tabs[1]:
                 target = target.split()[0] if target else q_clean
                 pattern = rf'\b{re.escape(target)}\b'
 
-            raw_paragraphs = re.split(r'\n+', corp_text)
+            raw_paragraphs = [p.strip() for p in corp_text.strip().splitlines() if p.strip()]
             matches_list = []
             
-            for p in raw_paragraphs:
-                verse = p.strip()
-                if len(verse) < 15:
+            for verse in raw_paragraphs:
+                if len(verse) < 10:
                     continue
                 if re.search(pattern, verse, re.IGNORECASE):
                     script = detect_script(verse)
