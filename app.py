@@ -641,7 +641,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: CORPUS KNOWLEDGE BASE (No 175-Word Failure)
+# TAB 2: CORPUS KNOWLEDGE BASE
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>The Full-Corpus Library Engine</h3>", unsafe_allow_html=True)
@@ -811,11 +811,25 @@ Synthesis Verdict:
     st.session_state["saved_compat_txt"] = compat_txt
 
 # ----------------------------------------------------
-# TAB 6: DUAL FREQUENCY MAPS (Neutral Defaults)
+# TAB 6: DUAL FREQUENCY MAPS (Explicit Variable Scope)
 # ----------------------------------------------------
 with tabs[5]:
     st.markdown("<h3 style='color:#f5c542;'>Spatiotemporal Frequency & The Crystal Sophia Mirror</h3>", unsafe_allow_html=True)
     st.markdown("> *Dual sacred geometric systems: An individual spatiotemporal frequency chart on the Flower of Life matrix and Tree of Life, followed by the Crystal Sophia Mirror.*")
+
+    # Shared Geometry Engine
+    cx_fol, cy_fol = 280, 270
+    fol_rad = 42
+    fol_circles = [(cx_fol, cy_fol)]
+    for a in range(0, 360, 60):
+        r = math.radians(a)
+        fol_circles.append((cx_fol + fol_rad * math.cos(r), cy_fol + fol_rad * math.sin(r)))
+    for a in range(0, 360, 30):
+        r = math.radians(a)
+        dist = fol_rad * math.sqrt(3) if (a % 60 != 0) else fol_rad * 2.0
+        fol_circles.append((cx_fol + dist * math.cos(r), cy_fol + dist * math.sin(r)))
+
+    fol_markup = "".join([f'<circle cx="{c[0]:.1f}" cy="{c[1]:.1f}" r="{fol_rad}" fill="none" stroke="rgba(212,175,55,0.18)" stroke-width="1.2"/>' for c in fol_circles])
 
     # ==========================================
     # PART A: INDIVIDUAL SPATIOTEMPORAL FREQUENCY MAP
@@ -846,23 +860,10 @@ with tabs[5]:
         </div>
         """, unsafe_allow_html=True)
 
-    cx1, cy1 = 280, 270
-    fol_rad = 42
-    fol_circles = [(cx1, cy1)]
-    for a in range(0, 360, 60):
-        r = math.radians(a)
-        fol_circles.append((cx1 + fol_rad * math.cos(r), cy1 + fol_rad * math.sin(r)))
-    for a in range(0, 360, 30):
-        r = math.radians(a)
-        dist = fol_rad * math.sqrt(3) if (a % 60 != 0) else fol_rad * 2.0
-        fol_circles.append((cx1 + dist * math.cos(r), cy1 + dist * math.sin(r)))
-
-    fol_markup = "".join([f'<circle cx="{c[0]:.1f}" cy="{c[1]:.1f}" r="{fol_rad}" fill="none" stroke="rgba(212,175,55,0.18)" stroke-width="1.2"/>' for c in fol_circles])
-
     tree_nodes = {
-        1: (cx1, cy1 - 180), 2: (cx1 + 105, cy1 - 130), 3: (cx1 - 105, cy1 - 130),
-        4: (cx1 + 105, cy1 - 40), 5: (cx1 - 105, cy1 - 40), 6: (cx1, cy1 - 10),
-        7: (cx1 + 105, cy1 + 70), 8: (cx1 - 105, cy1 + 70), 9: (cx1, cy1 + 115), 10: (cx1, cy1 + 195)
+        1: (cx_fol, cy_fol - 180), 2: (cx_fol + 105, cy_fol - 130), 3: (cx_fol - 105, cy_fol - 130),
+        4: (cx_fol + 105, cy_fol - 40), 5: (cx_fol - 105, cy_fol - 40), 6: (cx_fol, cy_fol - 10),
+        7: (cx_fol + 105, cy_fol + 70), 8: (cx_fol - 105, cy_fol + 70), 9: (cx_fol, cy_fol + 115), 10: (cx_fol, cy_fol + 195)
     }
 
     tree_paths = [
@@ -882,8 +883,8 @@ with tabs[5]:
     ])
 
     r_poly = 160
-    poly_nodes = {i: (cx1 + r_poly * math.cos(math.radians(-90 + (i - 1) * 40)),
-                      cy1 + r_poly * math.sin(math.radians(-90 + (i - 1) * 40))) for i in range(1, 10)}
+    poly_nodes = {i: (cx_fol + r_poly * math.cos(math.radians(-90 + (i - 1) * 40)),
+                      cy_fol + r_poly * math.sin(math.radians(-90 + (i - 1) * 40))) for i in range(1, 10)}
     active_seq1 = [ind_lp, ind_expr, ind_soul, ind_pitch, reduce_number(ind_lp + ind_expr)]
     poly_points = " ".join([f"{poly_nodes[p][0]:.1f},{poly_nodes[p][1]:.1f}" for p in active_seq1])
 
@@ -900,7 +901,7 @@ with tabs[5]:
                 <feComposite in="SourceGraphic" in2="blur" operator="over"/>
             </filter>
         </defs>
-        <circle cx="{cx1}" cy="{cy1}" r="248" fill="none" stroke="rgba(212,175,55,0.3)" stroke-width="1.8"/>
+        <circle cx="{cx_fol}" cy="{cy_fol}" r="248" fill="none" stroke="rgba(212,175,55,0.3)" stroke-width="1.8"/>
         <g opacity="0.85">{fol_markup}</g>
         <g>{tree_paths_svg}{tree_sephiroth_svg}</g>
         <polygon points="{poly_points}" fill="url(#polyGrad)" stroke="#ffd700" stroke-width="3" filter="url(#glowGold)"/>
@@ -908,7 +909,7 @@ with tabs[5]:
             <circle cx="{poly_nodes[i][0]}" cy="{poly_nodes[i][1]}" r="14" fill="#0c0e12" stroke="{("#ffd700" if i in active_seq1 else "rgba(212,175,55,0.4)")}" stroke-width="{("2.5" if i in active_seq1 else "1.2")}"/>
             <text x="{poly_nodes[i][0]}" y="{poly_nodes[i][1] + 4}" fill="{("#fff4cc" if i in active_seq1 else "#8a8f98")}" font-size="11" font-weight="700" text-anchor="middle" font-family="'Cinzel', serif">{i}</text>
         ''' for i in range(1, 10)])}
-        <text x="{cx1}" y="24" fill="#f5c542" font-size="11" font-weight="700" text-anchor="middle" font-family="'Cinzel', serif" letter-spacing="0.1em">INDIVIDUAL HARMONIC WEB OVER SACRED MATRIX</text>
+        <text x="{cx_fol}" y="24" fill="#f5c542" font-size="11" font-weight="700" text-anchor="middle" font-family="'Cinzel', serif" letter-spacing="0.1em">INDIVIDUAL HARMONIC WEB OVER SACRED MATRIX</text>
     </svg></body></html>
     """
     components.html(ind_svg, height=570)
