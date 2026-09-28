@@ -174,6 +174,49 @@ MIN_DATE = datetime.date(1, 1, 1)
 MAX_DATE = datetime.date(9999, 12, 31)
 
 # ==========================================
+# TOP FREQUENCY GENERATOR TOOLBAR (Solfeggio)
+# ==========================================
+freq_col1, freq_col2 = st.columns([1, 2])
+with freq_col1:
+    freq_choice = st.selectbox(
+        "🔊 Harmonic Resonator (Frequency Tone):",
+        ["Off", "432 Hz — Natural Harmonic Ground", "528 Hz — Solfeggio Transformation", "639 Hz — Relational Attunement", "741 Hz — Awakened Intuition", "963 Hz — Pure Crown Radiance"],
+        index=0
+    )
+
+hz_map = {
+    "Off": 0,
+    "432 Hz — Natural Harmonic Ground": 432,
+    "528 Hz — Solfeggio Transformation": 528,
+    "639 Hz — Relational Attunement": 639,
+    "741 Hz — Awakened Intuition": 741,
+    "963 Hz — Pure Crown Radiance": 963
+}
+selected_hz = hz_map[freq_choice]
+
+components.html(f"""
+<script>
+    if (window.audioCtx) {{
+        window.audioCtx.close();
+        window.audioCtx = null;
+    }}
+    const targetHz = {selected_hz};
+    if (targetHz > 0) {{
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        window.audioCtx = new AudioContext();
+        const osc = window.audioCtx.createOscillator();
+        const gain = window.audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(targetHz, window.audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, window.audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(window.audioCtx.destination);
+        osc.start();
+    }}
+</script>
+""", height=0)
+
+# ==========================================
 # 1. CONSTANTS, SCRIPTS & GEMATRIA
 # ==========================================
 
@@ -317,7 +360,7 @@ KNOWLEDGE_BASE = {
 }
 
 # ==========================================
-# VERIFIED HIGH-RELIABILITY CANONICAL MIRRORS
+# VERIFIED CANONICAL TEXT SOURCES
 # ==========================================
 CORPUS_METADATA = {
     "King James Bible (Complete)": [
@@ -325,23 +368,20 @@ CORPUS_METADATA = {
         "https://raw.githubusercontent.com/teropa/nlp/master/resources/corpora/gutenberg/bible-kjv.txt"
     ],
     "The Book of Enoch (R.H. Charles)": [
-        "https://raw.githubusercontent.com/pseudepigrapha/enoch/main/enoch_charles_complete.txt",
-        "https://raw.githubusercontent.com/ancient-texts/enoch/main/enoch.txt"
+        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/enoch.txt"
     ],
     "Pistis Sophia (G.R.S. Mead)": [
-        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/pistis_sophia_mead_complete.txt",
-        "https://raw.githubusercontent.com/ancient-texts/pistis-sophia/main/pistis_sophia.txt"
+        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/pistis_sophia.txt"
     ],
     "The Nag Hammadi Library (Complete Codices)": [
-        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/nag_hammadi_complete_codices.txt",
-        "https://raw.githubusercontent.com/ancient-texts/nag-hammadi/main/nag_hammadi.txt"
+        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/nag_hammadi.txt"
     ],
     "The Kybalion (Three Initiates)": [
         "https://www.gutenberg.org/cache/epub/14264/pg14264.txt"
     ]
 }
 
-# Extensive, verified canonical verse sets
+# Verified local canon reserves
 LOCAL_CANON_RESERVES = {
     "King James Bible (Complete)": """
 Genesis 1:1 In the beginning God created the heaven and the earth.
@@ -440,9 +480,7 @@ def is_valid_canonical_text(book_name: str, text: str) -> bool:
     if not text or len(text) < 1500:
         return False
     t_lower = text.lower()
-    
-    # Filter out mismatched secular Gutenberg texts
-    invalid_markers = ["oregon historical society", "wyeth", "dublin", "haig", "boston", "parliament"]
+    invalid_markers = ["oregon historical society", "wyeth", "dublin", "haig", "boston", "parliament", "irish on the somme"]
     if any(m in t_lower for m in invalid_markers):
         return False
 
@@ -485,13 +523,12 @@ def load_full_corpus_text(book_name: str) -> str:
     return LOCAL_CANON_RESERVES.get(book_name, "").strip()
 
 def split_into_verses(text: str):
-    # Regex splitting on verse, logion, chapter, numbered headers, or clean sentence terminals
+    # Split text cleanly into individual verse units
     raw_units = re.split(r'(?:\r?\n\s*(?:[A-Za-z0-9\s]+ \d+:\d+|Logion \d+|Chapter \d+|\d+\.)\s*)|(?<=[.!?])\s+(?=[A-Z0-9])', text)
     clean_verses = []
     seen = set()
     for unit in raw_units:
         v = unit.strip()
-        # Keep crisp, individual verse length (discard tiny headers or huge multi-paragraph blocks)
         if 20 <= len(v) <= 350:
             if v not in seen and not v.lower().startswith("project gutenberg"):
                 seen.add(v)
@@ -804,7 +841,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Precise Verses)
+# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Precise Verses & Export)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>Books of Knowledge Corpus</h3>", unsafe_allow_html=True)
@@ -844,7 +881,7 @@ with tabs[1]:
                 target = target.split()[0] if target else q_clean
                 pattern = rf'\b{re.escape(target)}\b'
 
-            # Parse into distinct, individual verse units
+            # Parse into crisp, individual verse units
             raw_entries = split_into_verses(corp_text)
 
             matches_list = []
@@ -871,6 +908,20 @@ with tabs[1]:
                         {v_text}
                     </div>
                     """, unsafe_allow_html=True)
+
+                # Direct Search Results File Exporter
+                verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nQuery: {c_query}\nTotal Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                for idx, (raw_v, _, v_root) in enumerate(matches_list, 1):
+                    verses_export_text += f"[{idx}] Root: {v_root}\n{raw_v}\n\n"
+
+                st.markdown("---")
+                st.download_button(
+                    "💾 Save Search Results As Text File (.txt)",
+                    data=verses_export_text,
+                    file_name=f"numberin_{corpus_sel[:10].strip().replace(' ', '_')}_{c_query[:8].strip()}_verses.txt",
+                    mime="text/plain",
+                    key="dl_search_res"
+                )
 
 # ----------------------------------------------------
 # TAB 3: TIMELINE FORECAST (Neutral Defaults)
