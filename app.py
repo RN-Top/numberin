@@ -245,7 +245,7 @@ GREEK_ISOPSEPHY_MAP = {
 
 CYRILLIC_MAP = {
     'А': 1, 'Б': 2, 'В': 2, 'Г': 3, 'Д': 4, 'Е': 5, 'Ё': 5, 'Ж': 7, 'З': 7,
-    'И': 8, 'Й': 8, 'І': 10, 'К': 20, 'Л': 30, 'M': 40, 'Н': 50, 'О': 70,
+    'И': 8, 'Й': 8, 'І': 10, 'К': 20, 'Л': 30, 'М': 40, 'Н': 50, 'О': 70,
     'П': 80, 'Р': 100, 'С': 200, 'Т': 300, 'У': 400, 'Ф': 500, 'Х': 600,
     'Ѱ': 700, 'Ѡ': 800, 'Ц': 900, 'Ч': 90, 'Ш': 1, 'Щ': 2, 'Ъ': 3, 'Ы': 4,
     'Ь': 5, 'Э': 6, 'Ю': 7, 'Я': 8
@@ -859,7 +859,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: TREE OF KNOWLEDGE CORPUS (Enhanced Dual Engine)
+# TAB 2: TREE OF KNOWLEDGE CORPUS (Multi-Tier Robust Engine)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>Tree of Knowledge Corpus</h3>", unsafe_allow_html=True)
@@ -908,11 +908,11 @@ with tabs[1]:
                         highlighted = re.sub(pattern, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
                         matches_list.append((verse, highlighted, v_root))
             
-            # 2. String/Phrase Query
+            # 2. String/Phrase Query with Intelligent Automatic Proximity Fallback
             else:
                 tokens = [re.escape(w) for w in re.split(r'[\s,\.\;\:\-\"\'\`]+', target) if w]
                 
-                # A: Try contiguous phrase search first
+                # A: Exact contiguous phrase first
                 if len(tokens) > 1:
                     phrase_pat = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
                 elif len(tokens) == 1:
@@ -927,7 +927,7 @@ with tabs[1]:
                         highlighted = re.sub(phrase_pat, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
                         matches_list.append((verse, highlighted, v_root))
 
-                # B: If contiguous phrase returned 0, automatically find verses containing all core tokens
+                # B: If contiguous phrase returned 0, automatically find verses containing the key thematic words
                 if len(matches_list) == 0 and len(tokens) > 1:
                     significant_tokens = [t for t in tokens if len(t) > 2]
                     search_tokens = significant_tokens if significant_tokens else tokens
@@ -940,11 +940,11 @@ with tabs[1]:
                                 highlighted = re.sub(rf'\b({t})\b', r"<span class='mark-glow'>\1</span>", highlighted, flags=re.IGNORECASE)
                             matches_list.append((verse, highlighted, v_root))
 
-                # C: Cross-Tradition Concept Guidance if 0 matches
-                clean_lower = target.lower()
+                # C: Cross-Tradition Concept Guidance and direct parallel verse injection
+                clean_lower = target.lower().strip()
                 if len(matches_list) == 0 and clean_lower in CROSS_TRADITION_MAP:
                     concept_info = CROSS_TRADITION_MAP[clean_lower]
-                    st.info(f"💡 **Canon Cross-Reference Note:** *'{target}'* is the core axiom of **{concept_info['direct_book']}**. In the Biblical canon, this principle is expressed in **{', '.join(concept_info['bible_refs'])}**.")
+                    st.info(f"💡 **Scriptural Principle Note:** The exact phrase *'{target}'* is the literal axiom in **{concept_info['direct_book']}**. In the Biblical canon, this cosmic mirror is recorded in **{', '.join(concept_info['bible_refs'])}**:")
                     for verse in raw_entries:
                         if any(ref in verse for ref in concept_info['bible_refs']):
                             script = detect_script(verse)
