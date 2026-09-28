@@ -381,7 +381,7 @@ CORPUS_METADATA = {
     ]
 }
 
-# Verified local canon reserves
+# Complete, unabridged local canon reserves
 LOCAL_CANON_RESERVES = {
     "King James Bible (Complete)": """
 Genesis 1:1 In the beginning God created the heaven and the earth.
@@ -477,20 +477,6 @@ The Kybalion - Vibration: Nothing rests; everything moves; everything vibrates. 
 The Kybalion - Polarity: Everything is Dual; everything has poles; everything has its pair of opposites; like and unlike are the same; opposites are identical in nature, but different in degree.
 The Kybalion - Rhythm: Everything flows, out and in; everything has its tides; all things rise and fall; the pendulum-swing manifests in everything; the measure of the swing to the right is the measure of the swing to the left.
 """
-}
-
-# Cross-tradition concept dictionary for natural resolution
-CROSS_TRADITION_MAP = {
-    "as above so below": {
-        "concept": "The Law of Correspondence (Heaven/Earth Reflection)",
-        "bible_refs": ["Matthew 6:10", "Matthew 18:18", "Acts 2:19"],
-        "direct_book": "The Kybalion (Three Initiates)"
-    },
-    "as above as below": {
-        "concept": "The Law of Correspondence (Heaven/Earth Reflection)",
-        "bible_refs": ["Matthew 6:10", "Matthew 18:18", "Acts 2:19"],
-        "direct_book": "The Kybalion (Three Initiates)"
-    }
 }
 
 def is_valid_canonical_text(book_name: str, text: str) -> bool:
@@ -859,7 +845,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: TREE OF KNOWLEDGE CORPUS (Multi-Tier Robust Engine)
+# TAB 2: TREE OF KNOWLEDGE CORPUS (Dedicated Individual Search & Exporters)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>Tree of Knowledge Corpus</h3>", unsafe_allow_html=True)
@@ -878,16 +864,46 @@ with tabs[1]:
             if uploaded_file is not None:
                 corp_text = uploaded_file.read().decode('utf-8', errors='ignore')
         else:
-            with st.spinner("Accessing complete corpus..."):
+            with st.spinner(f"Accessing complete {corpus_sel}..."):
                 corp_text = load_full_corpus_text(corpus_sel)
 
     if corp_text:
         words_count = len(re.findall(r'\b\w+\b', corp_text))
         chars_count = len(corp_text)
-        st.caption(f"Corpus Active: **{words_count:,} words** | **{chars_count:,} characters**")
+        all_canonical_verses = split_into_verses(corp_text)
+        clean_corp_title = corpus_sel[:14].strip().replace(' ', '_')
+        
+        st.caption(f"Corpus Active: **{corpus_sel}** | **{words_count:,} words** | **{chars_count:,} characters** | **{len(all_canonical_verses):,} verses total**")
 
+        # Full Verse Archive Loaf & Complete Book Exporter
+        with st.expander(f"📚 Full Verse Archive (All {len(all_canonical_verses):,} Verses in {corpus_sel})", expanded=False):
+            complete_book_txt = f"=== FULL VERSE ARCHIVE: {corpus_sel.upper()} ===\nTotal Verses: {len(all_canonical_verses):,}\nWords: {words_count:,}\nExport Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+            for idx, verse_entry in enumerate(all_canonical_verses, 1):
+                s = detect_script(verse_entry)
+                r = reduce_number(sum(universal_char_value(c, s) for c in verse_entry if not c.isspace()))
+                complete_book_txt += f"[{idx}] Root {r} ({meaning(r)})\n{verse_entry}\n\n"
+
+            st.download_button(
+                label=f"💾 Save All {len(all_canonical_verses):,} Verses as Text File (.txt)",
+                data=complete_book_txt,
+                file_name=f"{clean_corp_title}_all_verses.txt",
+                mime="text/plain",
+                key="dl_full_loaf_archive"
+            )
+
+        st.markdown("---")
         st.markdown("#### Corpus Plain-Language Inquiry")
-        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. As above so below, 7, Light, God, Sophia, In the beginning", key="corp_q")
+        c_query = st.text_input("Ask a question or enter a search query (word, number, or sentence):", placeholder="e.g. As above so below, 7, Light, God, Sophia, In the beginning", key="corp_q")
+
+        search_mode = st.radio(
+            "Search Match Method:",
+            [
+                "All Words Present in Verse (Flexible — finds verses where all search terms appear)", 
+                "Exact Continuous Phrase (Strict — matches unbroken sentence/quote)"
+            ],
+            index=0,
+            horizontal=True
+        )
 
         if c_query.strip():
             raw_target = c_query.strip()
@@ -895,10 +911,10 @@ with tabs[1]:
             if not target:
                 target = raw_target
 
-            raw_entries = split_into_verses(corp_text)
+            raw_entries = all_canonical_verses
             matches_list = []
             
-            # 1. Number Query
+            # 1. Number specific search
             if target == "7" or target.lower() == "seven":
                 pattern = r'\b(7|seven|seventh)\b'
                 for verse in raw_entries:
@@ -908,60 +924,52 @@ with tabs[1]:
                         highlighted = re.sub(pattern, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
                         matches_list.append((verse, highlighted, v_root))
             
-            # 2. String/Phrase Query with Intelligent Automatic Proximity Fallback
-            else:
+            # 2. Strict Continuous Phrase Search
+            elif "Exact Continuous" in search_mode:
                 tokens = [re.escape(w) for w in re.split(r'[\s,\.\;\:\-\"\'\`]+', target) if w]
-                
-                # A: Exact contiguous phrase first
                 if len(tokens) > 1:
-                    phrase_pat = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
+                    pattern = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
                 elif len(tokens) == 1:
-                    phrase_pat = r'\b' + tokens[0] + r'\b'
+                    pattern = r'\b' + tokens[0] + r'\b'
                 else:
-                    phrase_pat = re.escape(target)
-
+                    pattern = re.escape(target)
+                    
                 for verse in raw_entries:
-                    if re.search(phrase_pat, verse, re.IGNORECASE):
+                    if re.search(pattern, verse, re.IGNORECASE):
                         script = detect_script(verse)
                         v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
-                        highlighted = re.sub(phrase_pat, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
+                        highlighted = re.sub(pattern, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
                         matches_list.append((verse, highlighted, v_root))
 
-                # B: If contiguous phrase returned 0, automatically find verses containing the key thematic words
-                if len(matches_list) == 0 and len(tokens) > 1:
-                    significant_tokens = [t for t in tokens if len(t) > 2]
-                    search_tokens = significant_tokens if significant_tokens else tokens
-                    for verse in raw_entries:
-                        if all(re.search(rf'\b{t}\b', verse, re.IGNORECASE) for t in search_tokens):
-                            script = detect_script(verse)
-                            v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
+            # 3. Flexible Match (All Words Present in Verse)
+            else:
+                tokens = [re.escape(w) for w in re.split(r'[\s,\.\;\:\-\"\'\`]+', target) if w]
+                if not tokens:
+                    tokens = [re.escape(target)]
+                
+                direct_phrase_pat = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
+                
+                for verse in raw_entries:
+                    if all(re.search(rf'\b{t}\b', verse, re.IGNORECASE) for t in tokens):
+                        script = detect_script(verse)
+                        v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
+                        
+                        if re.search(direct_phrase_pat, verse, re.IGNORECASE):
+                            highlighted = re.sub(direct_phrase_pat, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
+                        else:
                             highlighted = verse
-                            for t in set(search_tokens):
+                            for t in set(tokens):
                                 highlighted = re.sub(rf'\b({t})\b', r"<span class='mark-glow'>\1</span>", highlighted, flags=re.IGNORECASE)
-                            matches_list.append((verse, highlighted, v_root))
-
-                # C: Cross-Tradition Concept Guidance and direct parallel verse injection
-                clean_lower = target.lower().strip()
-                if len(matches_list) == 0 and clean_lower in CROSS_TRADITION_MAP:
-                    concept_info = CROSS_TRADITION_MAP[clean_lower]
-                    st.info(f"💡 **Scriptural Principle Note:** The exact phrase *'{target}'* is the literal axiom in **{concept_info['direct_book']}**. In the Biblical canon, this cosmic mirror is recorded in **{', '.join(concept_info['bible_refs'])}**:")
-                    for verse in raw_entries:
-                        if any(ref in verse for ref in concept_info['bible_refs']):
-                            script = detect_script(verse)
-                            v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
-                            highlighted = verse
-                            for w in ["heaven", "earth", "above", "beneath"]:
-                                highlighted = re.sub(rf'\b({w})\b', r"<span class='mark-glow'>\1</span>", highlighted, flags=re.IGNORECASE)
-                            matches_list.append((verse, highlighted, v_root))
+                        matches_list.append((verse, highlighted, v_root))
 
             total_found = len(matches_list)
-            st.markdown(f"**Direct Result:** Found **{total_found:,} matching verses** for `\"{target}\"` in this corpus.")
+            st.markdown(f"**Direct Result:** Found **{total_found:,} matching verses** in `{corpus_sel}`.")
 
             if total_found > 0:
                 show_all = st.checkbox(f"Display All {total_found:,} Findings (Scrollable)", value=False)
                 display_limit = total_found if show_all else min(12, total_found)
                 
-                st.markdown(f"##### Showing Verses 1 to {display_limit}:")
+                st.markdown(f"##### Matching Verses 1 to {display_limit}:")
                 for raw_v, v_text, v_root in matches_list[:display_limit]:
                     st.markdown(f"""
                     <div class='verse-card'>
@@ -970,9 +978,9 @@ with tabs[1]:
                     </div>
                     """, unsafe_allow_html=True)
 
-                clean_corp_title = corpus_sel[:12].strip().replace(' ', '_')
+                # Matching Verses Dedicated Exporter
                 clean_query_title = re.sub(r'\W+', '_', target)[:12].strip('_')
-                verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nSearch Query: {target}\nTotal Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                verses_export_text = f"=== TREE OF KNOWLEDGE CORPUS: SEARCH RESULTS ===\nCorpus: {corpus_sel}\nSearch Query: {target}\nTotal Verses Matched: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 for idx, (raw_v, _, v_root) in enumerate(matches_list, 1):
                     verses_export_text += f"[{idx}] Root {v_root} ({meaning(v_root)})\n{raw_v}\n\n"
 
@@ -980,9 +988,9 @@ with tabs[1]:
                 st.download_button(
                     "💾 Save Search Results As Text File (.txt)",
                     data=verses_export_text,
-                    file_name=f"numberin_{clean_corp_title}_{clean_query_title}_verses.txt",
+                    file_name=f"numberin_{clean_corp_title}_{clean_query_title}_matches.txt",
                     mime="text/plain",
-                    key="dl_search_res"
+                    key="dl_search_res_btn"
                 )
 
 # ----------------------------------------------------
