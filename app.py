@@ -368,13 +368,13 @@ CORPUS_METADATA = {
         "https://raw.githubusercontent.com/teropa/nlp/master/resources/corpora/gutenberg/bible-kjv.txt"
     ],
     "The Book of Enoch (R.H. Charles)": [
-        "https://raw.githubusercontent.com/pseudepigrapha/enoch/main/enoch_charles_complete.txt"
+        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/enoch.txt"
     ],
     "Pistis Sophia (G.R.S. Mead)": [
-        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/pistis_sophia_mead_complete.txt"
+        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/pistis_sophia.txt"
     ],
     "The Nag Hammadi Library (Complete Codices)": [
-        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/nag_hammadi_complete_codices.txt"
+        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/nag_hammadi.txt"
     ],
     "The Kybalion (Three Initiates)": [
         "https://www.gutenberg.org/cache/epub/14264/pg14264.txt"
@@ -529,10 +529,12 @@ def split_into_verses(text: str):
     seen = set()
     for unit in raw_units:
         v = unit.strip()
-        if 20 <= len(v) <= 350:
+        if 20 <= len(v) <= 450:
             if v not in seen and not v.lower().startswith("project gutenberg"):
                 seen.add(v)
                 clean_verses.append(v)
+    if not clean_verses:
+        clean_verses = [line.strip() for line in text.splitlines() if len(line.strip()) >= 20]
     return clean_verses
 
 def detect_script(text: str) -> str:
@@ -1103,11 +1105,13 @@ with tabs[5]:
     r_poly = 160
     poly_nodes = {i: (cx_fol + r_poly * math.cos(math.radians(-90 + (i - 1) * 40)),
                       cy_fol + r_poly * math.sin(math.radians(-90 + (i - 1) * 40))) for i in range(1, 10)}
-    active_seq1 = [reduce_number(ind_lp, preserve_master=False), 
-                   reduce_number(ind_expr, preserve_master=False), 
-                   reduce_number(ind_soul, preserve_master=False), 
-                   reduce_number(ind_pitch, preserve_master=False), 
-                   reduce_number(ind_lp + ind_expr, preserve_master=False)]
+    active_seq1 = [
+        max(1, min(9, reduce_number(ind_lp, preserve_master=False))), 
+        max(1, min(9, reduce_number(ind_expr, preserve_master=False))), 
+        max(1, min(9, reduce_number(ind_soul, preserve_master=False))), 
+        max(1, min(9, reduce_number(ind_pitch, preserve_master=False))), 
+        max(1, min(9, reduce_number(ind_lp + ind_expr, preserve_master=False)))
+    ]
     poly_points = " ".join([f"{poly_nodes[p][0]:.1f},{poly_nodes[p][1]:.1f}" for p in active_seq1])
 
     ind_svg = f"""
