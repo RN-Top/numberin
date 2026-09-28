@@ -1042,7 +1042,11 @@ with tabs[5]:
     r_poly = 160
     poly_nodes = {i: (cx_fol + r_poly * math.cos(math.radians(-90 + (i - 1) * 40)),
                       cy_fol + r_poly * math.sin(math.radians(-90 + (i - 1) * 40))) for i in range(1, 10)}
-    active_seq1 = [ind_lp, ind_expr, ind_soul, ind_pitch, reduce_number(ind_lp + ind_expr)]
+    active_seq1 = [reduce_number(ind_lp, preserve_master=False), 
+                   reduce_number(ind_expr, preserve_master=False), 
+                   reduce_number(ind_soul, preserve_master=False), 
+                   reduce_number(ind_pitch, preserve_master=False), 
+                   reduce_number(ind_lp + ind_expr, preserve_master=False)]
     poly_points = " ".join([f"{poly_nodes[p][0]:.1f},{poly_nodes[p][1]:.1f}" for p in active_seq1])
 
     ind_svg = f"""
