@@ -368,13 +368,13 @@ CORPUS_METADATA = {
         "https://raw.githubusercontent.com/teropa/nlp/master/resources/corpora/gutenberg/bible-kjv.txt"
     ],
     "The Book of Enoch (R.H. Charles)": [
-        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/enoch.txt"
+        "https://raw.githubusercontent.com/pseudepigrapha/enoch/main/enoch_charles_complete.txt"
     ],
     "Pistis Sophia (G.R.S. Mead)": [
-        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/pistis_sophia.txt"
+        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/pistis_sophia_mead_complete.txt"
     ],
     "The Nag Hammadi Library (Complete Codices)": [
-        "https://raw.githubusercontent.com/RN-Top/corpus-mirrors/main/nag_hammadi.txt"
+        "https://raw.githubusercontent.com/pseudepigrapha/gnostic/main/nag_hammadi_complete_codices.txt"
     ],
     "The Kybalion (Three Initiates)": [
         "https://www.gutenberg.org/cache/epub/14264/pg14264.txt"
@@ -398,6 +398,7 @@ Psalms 19:1 The heavens declare the glory of God; and the firmament sheweth his 
 Psalms 119:105 Thy word is a lamp unto my feet, and a light unto my path.
 Isaiah 7:14 Therefore the Lord himself shall give you a sign; Behold, a virgin shall conceive, and bear a son, and shall call his name Immanuel.
 Isaiah 40:10 Behold, the Lord GOD will come with strong hand, and his arm shall rule for him: behold, his reward is with him, and his work before him.
+Matthew 6:10 Thy kingdom come. Thy will be done in earth, as it is in heaven.
 John 1:1 In the beginning was the Word, and the Word was with God, and the Word was God.
 John 1:2 The same was in the beginning with God.
 John 1:3 All things were made by him; and without him was not any thing made that was made.
@@ -757,12 +758,12 @@ st.markdown("<div class='brand-title'>NUMBERIN</div>", unsafe_allow_html=True)
 search_query = st.text_input("Enter any name, phrase, epoch, or date across any language (Hebrew, Greek, Russian, Spanish, English):", "")
 
 # ==========================================
-# 4. MODULE TABS (INCLUDES BOOKS OF KNOWLEDGE CORPUS)
+# 4. MODULE TABS (TREE OF KNOWLEDGE CORPUS)
 # ==========================================
 
 tabs = st.tabs([
     "Alchemy Pharmacy", 
-    "Books of Knowledge Corpus", 
+    "Tree of Knowledge Corpus", 
     "Timeline Forecast", 
     "Decan Oracle", 
     "Compatibility Matrix", 
@@ -843,10 +844,10 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Exact Phrase/Sentence/Number Matching)
+# TAB 2: TREE OF KNOWLEDGE CORPUS (Robust Phrase Search)
 # ----------------------------------------------------
 with tabs[1]:
-    st.markdown("<h3 style='color:#f5c542;'>Books of Knowledge Corpus</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#f5c542;'>Tree of Knowledge Corpus</h3>", unsafe_allow_html=True)
     st.markdown("Search, cross-examine, and extract patterns across complete canonical scriptures and user-uploaded texts.")
 
     col_cp1, col_cp2 = st.columns([1.2, 1])
@@ -876,18 +877,17 @@ with tabs[1]:
         if c_query.strip():
             raw_target = c_query.strip()
             
-            # Remove purely conversational prefixes if entered, but preserve the exact query string
             target = re.sub(r'^(find|how many times does|count|search for)\s+', '', raw_target, flags=re.IGNORECASE).strip().strip("'\"")
             if not target:
                 target = raw_target
 
-            # Build regex pattern for the exact multi-word sentence, number, or word
+            # Search either single digit/number or phrase with flexible non-alphanumeric spacing
             if target == "7" or target.lower() == "seven":
                 pattern = r'\b(7|seven|seventh)\b'
             else:
-                tokens = [re.escape(w) for w in target.split() if w]
+                tokens = [re.escape(w) for w in re.split(r'[\s,\.\;\:\-\"\'\`]+', target) if w]
                 if len(tokens) > 1:
-                    pattern = r'\b' + r'\s+'.join(tokens) + r'\b'
+                    pattern = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
                 elif len(tokens) == 1:
                     pattern = r'\b' + tokens[0] + r'\b'
                 else:
@@ -919,7 +919,6 @@ with tabs[1]:
                     </div>
                     """, unsafe_allow_html=True)
 
-                # Export search results to file
                 clean_corp_title = corpus_sel[:12].strip().replace(' ', '_')
                 clean_query_title = re.sub(r'\W+', '_', target)[:12].strip('_')
                 verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nSearch Query: {target}\nTotal Exact Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
