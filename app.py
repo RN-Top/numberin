@@ -841,7 +841,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Precise Verses & Export)
+# TAB 2: BOOKS OF KNOWLEDGE CORPUS (Precise Verses & Full String/Phrase Search)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>Books of Knowledge Corpus</h3>", unsafe_allow_html=True)
@@ -869,21 +869,30 @@ with tabs[1]:
         st.caption(f"Corpus Active: **{words_count:,} words** | **{chars_count:,} characters**")
 
         st.markdown("#### Corpus Plain-Language Inquiry")
-        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. 7, God, Light, Word, Sophia, Behold, Heaven", key="corp_q")
+        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. As above as below, 7, Light, God, Sophia, In the beginning", key="corp_q")
 
         if c_query.strip():
             q_clean = c_query.strip()
             
+            # Match the entire input phrase/number/sentence faithfully
             if q_clean == "7" or q_clean.lower() == "seven":
                 pattern = r'\b(7|seven|seventh)\b'
             else:
+                # Clean prompt questions while preserving full search query terms
                 target = re.sub(r'^(find|how many times does|count|search for)\s+', '', q_clean, flags=re.IGNORECASE).strip().strip("'\"")
-                target = target.split()[0] if target else q_clean
-                pattern = rf'\b{re.escape(target)}\b'
+                if not target:
+                    target = q_clean
+                
+                # Split multi-word phrases by flexible whitespace to handle line breaks/punctuation
+                words = [re.escape(w) for w in target.split() if w]
+                if len(words) > 1:
+                    pattern = r'\b' + r'\s+'.join(words) + r'\b'
+                elif len(words) == 1:
+                    pattern = r'\b' + words[0] + r'\b'
+                else:
+                    pattern = re.escape(target)
 
-            # Parse into crisp, individual verse units
             raw_entries = split_into_verses(corp_text)
-
             matches_list = []
             
             for verse in raw_entries:
@@ -894,7 +903,7 @@ with tabs[1]:
                     matches_list.append((verse, highlighted, v_root))
 
             total_found = len(matches_list)
-            st.markdown(f"**Direct Result:** Found **{total_found:,} matching verses** in this corpus.")
+            st.markdown(f"**Direct Result:** Found **{total_found:,} matching verses** for `\"{q_clean}\"` in this corpus.")
 
             if total_found > 0:
                 show_all = st.checkbox(f"Display All {total_found:,} Findings (Scrollable)", value=False)
@@ -910,15 +919,17 @@ with tabs[1]:
                     """, unsafe_allow_html=True)
 
                 # Direct Search Results File Exporter
-                verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nQuery: {c_query}\nTotal Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                clean_corp_title = corpus_sel[:12].strip().replace(' ', '_')
+                clean_query_title = re.sub(r'\W+', '_', q_clean)[:12].strip('_')
+                verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nSearch Query: {q_clean}\nTotal Exact Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 for idx, (raw_v, _, v_root) in enumerate(matches_list, 1):
-                    verses_export_text += f"[{idx}] Root: {v_root}\n{raw_v}\n\n"
+                    verses_export_text += f"[{idx}] Root {v_root} ({meaning(v_root)})\n{raw_v}\n\n"
 
                 st.markdown("---")
                 st.download_button(
                     "💾 Save Search Results As Text File (.txt)",
                     data=verses_export_text,
-                    file_name=f"numberin_{corpus_sel[:10].strip().replace(' ', '_')}_{c_query[:8].strip()}_verses.txt",
+                    file_name=f"numberin_{clean_corp_title}_{clean_query_title}_verses.txt",
                     mime="text/plain",
                     key="dl_search_res"
                 )
