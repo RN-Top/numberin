@@ -245,7 +245,7 @@ GREEK_ISOPSEPHY_MAP = {
 
 CYRILLIC_MAP = {
     'А': 1, 'Б': 2, 'В': 2, 'Г': 3, 'Д': 4, 'Е': 5, 'Ё': 5, 'Ж': 7, 'З': 7,
-    'И': 8, 'Й': 8, 'І': 10, 'К': 20, 'Л': 30, 'М': 40, 'Н': 50, 'О': 70,
+    'И': 8, 'Й': 8, 'І': 10, 'К': 20, 'Л': 30, 'M': 40, 'Н': 50, 'О': 70,
     'П': 80, 'Р': 100, 'С': 200, 'Т': 300, 'У': 400, 'Ф': 500, 'Х': 600,
     'Ѱ': 700, 'Ѡ': 800, 'Ц': 900, 'Ч': 90, 'Ш': 1, 'Щ': 2, 'Ъ': 3, 'Ы': 4,
     'Ь': 5, 'Э': 6, 'Ю': 7, 'Я': 8
@@ -399,12 +399,14 @@ Psalms 119:105 Thy word is a lamp unto my feet, and a light unto my path.
 Isaiah 7:14 Therefore the Lord himself shall give you a sign; Behold, a virgin shall conceive, and bear a son, and shall call his name Immanuel.
 Isaiah 40:10 Behold, the Lord GOD will come with strong hand, and his arm shall rule for him: behold, his reward is with him, and his work before him.
 Matthew 6:10 Thy kingdom come. Thy will be done in earth, as it is in heaven.
+Matthew 18:18 Verily I say unto you, Whatsoever ye shall bind on earth shall be bound in heaven: and whatsoever ye shall loose on earth shall be loosed in heaven.
 John 1:1 In the beginning was the Word, and the Word was with God, and the Word was God.
 John 1:2 The same was in the beginning with God.
 John 1:3 All things were made by him; and without him was not any thing made that was made.
 John 1:4 In him was life; and the life was the light of men.
 John 1:5 And the light shineth in darkness; and the darkness comprehended it not.
 John 1:29 The next day John seeth Jesus coming unto him, and saith, Behold the Lamb of God, which taketh away the sin of the world.
+Acts 2:19 And I will shew wonders in heaven above, and signs in the earth beneath; blood, and fire, and vapour of smoke.
 Revelation 1:4 John to the seven churches which are in Asia: Grace be unto you, and peace, from him which is, and which was, and which is to come; and from the seven Spirits which are before his throne.
 Revelation 1:7 Behold, he cometh with clouds; and every eye shall see him, and they also which pierced him.
 Revelation 1:16 And he had in his right hand seven stars: and out of his mouth went a sharp twoedged sword: and his countenance was as the sun shineth in his strength.
@@ -477,6 +479,20 @@ The Kybalion - Rhythm: Everything flows, out and in; everything has its tides; a
 """
 }
 
+# Cross-tradition concept dictionary for natural resolution
+CROSS_TRADITION_MAP = {
+    "as above so below": {
+        "concept": "The Law of Correspondence (Heaven/Earth Reflection)",
+        "bible_refs": ["Matthew 6:10", "Matthew 18:18", "Acts 2:19"],
+        "direct_book": "The Kybalion (Three Initiates)"
+    },
+    "as above as below": {
+        "concept": "The Law of Correspondence (Heaven/Earth Reflection)",
+        "bible_refs": ["Matthew 6:10", "Matthew 18:18", "Acts 2:19"],
+        "direct_book": "The Kybalion (Three Initiates)"
+    }
+}
+
 def is_valid_canonical_text(book_name: str, text: str) -> bool:
     if not text or len(text) < 1500:
         return False
@@ -524,7 +540,6 @@ def load_full_corpus_text(book_name: str) -> str:
     return LOCAL_CANON_RESERVES.get(book_name, "").strip()
 
 def split_into_verses(text: str):
-    # Splits by verse headings, logia, or sentence bounds to keep crisp units
     raw_units = re.split(r'(?:\r?\n\s*(?:[A-Za-z0-9\s]+ \d+:\d+|Logion \d+|Chapter \d+|\d+\.)\s*)|(?<=[.!?])\s+(?=[A-Z0-9])', text)
     clean_verses = []
     seen = set()
@@ -844,7 +859,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# TAB 2: TREE OF KNOWLEDGE CORPUS (Robust Phrase Search)
+# TAB 2: TREE OF KNOWLEDGE CORPUS (Enhanced Dual Engine)
 # ----------------------------------------------------
 with tabs[1]:
     st.markdown("<h3 style='color:#f5c542;'>Tree of Knowledge Corpus</h3>", unsafe_allow_html=True)
@@ -872,36 +887,72 @@ with tabs[1]:
         st.caption(f"Corpus Active: **{words_count:,} words** | **{chars_count:,} characters**")
 
         st.markdown("#### Corpus Plain-Language Inquiry")
-        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. As above as below, 7, Light, God, Sophia, In the beginning", key="corp_q")
+        c_query = st.text_input("Ask a question or enter a search query:", placeholder="e.g. As above so below, 7, Light, God, Sophia, In the beginning", key="corp_q")
 
         if c_query.strip():
             raw_target = c_query.strip()
-            
             target = re.sub(r'^(find|how many times does|count|search for)\s+', '', raw_target, flags=re.IGNORECASE).strip().strip("'\"")
             if not target:
                 target = raw_target
 
-            # Search either single digit/number or phrase with flexible non-alphanumeric spacing
-            if target == "7" or target.lower() == "seven":
-                pattern = r'\b(7|seven|seventh)\b'
-            else:
-                tokens = [re.escape(w) for w in re.split(r'[\s,\.\;\:\-\"\'\`]+', target) if w]
-                if len(tokens) > 1:
-                    pattern = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
-                elif len(tokens) == 1:
-                    pattern = r'\b' + tokens[0] + r'\b'
-                else:
-                    pattern = re.escape(target)
-
             raw_entries = split_into_verses(corp_text)
             matches_list = []
             
-            for verse in raw_entries:
-                if re.search(pattern, verse, re.IGNORECASE):
-                    script = detect_script(verse)
-                    v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
-                    highlighted = re.sub(pattern, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
-                    matches_list.append((verse, highlighted, v_root))
+            # 1. Number Query
+            if target == "7" or target.lower() == "seven":
+                pattern = r'\b(7|seven|seventh)\b'
+                for verse in raw_entries:
+                    if re.search(pattern, verse, re.IGNORECASE):
+                        script = detect_script(verse)
+                        v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
+                        highlighted = re.sub(pattern, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
+                        matches_list.append((verse, highlighted, v_root))
+            
+            # 2. String/Phrase Query
+            else:
+                tokens = [re.escape(w) for w in re.split(r'[\s,\.\;\:\-\"\'\`]+', target) if w]
+                
+                # A: Try contiguous phrase search first
+                if len(tokens) > 1:
+                    phrase_pat = r'\b' + r'[\s,\.\;\:\-\"\'\`]+'.join(tokens) + r'\b'
+                elif len(tokens) == 1:
+                    phrase_pat = r'\b' + tokens[0] + r'\b'
+                else:
+                    phrase_pat = re.escape(target)
+
+                for verse in raw_entries:
+                    if re.search(phrase_pat, verse, re.IGNORECASE):
+                        script = detect_script(verse)
+                        v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
+                        highlighted = re.sub(phrase_pat, lambda m: f"<span class='mark-glow'>{m.group(0)}</span>", verse, flags=re.IGNORECASE)
+                        matches_list.append((verse, highlighted, v_root))
+
+                # B: If contiguous phrase returned 0, automatically find verses containing all core tokens
+                if len(matches_list) == 0 and len(tokens) > 1:
+                    significant_tokens = [t for t in tokens if len(t) > 2]
+                    search_tokens = significant_tokens if significant_tokens else tokens
+                    for verse in raw_entries:
+                        if all(re.search(rf'\b{t}\b', verse, re.IGNORECASE) for t in search_tokens):
+                            script = detect_script(verse)
+                            v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
+                            highlighted = verse
+                            for t in set(search_tokens):
+                                highlighted = re.sub(rf'\b({t})\b', r"<span class='mark-glow'>\1</span>", highlighted, flags=re.IGNORECASE)
+                            matches_list.append((verse, highlighted, v_root))
+
+                # C: Cross-Tradition Concept Guidance if 0 matches
+                clean_lower = target.lower()
+                if len(matches_list) == 0 and clean_lower in CROSS_TRADITION_MAP:
+                    concept_info = CROSS_TRADITION_MAP[clean_lower]
+                    st.info(f"💡 **Canon Cross-Reference Note:** *'{target}'* is the core axiom of **{concept_info['direct_book']}**. In the Biblical canon, this principle is expressed in **{', '.join(concept_info['bible_refs'])}**.")
+                    for verse in raw_entries:
+                        if any(ref in verse for ref in concept_info['bible_refs']):
+                            script = detect_script(verse)
+                            v_root = reduce_number(sum(universal_char_value(c, script) for c in verse if not c.isspace()))
+                            highlighted = verse
+                            for w in ["heaven", "earth", "above", "beneath"]:
+                                highlighted = re.sub(rf'\b({w})\b', r"<span class='mark-glow'>\1</span>", highlighted, flags=re.IGNORECASE)
+                            matches_list.append((verse, highlighted, v_root))
 
             total_found = len(matches_list)
             st.markdown(f"**Direct Result:** Found **{total_found:,} matching verses** for `\"{target}\"` in this corpus.")
@@ -921,7 +972,7 @@ with tabs[1]:
 
                 clean_corp_title = corpus_sel[:12].strip().replace(' ', '_')
                 clean_query_title = re.sub(r'\W+', '_', target)[:12].strip('_')
-                verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nSearch Query: {target}\nTotal Exact Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                verses_export_text = f"=== NUMBERIN CORPUS SEARCH RESULTS ===\nCorpus: {corpus_sel}\nSearch Query: {target}\nTotal Matches: {total_found}\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 for idx, (raw_v, _, v_root) in enumerate(matches_list, 1):
                     verses_export_text += f"[{idx}] Root {v_root} ({meaning(v_root)})\n{raw_v}\n\n"
 
